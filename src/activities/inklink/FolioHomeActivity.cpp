@@ -85,6 +85,21 @@ void FolioHomeActivity::onEnter() {
     if (recent.size() > MAX_RECENT_STRIP) break;  // 1 on the card + strip
   }
   currentPercent = recent.empty() ? -1 : loadBookProgress(recent.front().path);
+  // Personal pace: time spent in this book so far per percent read. Needs a
+  // few percent and ten minutes of history to be more than noise.
+  secsLeftEstimate = 0;
+  if (!recent.empty() && currentPercent >= 3 && currentPercent < 100) {
+    std::vector<inklink::BookTotal> totals;
+    if (inklink::ReadingStats::get().loadBookTotals(totals)) {
+      for (const auto& t : totals) {
+        if (t.path == recent.front().path && t.secs >= 600) {
+          secsLeftEstimate = static_cast<uint32_t>(static_cast<uint64_t>(t.secs) * (100 - currentPercent) /
+                                                   static_cast<uint32_t>(currentPercent));
+          break;
+        }
+      }
+    }
+  }
   inklink::ReadingStats::get().summarize(summary, &days);
   goalMinutes = inklink::Shelves::dailyGoalMinutes();
   layoutTargets();
@@ -241,6 +256,13 @@ void FolioHomeActivity::render(RenderLock&&) {
       inklink::render::drawProgressBar(renderer, textX, ty, textW, 12, currentPercent);
       snprintf(buf, sizeof(buf), "%d%%", currentPercent);
       renderer.drawText(UI_10_FONT_ID, textX, ty + 18, buf);
+      if (secsLeftEstimate > 0) {
+        char left[40];
+        inklink::render::formatDuration(secsLeftEstimate, left, sizeof(left));
+        char line[64];
+        snprintf(line, sizeof(line), tr(STR_FOLIO_TIME_LEFT), left);
+        renderer.drawText(UI_10_FONT_ID, textX + 56, ty + 18, line);
+      }
       ty += 48;
     }
   } else {
