@@ -33,6 +33,8 @@ class CrossPointWebServerActivity final : public Activity {
   // Network mode
   NetworkMode networkMode = NetworkMode::JOIN_NETWORK;
   bool isApMode = false;
+  // InkLink "Phone sync": skip the mode menu and join the saved network.
+  bool quickConnect = false;
 
   // Web server - owned by this activity
   std::unique_ptr<CrossPointWebServer> webServer;
@@ -61,8 +63,9 @@ class CrossPointWebServerActivity final : public Activity {
   void startWebServer();
 
  public:
-  explicit CrossPointWebServerActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)
-      : Activity("CrossPointWebServer", renderer, mappedInput) {}
+  explicit CrossPointWebServerActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
+                                       bool quickConnect = false)
+      : Activity("CrossPointWebServer", renderer, mappedInput), quickConnect(quickConnect) {}
   void onEnter() override;
   void onExit() override;
   void loop() override;

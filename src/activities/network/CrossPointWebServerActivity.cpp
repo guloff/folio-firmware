@@ -14,8 +14,10 @@
 #include "SilentRestart.h"
 #include "WifiSelectionActivity.h"
 #include "activities/network/CalibreConnectActivity.h"
+#include "activities/settings/SdFirmwareUpdateActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/InkLinkApi.h"
 #include "util/QrUtils.h"
 #include "util/TaskWatchdog.h"
 
@@ -44,6 +46,9 @@ void stopDnsServer() {
 void restartMdns(const char* hostname, const char* tag) {
   MDNS.end();
   if (MDNS.begin(hostname)) {
+    // Bonjour records let the InkLink iOS app find the reader without an IP.
+    MDNS.addService("http", "tcp", 80);
+    MDNS.addService("inklink", "tcp", 80);
     LOG_DBG(tag, "mDNS started: http://%s.local/", hostname);
   } else {
     LOG_DBG(tag, "WARNING: mDNS failed to start");
@@ -84,6 +89,12 @@ void CrossPointWebServerActivity::onEnter() {
   connectedSSID.clear();
   lastHandleClientTime = 0;
   requestUpdate();
+
+  if (quickConnect) {
+    // InkLink "Phone sync": straight to the saved network, no mode menu.
+    onNetworkModeSelected(NetworkMode::JOIN_NETWORK);
+    return;
+  }
 
   // Launch network mode selection subactivity
   LOG_DBG("WEBACT", "Launching NetworkModeSelectionActivity...");
@@ -383,6 +394,17 @@ void CrossPointWebServerActivity::loop() {
         }
       }
       lastHandleClientTime = millis();
+
+      // The companion uploaded a firmware image and asked to install it. The
+      // update screen validates it and asks for confirmation on the device.
+      const std::string firmware = inklink::api::takePendingFirmware();
+      if (!firmware.empty()) {
+        LOG_INF("WEBACT", "Companion firmware update requested: %s", firmware.c_str());
+        startActivityForResult(
+            std::make_unique<SdFirmwareUpdateActivity>(renderer, mappedInput, false, firmware),
+            [this](const ActivityResult&) { requestUpdate(); });
+        return;
+      }
     }
 
     // Also check outside the request-processing loop.

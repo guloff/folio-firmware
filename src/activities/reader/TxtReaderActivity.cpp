@@ -15,6 +15,7 @@
 #include "ReaderUtils.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/ReadingStats.h"
 
 namespace {
 constexpr size_t CHUNK_SIZE = 8 * 1024;  // 8KB chunk for reading
@@ -340,6 +341,7 @@ void TxtReaderActivity::renderStatusBar() const {
 }
 
 bool TxtReaderActivity::pageTurn(bool isForward) {
+  inklink::ReadingStats::get().notePageTurn(isForward);
   // Ignore paging until initializeReader has established the page index
   if (!initialized) {
     return false;
@@ -359,6 +361,7 @@ bool TxtReaderActivity::pageTurn(bool isForward) {
 }
 
 bool TxtReaderActivity::skipPages(int amount) {
+  inklink::ReadingStats::get().notePageTurn(amount > 0);
   if (!initialized) {
     return false;
   }

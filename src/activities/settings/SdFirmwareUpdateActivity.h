@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 
 #include "activities/Activity.h"
 
@@ -28,8 +29,13 @@ class SdFirmwareUpdateActivity : public Activity {
     FAILED,
   };
 
-  explicit SdFirmwareUpdateActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, bool recoveryMode = false)
-      : Activity("SdFirmwareUpdate", renderer, mappedInput), recoveryMode(recoveryMode) {}
+  // preselectedPath skips the file picker (InkLink companion upload); the
+  // image is still validated and the user still confirms on the device.
+  explicit SdFirmwareUpdateActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, bool recoveryMode = false,
+                                    std::string preselectedPath = "")
+      : Activity("SdFirmwareUpdate", renderer, mappedInput),
+        recoveryMode(recoveryMode),
+        preselectedPath(std::move(preselectedPath)) {}
 
   void onEnter() override;
   void loop() override;
@@ -40,6 +46,7 @@ class SdFirmwareUpdateActivity : public Activity {
  private:
   State state = State::PICKING;
   bool recoveryMode = false;
+  std::string preselectedPath;
 
   std::string firmwarePath;
   size_t firmwareSize = 0;
@@ -49,6 +56,7 @@ class SdFirmwareUpdateActivity : public Activity {
 
   void launchPicker();
   void onPickerResult(const ActivityResult& result);
+  void startWithPath(const std::string& path);
   bool validateFirmware();
   void promptConfirmation();
   void onConfirmationResult(const ActivityResult& result);

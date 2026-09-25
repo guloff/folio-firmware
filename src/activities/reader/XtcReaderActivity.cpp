@@ -15,6 +15,7 @@
 #include "XtcReaderChapterSelectionActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/ReadingStats.h"
 
 bool XtcReaderActivity::loadBook() {
   auto loadedXtc = makeUniqueNoThrow<Xtc>(bookPath, "/.crosspoint");
@@ -288,6 +289,7 @@ void XtcReaderActivity::renderPage() {
 }
 
 bool XtcReaderActivity::pageTurn(bool isForward) {
+  inklink::ReadingStats::get().notePageTurn(isForward);
   if (!xtc) return false;
   if (isForward) {
     if (currentPage < xtc->getPageCount()) {
@@ -304,6 +306,7 @@ bool XtcReaderActivity::pageTurn(bool isForward) {
 }
 
 bool XtcReaderActivity::skipPages(int amount) {
+  inklink::ReadingStats::get().notePageTurn(amount > 0);
   if (!xtc) return false;
   int newPage = static_cast<int>(currentPage) + amount;
   if (newPage < 0) newPage = 0;

@@ -4,10 +4,23 @@
 #include <I18n.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "activities/Activity.h"
 #include "util/Dictionary.h"
+
+// InkLink: where the page comes from. In highlight mode the first Confirm /
+// tap anchors the range, the second saves words[anchor..selected] as a
+// highlight; in lookup mode a found word is logged to the vocabulary.
+struct WordSelectBookContext {
+  std::string bookPath;
+  std::string title;
+  std::string chapter;
+  int percent = -1;
+  int spine = -1;
+  int page = -1;
+};
 
 // Word selection over the current reader page: Left/Right step through words
 // in reading order, Up/Down jump rows, Confirm looks the word up and opens
@@ -15,12 +28,17 @@
 // touch-down moves the highlight and a tap on a word looks it up directly.
 class DictionaryWordSelectActivity final : public Activity {
  public:
+  using BookContext = WordSelectBookContext;
+
   explicit DictionaryWordSelectActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
-                                        std::unique_ptr<Page> page, int marginLeft, int marginTop)
+                                        std::unique_ptr<Page> page, int marginLeft, int marginTop,
+                                        BookContext context = {}, bool highlightMode = false)
       : Activity("DictionaryWordSelect", renderer, mappedInput),
         page(std::move(page)),
         marginLeft(marginLeft),
-        marginTop(marginTop) {}
+        marginTop(marginTop),
+        context(std::move(context)),
+        highlightMode(highlightMode) {}
 
   void onEnter() override;
   void loop() override;
@@ -38,7 +56,7 @@ class DictionaryWordSelectActivity final : public Activity {
     EpdFontFamily::Style style;
   };
 
-  enum class Popup : uint8_t { None, Busy, NotFound, Error };
+  enum class Popup : uint8_t { None, Busy, NotFound, Error, Saved };
 
   void extractWords();
   int closestInRow(uint16_t row, int centerX) const;
@@ -46,11 +64,17 @@ class DictionaryWordSelectActivity final : public Activity {
   void moveVertical(int direction);
   void performLookup();
   bool drawHighlightWithSnapshot();
+  void drawRangeHighlight();
+  void saveHighlight();
+  std::string contextAround(int index) const;
   void drawHints() const;
 
   std::unique_ptr<Page> page;
   const int marginLeft;
   const int marginTop;
+  BookContext context;
+  bool highlightMode = false;
+  int anchor = -1;  // highlight range start, -1 until the first Confirm
   int fontId = 0;
   int lineHeight = 0;
 

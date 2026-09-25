@@ -46,6 +46,7 @@
 #include "util/BookmarkUtil.h"
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
+#include "inklink/ReadingStats.h"
 
 namespace {
 // The X4 Pro and X4 Classic carry the X4's panel but sit outside isXteinkDevice()
@@ -311,8 +312,8 @@ void EpubReaderActivity::showBuildPopup(GfxRenderer& renderer, int& pagesUntilFu
   buildPopupPending = false;
 }
 
-void EpubReaderActivity::openDictionaryWordSelect() {
-  if (SETTINGS.dictionaryName[0] == '\0') {
+void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode) {
+  if (!highlightMode && SETTINGS.dictionaryName[0] == '\0') {
     showDictionaryMessage = true;
     dictionaryMessageTime = millis();
     requestUpdate();
@@ -328,8 +329,16 @@ void EpubReaderActivity::openDictionaryWordSelect() {
   orientedMarginTop += SETTINGS.screenMargin;
   orientedMarginLeft += SETTINGS.screenMargin;
 
+  DictionaryWordSelectActivity::BookContext context;
+  context.bookPath = bookPath;
+  context.title = epub ? epub->getTitle() : "";
+  context.chapter = currentChapterTitle();
+  context.percent = bookPercentFor(chapterPosition());
+  context.spine = currentSpineIndex;
+  context.page = section->currentPage;
   startActivityForResult(std::make_unique<DictionaryWordSelectActivity>(renderer, mappedInput, std::move(page),
-                                                                        orientedMarginLeft, orientedMarginTop),
+                                                                        orientedMarginLeft, orientedMarginTop,
+                                                                        std::move(context), highlightMode),
                          [this](const ActivityResult&) { requestUpdate(); });
 }
 
@@ -886,6 +895,10 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
       openDictionaryWordSelect();
       break;
     }
+    case EpubReaderMenuActivity::MenuAction::HIGHLIGHT: {
+      openDictionaryWordSelect(true);
+      break;
+    }
     case EpubReaderMenuActivity::MenuAction::DISPLAY_QR: {
       if (section && section->currentPage >= 0 && section->currentPage < section->pageCount) {
         std::string fullText = section->getTextFromSectionFile();
@@ -1059,6 +1072,7 @@ void EpubReaderActivity::toggleAutoPageTurn(const uint8_t selectedPageTurnOption
 }
 
 bool EpubReaderActivity::pageTurn(bool isForwardTurn) {
+  inklink::ReadingStats::get().notePageTurn(isForwardTurn);
   if (!section) return false;
   {
     RenderLock lock;
@@ -1100,6 +1114,7 @@ bool EpubReaderActivity::pageTurn(bool isForwardTurn) {
 }
 
 bool EpubReaderActivity::skipPages(int amount) {
+  inklink::ReadingStats::get().notePageTurn(amount > 0);
   if (!section) return false;
   if (amount > 0) {
     RenderLock lock;

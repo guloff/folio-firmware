@@ -3,7 +3,7 @@ _language_code: "DE"
 _order: "3"
 _bcp47: "de"
 
-STR_CROSSPOINT: "CrossPoint"
+STR_CROSSPOINT: "Folio"
 STR_BOOTING: "STARTE"
 STR_SLEEPING: "STANDBY"
 STR_ENTERING_SLEEP: "Standby"

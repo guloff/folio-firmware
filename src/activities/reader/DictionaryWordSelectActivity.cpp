@@ -6,6 +6,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
+#include <algorithm>
 #include <cctype>
 #include <climits>
 #include <cstdlib>
@@ -13,6 +14,8 @@
 #include "CrossPointSettings.h"
 #include "DictionaryDefinitionActivity.h"
 #include "components/UITheme.h"
+#include "fontIds.h"
+#include "inklink/Annotations.h"
 
 namespace {
 
@@ -179,6 +182,8 @@ void DictionaryWordSelectActivity::performLookup() {
 
   if (found) {
     popup = Popup::None;
+    inklink::Annotations::addVocabWord(headword.empty() ? words[selected].text : headword.c_str(),
+                                       contextAround(selected).c_str(), context.bookPath.c_str());
     startActivityForResult(
         std::make_unique<DictionaryDefinitionActivity>(renderer, mappedInput, std::move(headword),
                                                        std::move(definition), dict.definitionsAreHtml()),
@@ -230,8 +235,12 @@ void DictionaryWordSelectActivity::performLookup() {
 }
 
 void DictionaryWordSelectActivity::loop() {
-  if (popup == Popup::NotFound || popup == Popup::Error) {
+  if (popup == Popup::NotFound || popup == Popup::Error || popup == Popup::Saved) {
     if (millis() - popupTime >= POPUP_DURATION_MS) {
+      if (popup == Popup::Saved) {
+        finish();
+        return;
+      }
       popup = Popup::None;
       requestUpdate();
     }
@@ -243,7 +252,15 @@ void DictionaryWordSelectActivity::loop() {
     return;
   }
   if (mappedInput.wasReleased(MappedInputManager::Button::Confirm) && !words.empty()) {
-    performLookup();
+    if (!highlightMode) {
+      performLookup();
+    } else if (anchor < 0) {
+      anchor = selected;
+      snapshotIdx = -1;  // range drawing needs full repaints from here on
+      requestUpdate();
+    } else {
+      saveHighlight();
+    }
     return;
   }
 
@@ -265,7 +282,15 @@ void DictionaryWordSelectActivity::loop() {
     const int hit = wordAt(tx, ty);
     if (hit >= 0) {
       selected = hit;
-      performLookup();
+      if (!highlightMode) {
+        performLookup();
+      } else if (anchor < 0) {
+        anchor = selected;
+        snapshotIdx = -1;
+        requestUpdate();
+      } else {
+        saveHighlight();
+      }
     }
     return;
   }
@@ -342,7 +367,8 @@ void DictionaryWordSelectActivity::drawHints() const {
     GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
     return;
   }
-  const auto labels = mappedInput.mapDirectionalLabels(tr(STR_BACK), tr(STR_LOOKUP), tr(STR_DIR_LEFT),
+  const char* confirmLabel = highlightMode ? tr(STR_INKLINK_HIGHLIGHT) : tr(STR_LOOKUP);
+  const auto labels = mappedInput.mapDirectionalLabels(tr(STR_BACK), confirmLabel, tr(STR_DIR_LEFT),
                                                        tr(STR_DIR_RIGHT), tr(STR_DIR_UP), tr(STR_DIR_DOWN));
   GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
 }
@@ -352,7 +378,7 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
   // still holds a clean page (no popup or sub-activity since the last full
   // repaint). Restore the pixels under the old highlight, draw the new one,
   // and push — skipping the two-pass page render entirely.
-  if (popup == Popup::None && snapshotIdx >= 0 && !words.empty() && selected != snapshotIdx) {
+  if (popup == Popup::None && anchor < 0 && snapshotIdx >= 0 && !words.empty() && selected != snapshotIdx) {
     renderer.writeFramebufferRegion(snapshotX, snapshotY, snapshotW, snapshotH, snapshot.get());
     // The full path's PrewarmScope cleared the glyph cache on exit; batch-load
     // just the highlighted word's glyphs before drawing them white-on-black.
@@ -377,7 +403,15 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
   page->render(renderer, fontId, marginLeft, marginTop);
 
   if (!words.empty()) {
-    drawHighlightWithSnapshot();
+    if (anchor >= 0) {
+      drawRangeHighlight();
+    } else {
+      drawHighlightWithSnapshot();
+    }
+  }
+  if (highlightMode && anchor < 0 && popup == Popup::None) {
+    // First-time hint for the two-step selection.
+    renderer.drawCenteredText(UI_10_FONT_ID, 8, tr(STR_INKLINK_HIGHLIGHT_HINT));
   }
 
   drawHints();
@@ -392,4 +426,56 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
     return;
   }
   renderer.displayBuffer(HalDisplay::FAST_REFRESH);
+}
+
+// Inverts every word in the anchored range (reading order, either direction).
+void DictionaryWordSelectActivity::drawRangeHighlight() {
+  const int from = std::min(anchor, selected);
+  const int to = std::max(anchor, selected);
+  for (int i = from; i <= to; i++) {
+    const WordBox& word = words[i];
+    // Extend each box to the next word on the same row so the range reads as
+    // one continuous band instead of separate word blocks.
+    int right = word.x + word.width + 2;
+    if (i < to && words[i + 1].row == word.row) right = words[i + 1].x - 2;
+    renderer.fillRect(word.x - 2, word.y - 2, right - (word.x - 2), lineHeight + 4, true);
+    renderer.drawText(fontId, word.x, word.y, word.text, false, word.style);
+  }
+  snapshotIdx = -1;
+}
+
+void DictionaryWordSelectActivity::saveHighlight() {
+  const int from = std::min(anchor, selected);
+  const int to = std::max(anchor, selected);
+  inklink::HighlightRecord rec;
+  rec.book = context.bookPath;
+  rec.title = context.title;
+  rec.chapter = context.chapter;
+  rec.percent = context.percent;
+  rec.spine = context.spine;
+  rec.page = context.page;
+  rec.text.reserve(static_cast<size_t>(to - from + 1) * 8);
+  for (int i = from; i <= to; i++) {
+    if (!rec.text.empty()) rec.text.push_back(' ');
+    rec.text.append(words[i].text);
+  }
+  const bool ok = inklink::Annotations::addHighlight(rec);
+  popup = ok ? Popup::Saved : Popup::Error;
+  popupMsg = ok ? StrId::STR_INKLINK_HIGHLIGHT_SAVED : StrId::STR_DICT_ERROR;
+  popupTime = millis();
+  requestUpdate();
+}
+
+// Up to ~12 words around `index` as the vocabulary context sentence.
+std::string DictionaryWordSelectActivity::contextAround(const int index) const {
+  constexpr int SPAN = 6;
+  const int from = std::max(0, index - SPAN);
+  const int to = std::min(static_cast<int>(words.size()) - 1, index + SPAN);
+  std::string out;
+  out.reserve(128);
+  for (int i = from; i <= to; i++) {
+    if (!out.empty()) out.push_back(' ');
+    out.append(words[i].text);
+  }
+  return out;
 }

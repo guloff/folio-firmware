@@ -15,6 +15,8 @@
 #include "SdCardFontSystem.h"
 #include "TxtReaderActivity.h"
 #include "XtcReaderActivity.h"
+#include "inklink/ReadingStats.h"
+#include "util/BookProgress.h"
 
 ReaderActivity::ReaderActivity(const char* name, GfxRenderer& renderer, MappedInputManager& mappedInput,
                                std::string bookPath, const bool allowFastInitialRefresh)
@@ -71,11 +73,16 @@ void ReaderActivity::onEnter() {
   APP_STATE.openEpubPath = bookPath;
   APP_STATE.saveToFile();
   RECENT_BOOKS.addBook(bookPath, getBookTitle(), getBookAuthor(), getBookThumbBmpPath());
+  inklink::ReadingStats::get().beginSession(bookPath, getBookTitle());
   requestUpdate();
 }
 
 void ReaderActivity::onExit() {
   Activity::onExit();
+
+  if (inklink::ReadingStats::get().sessionOpen()) {
+    inklink::ReadingStats::get().endSession(loadBookProgress(bookPath));
+  }
 
   // Keep rebuildable font buffers from pinning the heap between reading sessions.
   if (auto* fontCache = renderer.getFontCacheManager()) {

@@ -19,6 +19,10 @@ void SdFirmwareUpdateActivity::onEnter() {
   // Build-identity marker — confirms which firmware build owns the SD update flow.
   LOG_INF("FW", "SdFirmwareUpdateActivity build=%s %s recovery=%d", __DATE__, __TIME__, recoveryMode ? 1 : 0);
   state = State::PICKING;
+  if (!preselectedPath.empty()) {
+    startWithPath(preselectedPath);
+    return;
+  }
   launchPicker();
 }
 
@@ -46,7 +50,11 @@ void SdFirmwareUpdateActivity::onPickerResult(const ActivityResult& result) {
     finish();
     return;
   }
-  firmwarePath = path->path;
+  startWithPath(path->path);
+}
+
+void SdFirmwareUpdateActivity::startWithPath(const std::string& path) {
+  firmwarePath = path;
   LOG_DBG("FW", "Selected: %s", firmwarePath.c_str());
 
   {

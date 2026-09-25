@@ -126,3 +126,32 @@ bool HalClock::syncFromNTP() {
   setTimezone(savedTz);
   return false;
 }
+
+bool HalClock::utcNow(time_t& out) const {
+  struct tm unused;
+  if (!localTime(unused)) return false;  // refreshes _cachedUtc from the RTC
+  // Between RTC polls advance the cached value by elapsed millis so callers
+  // measuring durations don't see a clock frozen for CLOCK_POLL_MS.
+  out = _cachedUtc + static_cast<time_t>((millis() - _lastPollMs) / 1000UL);
+  return true;
+}
+
+bool HalClock::setUtc(time_t epoch) {
+  if (!_available || epoch <= 0) return false;
+  struct tm t;
+  gmtime_r(&epoch, &t);
+  Rtc::DateTime dt;
+  dt.year = static_cast<uint16_t>(t.tm_year + 1900);
+  dt.month = static_cast<uint8_t>(t.tm_mon + 1);
+  dt.day = static_cast<uint8_t>(t.tm_mday);
+  dt.hour = static_cast<uint8_t>(t.tm_hour);
+  dt.minute = static_cast<uint8_t>(t.tm_min);
+  dt.second = static_cast<uint8_t>(t.tm_sec);
+  dt.weekday = static_cast<uint8_t>(t.tm_wday);
+  if (!_sdkRtc.set(dt)) return false;
+  _cachedUtc = epoch;
+  _hasCachedTime = true;
+  _lastPollMs = millis() != 0 ? millis() : 1;
+  LOG_INF("CLK", "RTC set from companion: %ld", static_cast<long>(epoch));
+  return true;
+}

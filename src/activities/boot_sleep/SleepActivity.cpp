@@ -27,6 +27,7 @@
 #include "activities/reader/ReaderUtils.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/SleepScreens.h"
 #include "images/Logo120.h"
 #include "images/MoonIcon.h"
 
@@ -562,6 +563,18 @@ void SleepActivity::onEnter() {
       } else {
         return renderCustomSleepScreen();
       }
+    case (CrossPointSettings::SLEEP_SCREEN_MODE::INKLINK_DASHBOARD):
+      if (inklink::sleep::renderDashboard(renderer)) {
+        renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+        return;
+      }
+      return renderDefaultSleepScreen();
+    case (CrossPointSettings::SLEEP_SCREEN_MODE::INKLINK_QUOTE):
+      if (inklink::sleep::renderQuote(renderer)) {
+        renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+        return;
+      }
+      return renderCustomSleepScreen();
     default:
       return renderDefaultSleepScreen();
   }

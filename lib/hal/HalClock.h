@@ -50,4 +50,9 @@ class HalClock {
   // Debouncing (skip if already synced once) is enforced by the caller, not here,
   // so the HAL stays free of any app-layer settings dependency.
   bool syncFromNTP();
+
+  // InkLink: current UTC epoch (false when no RTC / never set) and setting the
+  // RTC from a trusted UTC epoch (the companion app sends the phone's time).
+  bool utcNow(time_t& out) const;
+  bool setUtc(time_t epoch);
 };
