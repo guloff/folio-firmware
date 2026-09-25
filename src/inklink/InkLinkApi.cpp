@@ -311,6 +311,16 @@ void handleBooks() {
     item["lastRead"] = static_cast<int64_t>(t != totalByPath.end() ? t->second->lastRead : 0);
     item["secs"] = t != totalByPath.end() ? t->second->secs : 0u;
     item["status"] = lib["status"][path.c_str()] | "";
+    // Position in the device's recent list (0 = last opened), -1 when absent.
+    int recentRank = -1;
+    const auto& recentBooks = RECENT_BOOKS.getBooks();
+    for (size_t r = 0; r < recentBooks.size(); r++) {
+      if (recentBooks[r].path == path) {
+        recentRank = static_cast<int>(r);
+        break;
+      }
+    }
+    item["recent"] = recentRank;
     JsonArray shelves = item["shelves"].to<JsonArray>();
     auto sb = shelvesByBook.find(path);
     if (sb != shelvesByBook.end()) {
