@@ -22,6 +22,11 @@ namespace {
 constexpr unsigned long POPUP_DURATION_MS = 1500;
 constexpr unsigned long WORD_REPEAT_START_MS = 500;
 constexpr unsigned long WORD_REPEAT_INTERVAL_MS = 500;
+// Finger travel (logical px) before a highlight-mode contact becomes a drag.
+constexpr int DRAG_SLOP = 20;
+// A drag starts a selection only on (or right next to) a word; one from the
+// blank margin stays a Back swipe.
+constexpr int DRAG_START_MAX_DX = 24;
 
 // A token is selectable when it has an ASCII alphanumeric or a non-ASCII
 // codepoint outside U+2000-U+206F (dashes, bullets and other General
@@ -58,6 +63,14 @@ void DictionaryWordSelectActivity::onEnter() {
   if (!words.empty()) {
     const int initial = closestInRow(rowCount / 2, renderer.getScreenWidth() / 2);
     if (initial >= 0) selected = initial;
+  }
+  // Entered from a long-press on the reader page: that word starts the range.
+  if (highlightMode && startX >= 0 && startY >= 0) {
+    const int hit = nearestWord(startX, startY);
+    if (hit >= 0) {
+      selected = hit;
+      anchor = hit;
+    }
   }
   requestUpdate();
 }
@@ -125,6 +138,29 @@ int DictionaryWordSelectActivity::wordAt(const int x, const int y) const {
     }
   }
   return -1;
+}
+
+// Like wordAt, but a touch in the gap between justified words, past a line's
+// end or a few px above/below the glyphs resolves to the closest word whose
+// line band is within one line height. Without this such taps were silently
+// dropped (hit == -1), which read as "touch does nothing".
+int DictionaryWordSelectActivity::nearestWord(const int x, const int y, const int maxDx) const {
+  const int exact = wordAt(x, y);
+  if (exact >= 0) return exact;
+  int best = -1;
+  int bestScore = INT_MAX;
+  for (int i = 0; i < static_cast<int>(words.size()); i++) {
+    const WordBox& word = words[i];
+    const int dx = x < word.x ? word.x - x : (x >= word.x + word.width ? x - (word.x + word.width - 1) : 0);
+    const int dy = y < word.y ? word.y - y : (y >= word.y + lineHeight ? y - (word.y + lineHeight - 1) : 0);
+    if (dy > lineHeight || dx > maxDx) continue;
+    const int score = dx + 4 * dy;  // stay on the touched line first
+    if (score < bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  }
+  return best;
 }
 
 // Index of the word in `row` whose horizontal center is closest to centerX;
@@ -247,6 +283,10 @@ void DictionaryWordSelectActivity::loop() {
     return;
   }
 
+  // Before Back: a left-to-right drag from the left quarter also reads as the
+  // Back swipe, which used to close the screen mid-selection.
+  if (highlightMode && !words.empty() && handleDrag()) return;
+
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     if (highlightMode && anchor >= 0) {
       // First Back drops the range start; the next one leaves the mode.
@@ -277,15 +317,20 @@ void DictionaryWordSelectActivity::loop() {
   int tx = 0;
   int ty = 0;
   if (mappedInput.wasScreenTouchDown(tx, ty)) {
-    const int hit = wordAt(tx, ty);
+    const int hit = nearestWord(tx, ty);
     if (hit >= 0 && hit != selected) {
-      selected = hit;
-      requestUpdate();
+      if (anchor >= 0) {
+        setRangeEnd(hit);
+      } else {
+        selected = hit;
+        requestUpdate();
+      }
     }
     return;
   }
   if (mappedInput.wasScreenTapped(tx, ty)) {
-    const int hit = wordAt(tx, ty);
+    const int hit = nearestWord(tx, ty);
+    LOG_DBG("DWS", "tap %d,%d -> word %d (anchor %d)", tx, ty, hit, anchor);
     if (hit >= 0) {
       selected = hit;
       if (!highlightMode) {
@@ -322,6 +367,72 @@ void DictionaryWordSelectActivity::loop() {
   } else if (mappedInput.wasPressed(MappedInputManager::Button::ScreenDown)) {
     moveVertical(1);
   }
+}
+
+void DictionaryWordSelectActivity::setRangeEnd(const int index) {
+  if (index < 0 || index == selected) return;
+  selected = index;
+  snapshotIdx = -1;
+  requestUpdate();
+}
+
+// Highlight-mode drag: once the contact travels DRAG_SLOP the word under its
+// start becomes the anchor (unless one is set already) and the range end
+// follows the finger. Returns true while it owns the contact, including the
+// release frame, whose tap must not also save. A quick drag can arrive as one
+// down/up pair with no samples in between; its swipe endpoints cover that.
+bool DictionaryWordSelectActivity::handleDrag() {
+  int hx = 0;
+  int hy = 0;
+  if (mappedInput.isScreenTouchHeld(hx, hy)) {
+    if (!touchTracking) {
+      touchTracking = true;
+      dragging = false;
+      touchStartX = static_cast<int16_t>(hx);
+      touchStartY = static_cast<int16_t>(hy);
+    }
+    if (!dragging && (std::abs(hx - touchStartX) > DRAG_SLOP || std::abs(hy - touchStartY) > DRAG_SLOP)) {
+      const int start = nearestWord(touchStartX, touchStartY, DRAG_START_MAX_DX);
+      if (start < 0) return false;
+      dragging = true;
+      if (anchor < 0) {
+        anchor = start;
+        selected = start;
+      }
+      snapshotIdx = -1;
+      requestUpdate();
+      LOG_DBG("DWS", "drag from word %d (anchor %d)", start, anchor);
+    }
+    if (dragging) setRangeEnd(nearestWord(hx, hy));
+    return dragging;
+  }
+  const bool wasDragging = dragging;
+  touchTracking = false;
+  dragging = false;
+  int sx = 0;
+  int sy = 0;
+  int ex = 0;
+  int ey = 0;
+  if (mappedInput.wasScreenSwipe(sx, sy, ex, ey)) {
+    const int start = nearestWord(sx, sy, DRAG_START_MAX_DX);
+    const int end = nearestWord(ex, ey);
+    if (start >= 0 && end >= 0) {
+      if (anchor < 0) {
+        anchor = start;
+        selected = start;
+        snapshotIdx = -1;
+        requestUpdate();
+      }
+      setRangeEnd(end);
+      LOG_DBG("DWS", "drag released: range %d..%d", anchor, selected);
+      return true;
+    }
+  }
+  if (wasDragging) {
+    LOG_DBG("DWS", "drag released: range %d..%d", anchor, selected);
+    return true;
+  }
+  return false;
 }
 
 // Saves the pixels under words[selected]'s highlight box, then draws the
@@ -415,14 +526,16 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
       drawHighlightWithSnapshot();
     }
   }
-  if (highlightMode && anchor < 0 && popup == Popup::None) {
+  if (highlightMode && popup == Popup::None && (anchor < 0 || mappedInput.hasTouch())) {
     // Two-step selection hint on a white band at the bottom edge, where it
-    // can't cover the words being chosen.
+    // can't cover the words being chosen. Once anchored, touch users are told
+    // how to finish (buttons keep the Confirm hint below).
     const int bandH = renderer.getLineHeight(UI_10_FONT_ID) + 12;
     const int bandY = renderer.getScreenHeight() - bandH;
     renderer.fillRect(0, bandY, renderer.getScreenWidth(), bandH, false);
     renderer.drawLine(0, bandY, renderer.getScreenWidth() - 1, bandY, true);
-    renderer.drawCenteredText(UI_10_FONT_ID, bandY + 6, tr(STR_INKLINK_HIGHLIGHT_HINT));
+    renderer.drawCenteredText(UI_10_FONT_ID, bandY + 6,
+                              anchor < 0 ? tr(STR_INKLINK_HIGHLIGHT_HINT) : tr(STR_INKLINK_HIGHLIGHT_HINT_END));
   }
 
   drawHints();

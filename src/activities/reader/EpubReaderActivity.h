@@ -161,7 +161,9 @@ class EpubReaderActivity final : public ReaderActivity {
   std::string moreRowValue(int row) const;
   void activateMoreRow(int row);
   void openFootnoteSelect(bool reopenMenuOnCancel);
-  void openDictionaryWordSelect(bool highlightMode = false);
+  // startX/startY: a long-pressed point on the page; that word starts the
+  // highlight range.
+  void openDictionaryWordSelect(bool highlightMode = false, int startX = -1, int startY = -1);
   bool launchKOReaderSync();
   unsigned long confirmLongPressThreshold() const;
   void toggleAutoPageTurn(uint8_t selectedPageTurnOption);

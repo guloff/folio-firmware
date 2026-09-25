@@ -71,6 +71,8 @@ class MappedInputManager {
   // (which wasScreenTapped never reports). InputSnapshot builders forward it
   // off-target so FreeInkUI routing clears its pressed-element state.
   bool wasScreenTouchReleased() const;
+  // A quick drag released this frame: both endpoints in logical coords.
+  bool wasScreenSwipe(int& sx, int& sy, int& ex, int& ey) const { return decodeSwipe(sx, sy, ex, ey); }
   bool wasTapInRect(int x, int y, int width, int height) const;
 
   // Combined touch interaction for a band of equal rows with caller-supplied

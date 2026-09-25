@@ -312,7 +312,7 @@ void EpubReaderActivity::showBuildPopup(GfxRenderer& renderer, int& pagesUntilFu
   buildPopupPending = false;
 }
 
-void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode) {
+void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode, const int startX, const int startY) {
   if (!highlightMode && SETTINGS.dictionaryName[0] == '\0') {
     showDictionaryMessage = true;
     dictionaryMessageTime = millis();
@@ -338,7 +338,8 @@ void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode) {
   context.page = section->currentPage;
   startActivityForResult(std::make_unique<DictionaryWordSelectActivity>(renderer, mappedInput, std::move(page),
                                                                         orientedMarginLeft, orientedMarginTop,
-                                                                        std::move(context), highlightMode),
+                                                                        std::move(context), highlightMode, startX,
+                                                                        startY),
                          [this](const ActivityResult&) { requestUpdate(); });
 }
 
@@ -598,6 +599,19 @@ void EpubReaderActivity::loop() {
         return;
       default:
         break;
+    }
+  }
+
+  // Touch equivalent of Menu -> Highlight -> Confirm: a long-press on the page
+  // opens highlight mode with the pressed word as the range start. The
+  // long-press suppresses the rest of the contact, so the lift is not also a
+  // page-turn tap.
+  if (!atEndOfBook && section && SETTINGS.touchReaderControls && mappedInput.hasTouch()) {
+    int pressX = 0;
+    int pressY = 0;
+    if (mappedInput.wasScreenLongPress(pressX, pressY)) {
+      openDictionaryWordSelect(true, pressX, pressY);
+      return;
     }
   }
 

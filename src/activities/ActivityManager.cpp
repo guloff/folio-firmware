@@ -103,7 +103,8 @@ void ActivityManager::loop() {
   }
 
   if (currentActivity) {
-    if (!currentActivity->isHomeActivity() && mappedInput.wasHomeGesture()) {
+    const bool edgeGestures = !currentActivity->suppressesEdgeGestures();
+    if (edgeGestures && !currentActivity->isHomeActivity() && mappedInput.wasHomeGesture()) {
       if (currentActivity->handleHomeGesture()) {
         return;
       }
@@ -124,7 +125,8 @@ void ActivityManager::loop() {
       // The header back button shares this band; its taps stay Back.
       statusBarTap = mappedInput.wasScreenTapped(tx, ty) && ty < 44 && !HeaderBackTapTarget::contains(tx, ty);
     }
-    if (currentActivity->name != "FrontlightPanel" && (statusBarTap || mappedInput.wasLightPanelGesture())) {
+    if (currentActivity->name != "FrontlightPanel" &&
+        (statusBarTap || (edgeGestures && mappedInput.wasLightPanelGesture()))) {
       pushActivity(std::make_unique<FrontlightPanelActivity>(renderer, mappedInput));
       return;
     }
