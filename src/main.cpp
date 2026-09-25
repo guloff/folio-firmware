@@ -38,6 +38,7 @@
 #include "platform/UsbSerialJtagHandoff.h"
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
+#include "inklink/BootHealth.h"
 #include "util/Timezones.h"
 
 #if CROSSPOINT_VECTOR_FONTS
@@ -582,6 +583,7 @@ void setup() {
 }
 
 void loop() {
+  inklink::boot::confirmIfHealthy();
   static unsigned long maxLoopDuration = 0;
   const unsigned long loopStartTime = millis();
   static unsigned long lastMemPrint = 0;
