@@ -21,7 +21,7 @@
 namespace {
 // Folio updates come from the fork's own releases, never from upstream
 // CrossPoint (whose images would replace Folio).
-constexpr char latestReleaseUrl[] = "https://api.github.com/repos/rustamguloff/folio-firmware/releases/latest";
+constexpr char latestReleaseUrl[] = "https://api.github.com/repos/guloff/folio-firmware/releases/latest";
 }  // namespace
 
 OtaUpdater::OtaUpdaterError OtaUpdater::checkForUpdate() {
