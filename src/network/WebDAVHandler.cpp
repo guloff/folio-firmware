@@ -4,6 +4,7 @@
 #include <HalStorage.h>
 #include <Logging.h>
 
+#include "inklink/Pairing.h"
 #include "util/BookCacheUtils.h"
 #include "util/TaskWatchdog.h"
 
@@ -48,7 +49,8 @@ void WebDAVHandler::raw(WebServer& server, const String& uri, HTTPRaw& raw) {
   (void)uri;
   if (raw.status == RAW_START) {
     _putPath = getRequestPath(server);
-    if (isProtectedPath(_putPath)) {
+    // Unpaired clients never get a temp file; handle() answers 401.
+    if (!inklink::pairing::authorized(server) || isProtectedPath(_putPath)) {
       _putOk = false;
       return;
     }
@@ -117,6 +119,20 @@ void WebDAVHandler::raw(WebServer& server, const String& uri, HTTPRaw& raw) {
 
 bool WebDAVHandler::handle(WebServer& server, HTTPMethod method, const String& uri) {
   (void)uri;
+  switch (method) {
+    case HTTP_PUT:
+    case HTTP_DELETE:
+    case HTTP_MKCOL:
+    case HTTP_MOVE:
+    case HTTP_COPY:
+    case HTTP_LOCK:
+      // WebDAV clients can't add headers: the pairing token is accepted as
+      // the Basic-auth password.
+      if (!inklink::pairing::requireAuth(server, /*webdav=*/true)) return true;
+      break;
+    default:
+      break;
+  }
   switch (method) {
     case HTTP_OPTIONS:
       handleOptions(server);

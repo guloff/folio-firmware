@@ -13,20 +13,21 @@
 class MappedInputManager;
 
 // Home-menu entry for the InkLink features: phone sync, reading statistics,
-// bookshelves and saved highlights.
+// bookshelves, saved highlights and resetting phone pairing.
 class InkLinkHubActivity final : public UiListActivity {
  public:
   InkLinkHubActivity(GfxRenderer& renderer, MappedInputManager& mappedInput);
   void onEnter() override;
 
  private:
-  static constexpr int ROW_COUNT = 7;
+  static constexpr int ROW_COUNT = 8;
   freeink::ui::ListItem rows[ROW_COUNT]{};
 
   int listCount() const override { return ROW_COUNT; }
   const char* headerTitle() const override;
   void buildScreen(UiScreen& screen) override;
   void activateIndex(int index) override;
+  void confirmResetPairing();
 };
 
 // Today / streak / totals plus a heatmap of the last weeks.

@@ -21,6 +21,7 @@
 #include "FirmwareSignature.h"
 #include "InkLinkClock.h"
 #include "JsonLines.h"
+#include "Pairing.h"
 #include "ReadingStats.h"
 #include "RecentBooksStore.h"
 #include "Shelves.h"
@@ -127,8 +128,14 @@ void handleInfo() {
   clk["available"] = halClock.isAvailable();
   clk["valid"] = valid;
   clk["epoch"] = static_cast<int64_t>(valid ? now : 0);
+  JsonObject pair = doc["pairing"].to<JsonObject>();
+  pair["required"] = true;
+  pair["paired"] = pairing::isPaired();
+  pair["authorized"] = pairing::authorized(*server);
   JsonArray features = doc["features"].to<JsonArray>();
-  for (const char* f : {"stats", "library", "highlights", "vocab", "screenshots", "sleep", "ota"}) features.add(f);
+  for (const char* f : {"stats", "library", "highlights", "vocab", "screenshots", "sleep", "ota", "pairing"}) {
+    features.add(f);
+  }
   sendDoc(200, doc);
 }
 
@@ -555,26 +562,33 @@ void handleFirmwareApply() {
   sendDoc(200, resp);
 }
 
+// Mutating routes run only for a paired phone (X-InkLink-Token).
+template <void (*Handler)()>
+void authorized() {
+  if (pairing::requireAuth(*server)) Handler();
+}
+
 }  // namespace
 
 void registerRoutes(WebServer& s) {
   server = &s;
   pendingFirmware.clear();
+  pairing::registerRoutes(s);
   s.on("/api/inklink/info", HTTP_GET, handleInfo);
-  s.on("/api/inklink/time", HTTP_POST, handleSetTime);
+  s.on("/api/inklink/time", HTTP_POST, authorized<handleSetTime>);
   s.on("/api/inklink/sessions", HTTP_GET, handleSessions);
   s.on("/api/inklink/stats", HTTP_GET, handleStats);
   s.on("/api/inklink/books", HTTP_GET, handleBooks);
   s.on("/api/inklink/library", HTTP_GET, handleGetLibrary);
-  s.on("/api/inklink/library", HTTP_POST, handlePostLibrary);
+  s.on("/api/inklink/library", HTTP_POST, authorized<handlePostLibrary>);
   s.on("/api/inklink/highlights", HTTP_GET, handleHighlights);
-  s.on("/api/inklink/highlights/update", HTTP_POST, handleHighlightUpdate);
-  s.on("/api/inklink/highlights/delete", HTTP_POST, handleHighlightDelete);
+  s.on("/api/inklink/highlights/update", HTTP_POST, authorized<handleHighlightUpdate>);
+  s.on("/api/inklink/highlights/delete", HTTP_POST, authorized<handleHighlightDelete>);
   s.on("/api/inklink/vocab", HTTP_GET, handleVocab);
-  s.on("/api/inklink/vocab/delete", HTTP_POST, handleVocabDelete);
+  s.on("/api/inklink/vocab/delete", HTTP_POST, authorized<handleVocabDelete>);
   s.on("/api/inklink/screenshots", HTTP_GET, handleScreenshots);
   s.on("/api/inklink/sleep", HTTP_GET, handleSleep);
-  s.on("/api/inklink/firmware/apply", HTTP_POST, handleFirmwareApply);
+  s.on("/api/inklink/firmware/apply", HTTP_POST, authorized<handleFirmwareApply>);
   LOG_DBG("INKLINK", "companion API routes registered");
 }
 
