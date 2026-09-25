@@ -6,6 +6,7 @@
 
 #include "NetworkModeSelectionActivity.h"
 #include "activities/Activity.h"
+#include "inklink/Pairing.h"
 #include "network/CrossPointWebServer.h"
 
 // Web server activity states
@@ -54,7 +55,12 @@ class CrossPointWebServerActivity final : public Activity {
   // Cached signal-strength bracket (0..4) for the WiFi indicator.
   int lastWifiBars = 0;
 
+  // Pairing PIN shown over the screen while a phone is pairing.
+  uint32_t pairingGeneration = 0;
+  inklink::pairing::PinView pairingPin;
+
   void renderServerRunning() const;
+  void renderPairingOverlay() const;
   void renderWifiIndicator(int subHeaderTop) const;
 
   void onNetworkModeSelected(NetworkMode mode);

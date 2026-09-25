@@ -1,0 +1,8 @@
+{
+  "name": "Monocypher",
+  "version": "4.0.2",
+  "description": "Vendored Monocypher 4.0.2 (https://monocypher.org), CC0-1.0 or BSD-2-Clause. Used for Ed25519 firmware-signature verification (monocypher-ed25519: SHA-512 based, RFC 8032 compatible).",
+  "license": "CC0-1.0 OR BSD-2-Clause",
+  "frameworks": "*",
+  "platforms": "*"
+}

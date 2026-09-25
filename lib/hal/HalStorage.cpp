@@ -218,6 +218,17 @@ bool HalStorage::openFileForWrite(const char* moduleName, const String& path, Ha
 
 bool HalStorage::removeDir(const char* path) { HAL_STORAGE_WRAPPED_CALL(removeDir, path); }
 
+bool HalStorage::volumeSpace(uint64_t& totalBytes, uint64_t& freeBytes) {
+  StorageLock lock;
+  totalBytes = SDCard.sdTotalBytes();
+  const uint64_t used = SDCard.sdUsedBytes();
+  // 0 used means the free-cluster scan failed: a mounted card always holds
+  // at least the /.crosspoint folder.
+  if (totalBytes == 0 || used == 0 || used > totalBytes) return false;
+  freeBytes = totalBytes - used;
+  return true;
+}
+
 // HalFile implementation
 // Allow doing file operations while ensuring thread safety via HalStorage's mutex.
 // Please keep the list below in sync with the HalFile.h header

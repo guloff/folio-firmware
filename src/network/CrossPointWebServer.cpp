@@ -25,8 +25,10 @@
 #include "html/FontsPageHtml.generated.h"
 #include "html/HomePageHtml.generated.h"
 #include "html/SettingsPageHtml.generated.h"
+#include "html/js/inklink_authJs.generated.h"
 #include "html/js/jszip_minJs.generated.h"
 #include "inklink/InkLinkApi.h"
+#include "inklink/Pairing.h"
 #include "util/BookCacheUtils.h"
 #include "util/TaskWatchdog.h"
 
@@ -60,6 +62,9 @@ size_t wsLastProgressSent = 0;
 String wsLastCompleteName;
 size_t wsLastCompleteSize = 0;
 unsigned long wsLastCompleteAt = 0;
+// WebSocket clients that sent a valid "AUTH:<token>" (indexed by client num).
+constexpr uint8_t WS_AUTH_SLOTS = 8;
+bool wsAuthorized[WS_AUTH_SLOTS] = {};
 
 String normalizeWebPath(const String& inputPath) {
   if (inputPath.isEmpty() || inputPath == "/") {
@@ -153,6 +158,7 @@ void CrossPointWebServer::begin() {
   server->on("/", HTTP_GET, [this] { handleRoot(); });
   server->on("/files", HTTP_GET, [this] { handleFileList(); });
   server->on("/js/jszip.min.js", HTTP_GET, [this] { handleJszip(); });
+  server->on("/js/inklink-auth.js", HTTP_GET, [this] { handleInkLinkAuthJs(); });
 
   server->on("/api/status", HTTP_GET, [this] { handleStatus(); });
   server->on("/api/files", HTTP_GET, [this] { handleFileListData(); });
@@ -202,9 +208,10 @@ void CrossPointWebServer::begin() {
 
   // Collect WebDAV headers and register handler
   // If-None-Match is collected so the static-page handlers can answer conditional GETs with 304
-  const char* collectedHeaders[] = {"Depth",      "Destination", "Overwrite",    "If",
-                                    "Lock-Token", "Timeout",     "If-None-Match"};
-  server->collectHeaders(collectedHeaders, 7);
+  // X-InkLink-Token authorizes mutating requests (Authorization is always collected).
+  const char* collectedHeaders[] = {"Depth",   "Destination",   "Overwrite", "If", "Lock-Token",
+                                    "Timeout", "If-None-Match", inklink::pairing::TOKEN_HEADER};
+  server->collectHeaders(collectedHeaders, 8);
   server->addHandler(new WebDAVHandler());  // Note: WebDAVHandler will be deleted by WebServer when server is stopped
   LOG_DBG("WEB", "WebDAV handler initialized");
 
@@ -214,6 +221,7 @@ void CrossPointWebServer::begin() {
   LOG_DBG("WEB", "Starting WebSocket server on port %d...", wsPort);
   wsServer.reset(new WebSocketsServer(wsPort));
   wsInstance = const_cast<CrossPointWebServer*>(this);
+  for (bool& a : wsAuthorized) a = false;
   wsServer->begin();
   wsServer->onEvent(wsEventCallback);
   LOG_DBG("WEB", "WebSocket server started");
@@ -389,6 +397,12 @@ void CrossPointWebServer::handleRoot() const {
 void CrossPointWebServer::handleJszip() const {
   sendStaticContent(server.get(), jszip_minJs, jszip_minJsCompressedSize, jszip_minJsETag, "application/javascript");
   LOG_DBG("WEB", "Served jszip.min.js");
+}
+
+// Pairing helper loaded by every built-in page (adds X-InkLink-Token).
+void CrossPointWebServer::handleInkLinkAuthJs() const {
+  sendStaticContent(server.get(), inklink_authJs, inklink_authJsCompressedSize, inklink_authJsETag,
+                    "application/javascript");
 }
 
 void CrossPointWebServer::handleNotFound() const {
@@ -693,6 +707,13 @@ void CrossPointWebServer::handleUpload(UploadState& state) const {
     totalWriteTime = 0;
     writeCount = 0;
 
+    // Nothing touches the card before the token is checked; the final
+    // handler answers 401.
+    if (!inklink::pairing::authorized(*server)) {
+      state.error = "pairing required";
+      return;
+    }
+
     if (!FsHelpers::isSafePathComponent(state.fileName)) {
       state.error = "Invalid file name";
       LOG_DBG("WEB", "[UPLOAD] Rejected unsafe filename: %s", state.fileName.c_str());
@@ -812,6 +833,7 @@ void CrossPointWebServer::handleUpload(UploadState& state) const {
 }
 
 void CrossPointWebServer::handleUploadPost(UploadState& state) const {
+  if (!inklink::pairing::requireAuth(*server)) return;
   if (state.success) {
     server->send(200, "text/plain", "File uploaded successfully: " + state.fileName);
   } else {
@@ -821,6 +843,7 @@ void CrossPointWebServer::handleUploadPost(UploadState& state) const {
 }
 
 void CrossPointWebServer::handleCreateFolder() const {
+  if (!inklink::pairing::requireAuth(*server)) return;
   // Get folder name from form data
   if (!server->hasArg("name")) {
     server->send(400, "text/plain", "Missing folder name");
@@ -875,6 +898,7 @@ void CrossPointWebServer::handleCreateFolder() const {
 }
 
 void CrossPointWebServer::handleRename() const {
+  if (!inklink::pairing::requireAuth(*server)) return;
   if (!server->hasArg("path") || !server->hasArg("name")) {
     server->send(400, "text/plain", "Missing path or new name");
     return;
@@ -957,6 +981,7 @@ void CrossPointWebServer::handleRename() const {
 }
 
 void CrossPointWebServer::handleMove() const {
+  if (!inklink::pairing::requireAuth(*server)) return;
   if (!server->hasArg("path") || !server->hasArg("dest")) {
     server->send(400, "text/plain", "Missing path or destination");
     return;
@@ -1050,6 +1075,7 @@ void CrossPointWebServer::handleMove() const {
 }
 
 void CrossPointWebServer::handleDelete() const {
+  if (!inklink::pairing::requireAuth(*server)) return;
   // To ensure backwards compatibility, plain `path` is mapped
   // to a single element JSON array.
   bool hasPathArg = server->hasArg("path");
@@ -1266,6 +1292,7 @@ void CrossPointWebServer::handleGetSettings() const {
 }
 
 void CrossPointWebServer::handlePostSettings() {
+  if (!inklink::pairing::requireAuth(*server)) return;
   if (!server->hasArg("plain")) {
     server->send(400, "text/plain", "Missing JSON body");
     return;
@@ -1380,6 +1407,7 @@ void CrossPointWebServer::handleGetOpdsServers() const {
 }
 
 void CrossPointWebServer::handlePostOpdsServer() {
+  if (!inklink::pairing::requireAuth(*server)) return;
   if (!server->hasArg("plain")) {
     server->send(400, "text/plain", "Missing JSON body");
     return;
@@ -1431,6 +1459,7 @@ void CrossPointWebServer::handlePostOpdsServer() {
 
 // Uses POST (not HTTP DELETE) because ESP32 WebServer doesn't support DELETE with body.
 void CrossPointWebServer::handleDeleteOpdsServer() {
+  if (!inklink::pairing::requireAuth(*server)) return;
   if (!server->hasArg("plain")) {
     server->send(400, "text/plain", "Missing JSON body");
     return;
@@ -1497,6 +1526,7 @@ void CrossPointWebServer::handleGetWifiNetworks() const {
 }
 
 void CrossPointWebServer::handlePostWifiNetwork() {
+  if (!inklink::pairing::requireAuth(*server)) return;
   if (!server->hasArg("plain")) {
     server->send(400, "text/plain", "Missing JSON body");
     return;
@@ -1564,6 +1594,7 @@ void CrossPointWebServer::handlePostWifiNetwork() {
 
 // Uses POST (not HTTP DELETE) because ESP32 WebServer doesn't support DELETE with body.
 void CrossPointWebServer::handleDeleteWifiNetwork() {
+  if (!inklink::pairing::requireAuth(*server)) return;
   if (!server->hasArg("plain")) {
     server->send(400, "text/plain", "Missing JSON body");
     return;
@@ -1625,19 +1656,33 @@ void CrossPointWebServer::onWebSocketEvent(uint8_t num, WStype_t type, uint8_t* 
       if (num == wsUploadClientNum && wsUploadInProgress && wsUploadFile) {
         abortWsUpload("WS");
       }
+      if (num < WS_AUTH_SLOTS) wsAuthorized[num] = false;
       break;
 
     case WStype_CONNECTED: {
       LOG_DBG("WS", "Client %u connected", num);
+      if (num < WS_AUTH_SLOTS) wsAuthorized[num] = false;
       break;
     }
 
     case WStype_TEXT: {
       // Parse control messages
       String msg = String((char*)payload);
+      if (msg.startsWith("AUTH:")) {
+        // Pairing token for this connection (sent before START).
+        const bool ok = num < WS_AUTH_SLOTS && inklink::pairing::tokenValid(msg.c_str() + 5, msg.length() - 5);
+        if (num < WS_AUTH_SLOTS) wsAuthorized[num] = ok;
+        LOG_DBG("WS", "Client %u auth %s", num, ok ? "ok" : "rejected");
+        if (!ok) wsServer->sendTXT(num, "ERROR:pairing required");
+        break;
+      }
       LOG_DBG("WS", "Text from client %u: %s", num, msg.c_str());
 
       if (msg.startsWith("START:")) {
+        if (num >= WS_AUTH_SLOTS || !wsAuthorized[num]) {
+          wsServer->sendTXT(num, "ERROR:pairing required");
+          break;
+        }
         // Reject any START while an upload is already active to prevent
         // leaking the open wsUploadFile handle (owning client re-START included)
         if (wsUploadInProgress) {
@@ -1853,6 +1898,8 @@ void CrossPointWebServer::handleFontUploadData() {
       fontUpload.bytesWritten = 0;
       fontUpload.bufferPos = 0;
 
+      if (!inklink::pairing::authorized(*server)) break;
+
       if (!FontInstaller::isValidFamilyName(family.c_str())) {
         LOG_ERR("WEB", "Invalid font family name: %s", family.c_str());
         break;
@@ -1961,6 +2008,7 @@ void CrossPointWebServer::handleFontUploadData() {
 }
 
 void CrossPointWebServer::handleFontUpload() {
+  if (!inklink::pairing::requireAuth(*server)) return;
   if (fontUpload.valid) {
     sdFontSystem.markRegistryDirty();
     server->send(200, "application/json", "{\"ok\":true}");
@@ -1971,6 +2019,7 @@ void CrossPointWebServer::handleFontUpload() {
 }
 
 void CrossPointWebServer::handleFontDelete() {
+  if (!inklink::pairing::requireAuth(*server)) return;
   String body = server->arg("plain");
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, body);

@@ -18,8 +18,10 @@
 
 #include "Annotations.h"
 #include "CrossPointSettings.h"
+#include "FirmwareSignature.h"
 #include "InkLinkClock.h"
 #include "JsonLines.h"
+#include "Pairing.h"
 #include "ReadingStats.h"
 #include "RecentBooksStore.h"
 #include "Shelves.h"
@@ -35,6 +37,13 @@ namespace {
 
 WebServer* server = nullptr;
 std::string pendingFirmware;
+
+// Card size and free space, measured once per server session: the free-cluster
+// count walks the whole FAT on FAT32 cards.
+bool sdMeasured = false;
+bool sdKnown = false;
+uint64_t sdTotalBytes = 0;
+uint64_t sdFreeBytes = 0;
 
 constexpr const char* JSON = "application/json";
 constexpr const char* LIBRARY_INDEX = "/.crosspoint/library.idx";
@@ -126,8 +135,22 @@ void handleInfo() {
   clk["available"] = halClock.isAvailable();
   clk["valid"] = valid;
   clk["epoch"] = static_cast<int64_t>(valid ? now : 0);
+  if (!sdMeasured) {
+    sdMeasured = true;
+    sdKnown = Storage.volumeSpace(sdTotalBytes, sdFreeBytes);
+  }
+  if (sdKnown) {
+    doc["sdTotalMB"] = static_cast<uint32_t>(sdTotalBytes / (1024 * 1024));
+    doc["sdFreeMB"] = static_cast<uint32_t>(sdFreeBytes / (1024 * 1024));
+  }
+  JsonObject pair = doc["pairing"].to<JsonObject>();
+  pair["required"] = true;
+  pair["paired"] = pairing::isPaired();
+  pair["authorized"] = pairing::authorized(*server);
   JsonArray features = doc["features"].to<JsonArray>();
-  for (const char* f : {"stats", "library", "highlights", "vocab", "screenshots", "sleep", "ota"}) features.add(f);
+  for (const char* f : {"stats", "library", "highlights", "vocab", "screenshots", "sleep", "ota", "pairing"}) {
+    features.add(f);
+  }
   sendDoc(200, doc);
 }
 
@@ -265,7 +288,36 @@ std::string titleFromFileName(const std::string& path) {
   return name;
 }
 
+// Parses an optional non-negative integer query argument.
+bool queryUint(const char* name, size_t& out, bool& present) {
+  present = server->hasArg(name);
+  if (!present) return true;
+  const String v = server->arg(name);
+  if (v.length() == 0 || v.length() > 9) return false;
+  size_t n = 0;
+  for (size_t i = 0; i < v.length(); i++) {
+    if (v[i] < '0' || v[i] > '9') return false;
+    n = n * 10 + static_cast<size_t>(v[i] - '0');
+  }
+  out = n;
+  return true;
+}
+
+constexpr size_t MAX_BOOKS_PAGE = 200;
+
 void handleBooks() {
+  // ?offset=&limit= pages the list (limit capped at 200); without them every
+  // book is sent. Both forms carry "total".
+  size_t offset = 0;
+  size_t limit = MAX_BOOKS_PAGE;
+  bool hasOffset = false;
+  bool hasLimit = false;
+  if (!queryUint("offset", offset, hasOffset) || !queryUint("limit", limit, hasLimit)) {
+    return sendError(400, "offset and limit must be non-negative integers");
+  }
+  const bool paged = hasOffset || hasLimit;
+  if (limit > MAX_BOOKS_PAGE) limit = MAX_BOOKS_PAGE;
+
   // Union of indexed books, recent books and books with reading history.
   std::map<std::string, BookRow> books;
   {
@@ -316,11 +368,32 @@ void handleBooks() {
     for (size_t r = 0; r < recentBooks.size(); r++) recentRank.emplace(recentBooks[r].path, static_cast<int>(r));
   }
 
+  // Page selection over the books still on the card, in path order.
+  std::vector<const std::pair<const std::string, BookRow>*> present;
+  present.reserve(books.size());
+  for (const auto& kv : books) {
+    if (Storage.exists(kv.first.c_str())) present.push_back(&kv);
+  }
+  const size_t total = present.size();
+  size_t first = 0;
+  size_t count = total;
+  if (paged) {
+    first = offset < total ? offset : total;
+    count = limit < total - first ? limit : total - first;
+  }
+  char trailer[64];
+  if (paged) {
+    snprintf(trailer, sizeof(trailer), ",\"total\":%u,\"offset\":%u,\"limit\":%u", static_cast<unsigned>(total),
+             static_cast<unsigned>(offset), static_cast<unsigned>(limit));
+  } else {
+    snprintf(trailer, sizeof(trailer), ",\"total\":%u", static_cast<unsigned>(total));
+  }
+
   ArrayStreamer out("books");
   JsonDocument item;
-  for (const auto& kv : books) {
+  for (size_t i = first; i < first + count; i++) {
+    const auto& kv = *present[i];
     const std::string& path = kv.first;
-    if (!Storage.exists(path.c_str())) continue;
     item.clear();
     item["path"] = path.c_str();
     const std::string fallbackTitle = kv.second.title.empty() ? titleFromFileName(path) : std::string();
@@ -344,7 +417,7 @@ void handleBooks() {
     }
     out.add(item);
   }
-  out.finish();
+  out.finish(trailer);
 }
 
 void handleGetLibrary() {
@@ -534,6 +607,18 @@ void handleFirmwareApply() {
   }
   if (!pendingFirmware.empty()) return sendError(409, "an update is already waiting for confirmation");
   if (!Storage.exists(path)) return sendError(404, "file not found");
+  // Companion updates must be signed with the Folio release key. The update
+  // screen checks again before flashing.
+  switch (fwsig::verifyFile(path)) {
+    case fwsig::Status::VALID:
+      break;
+    case fwsig::Status::MISSING:
+      return sendError(422, "signature missing");
+    case fwsig::Status::INVALID:
+      return sendError(422, "signature invalid");
+    case fwsig::Status::ERROR:
+      return sendError(500, "firmware unreadable");
+  }
   pendingFirmware = path;
   JsonDocument resp;
   resp["ok"] = true;
@@ -542,26 +627,34 @@ void handleFirmwareApply() {
   sendDoc(200, resp);
 }
 
+// Mutating routes run only for a paired phone (X-InkLink-Token).
+template <void (*Handler)()>
+void authorized() {
+  if (pairing::requireAuth(*server)) Handler();
+}
+
 }  // namespace
 
 void registerRoutes(WebServer& s) {
   server = &s;
   pendingFirmware.clear();
+  sdMeasured = false;
+  pairing::registerRoutes(s);
   s.on("/api/inklink/info", HTTP_GET, handleInfo);
-  s.on("/api/inklink/time", HTTP_POST, handleSetTime);
+  s.on("/api/inklink/time", HTTP_POST, authorized<handleSetTime>);
   s.on("/api/inklink/sessions", HTTP_GET, handleSessions);
   s.on("/api/inklink/stats", HTTP_GET, handleStats);
   s.on("/api/inklink/books", HTTP_GET, handleBooks);
   s.on("/api/inklink/library", HTTP_GET, handleGetLibrary);
-  s.on("/api/inklink/library", HTTP_POST, handlePostLibrary);
+  s.on("/api/inklink/library", HTTP_POST, authorized<handlePostLibrary>);
   s.on("/api/inklink/highlights", HTTP_GET, handleHighlights);
-  s.on("/api/inklink/highlights/update", HTTP_POST, handleHighlightUpdate);
-  s.on("/api/inklink/highlights/delete", HTTP_POST, handleHighlightDelete);
+  s.on("/api/inklink/highlights/update", HTTP_POST, authorized<handleHighlightUpdate>);
+  s.on("/api/inklink/highlights/delete", HTTP_POST, authorized<handleHighlightDelete>);
   s.on("/api/inklink/vocab", HTTP_GET, handleVocab);
-  s.on("/api/inklink/vocab/delete", HTTP_POST, handleVocabDelete);
+  s.on("/api/inklink/vocab/delete", HTTP_POST, authorized<handleVocabDelete>);
   s.on("/api/inklink/screenshots", HTTP_GET, handleScreenshots);
   s.on("/api/inklink/sleep", HTTP_GET, handleSleep);
-  s.on("/api/inklink/firmware/apply", HTTP_POST, handleFirmwareApply);
+  s.on("/api/inklink/firmware/apply", HTTP_POST, authorized<handleFirmwareApply>);
   LOG_DBG("INKLINK", "companion API routes registered");
 }
 

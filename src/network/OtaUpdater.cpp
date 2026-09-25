@@ -17,6 +17,8 @@
 
 #include "FirmwareBoardTag.h"
 #include "FirmwareFlasher.h"
+#include "FirmwareVersion.h"
+#include "inklink/FirmwareSignature.h"
 
 namespace {
 // Folio updates come from the fork's own releases, never from upstream
@@ -91,43 +93,8 @@ bool OtaUpdater::isUpdateNewer() const {
   if (!updateAvailable || latestVersion.empty() || latestVersion == CROSSPOINT_VERSION) {
     return false;
   }
-
-  int currentMajor, currentMinor, currentPatch;
-  int latestMajor, latestMinor, latestPatch;
-
-  const auto currentVersion = CROSSPOINT_VERSION;
-
-  // semantic version check (only match on 3 segments)
-  sscanf(latestVersion.c_str(), "%d.%d.%d", &latestMajor, &latestMinor, &latestPatch);
-  sscanf(currentVersion, "%d.%d.%d", &currentMajor, &currentMinor, &currentPatch);
-
-  /*
-   * Compare major versions.
-   * If they differ, return true if latest major version greater than current major version
-   * otherwise return false.
-   */
-  if (latestMajor != currentMajor) return latestMajor > currentMajor;
-
-  /*
-   * Compare minor versions.
-   * If they differ, return true if latest minor version greater than current minor version
-   * otherwise return false.
-   */
-  if (latestMinor != currentMinor) return latestMinor > currentMinor;
-
-  /*
-   * Check patch versions.
-   */
-  if (latestPatch != currentPatch) return latestPatch > currentPatch;
-
-  // If we reach here, it means all segments are equal.
-  // One final check, if we're on an RC build (contains "-rc"), we should consider the latest version as newer even if
-  // the segments are equal, since RC builds are pre-release versions.
-  if (strstr(currentVersion, "-rc") != nullptr) {
-    return true;
-  }
-
-  return false;
+  // Release tags look like "v0.2.0"; builds report "0.2.0" or "0.2.0-x4pro".
+  return firmware_version::isNewer(latestVersion.c_str(), CROSSPOINT_VERSION);
 }
 
 const std::string& OtaUpdater::getLatestVersion() const { return latestVersion; }
@@ -147,6 +114,28 @@ OtaUpdater::OtaUpdaterError OtaUpdater::installUpdate(ProgressCallback onProgres
     LOG_ERR("OTA", "No OTA partition available");
     return INTERNAL_UPDATE_ERROR;
   }
+
+  // Every Folio release carries "<asset>.bin.sig" (64-byte Ed25519 signature,
+  // see FirmwareSignature.h). Fetch it first: no signature, no install.
+  uint8_t signature[inklink::fwsig::SIGNATURE_SIZE];
+  {
+    size_t sigLen = 0;
+    bool sigTooLong = false;
+    const bool sigOk = HttpDownloader::fetchUrl(otaUrl + ".sig", [&](const uint8_t* data, size_t len) {
+      if (sigLen + len > sizeof(signature)) {
+        sigTooLong = true;
+        return false;
+      }
+      std::memcpy(signature + sigLen, data, len);
+      sigLen += len;
+      return true;
+    });
+    if (!sigOk || sigTooLong || sigLen != sizeof(signature)) {
+      LOG_ERR("OTA", "Release signature unavailable (ok=%d len=%u)", sigOk ? 1 : 0, static_cast<unsigned>(sigLen));
+      return SIGNATURE_MISSING_ERROR;
+    }
+  }
+  inklink::fwsig::ImageHasher imageHash;
 
   esp_ota_handle_t otaHandle = 0;
   esp_err_t esp_err = esp_ota_begin(updatePartition, OTA_SIZE_UNKNOWN, &otaHandle);
@@ -199,6 +188,7 @@ OtaUpdater::OtaUpdaterError OtaUpdater::installUpdate(ProgressCallback onProgres
       flashOk = false;
       return false;  // abort the transfer
     }
+    imageHash.update(data, len);
     processedSize += len;
     // Fire the callback only on whole-percent change. Per-chunk updates wake the
     // render task, whose framebuffer work contends with TLS on the internal arena,
@@ -226,6 +216,14 @@ OtaUpdater::OtaUpdaterError OtaUpdater::installUpdate(ProgressCallback onProgres
     LOG_ERR("OTA", "Firmware install failed (%s)", flashOk ? "download" : "flash write");
     esp_ota_abort(otaHandle);
     return flashOk ? HTTP_ERROR : INTERNAL_UPDATE_ERROR;
+  }
+
+  uint8_t digest[inklink::fwsig::DIGEST_SIZE];
+  imageHash.finish(digest);
+  if (!inklink::fwsig::verifyDigest(digest, signature)) {
+    LOG_ERR("OTA", "Release signature does not match the image");
+    esp_ota_abort(otaHandle);
+    return SIGNATURE_INVALID_ERROR;
   }
 
   esp_err = esp_ota_end(otaHandle);  // verifies the written image

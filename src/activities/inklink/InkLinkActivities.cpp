@@ -4,6 +4,7 @@
 #include <GfxRenderer.h>
 #include <HalStorage.h>
 #include <I18n.h>
+#include <Logging.h>
 
 #include <algorithm>
 #include <cstdio>
@@ -13,11 +14,13 @@
 #include "RecentBooksStore.h"
 #include "activities/ActivityManager.h"
 #include "activities/network/CrossPointWebServerActivity.h"
+#include "activities/util/ConfirmationActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
 #include "inklink/Annotations.h"
 #include "inklink/InkLinkClock.h"
 #include "inklink/JsonLines.h"
+#include "inklink/Pairing.h"
 #include "inklink/StatsRender.h"
 #include "util/BookProgress.h"
 
@@ -59,7 +62,7 @@ void InkLinkHubActivity::onEnter() {
   UiListActivity::onEnter();
   const char* labels[ROW_COUNT] = {tr(STR_INKLINK_PHONE_SYNC), tr(STR_INKLINK_STATS), tr(STR_INKLINK_SHELVES),
                                    tr(STR_INKLINK_HIGHLIGHTS),  tr(STR_BROWSE_FILES),   tr(STR_FILE_TRANSFER),
-                                   tr(STR_SETTINGS_TITLE)};
+                                   tr(STR_SETTINGS_TITLE),      tr(STR_RESET_PAIRING)};
   for (int i = 0; i < ROW_COUNT; i++) {
     rows[i] = fui::ListItem{};
     rows[i].label = labels[i];
@@ -104,9 +107,25 @@ void InkLinkHubActivity::activateIndex(const int index) {
     case 6:
       activityManager.goToSettings();
       break;
+    case 7:
+      confirmResetPairing();
+      break;
     default:
       break;
   }
+}
+
+void InkLinkHubActivity::confirmResetPairing() {
+  auto confirm =
+      makeUniqueNoThrow<ConfirmationActivity>(renderer, mappedInput, tr(STR_RESET_PAIRING), tr(STR_RESET_PAIRING_CONFIRM));
+  if (!confirm) {
+    LOG_ERR("INKLINK", "OOM: reset pairing confirmation");
+    return;
+  }
+  startActivityForResult(std::move(confirm), [this](const ActivityResult& result) {
+    if (!result.isCancelled) inklink::pairing::reset();
+    requestUpdate();
+  });
 }
 
 // ---- Reading stats -----------------------------------------------------------

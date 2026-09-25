@@ -8,6 +8,7 @@
 #include <WiFi.h>
 
 #include <cstddef>
+#include <cstdio>
 
 #include "MappedInputManager.h"
 #include "NetworkModeSelectionActivity.h"
@@ -396,14 +397,26 @@ void CrossPointWebServerActivity::loop() {
       }
       lastHandleClientTime = millis();
 
+      // A phone asked for a pairing PIN, paired, or the PIN expired.
+      const uint32_t pairGen = inklink::pairing::generation();
+      if (pairGen != pairingGeneration) {
+        {
+          RenderLock lock(*this);
+          pairingGeneration = pairGen;
+          pairingPin = inklink::pairing::currentPin();
+        }
+        requestUpdate();
+      }
+
       // The companion uploaded a firmware image and asked to install it. The
-      // update screen validates it and asks for confirmation on the device.
+      // update screen validates it, requires the Folio signature and asks for
+      // confirmation on the device.
       const std::string firmware = inklink::api::takePendingFirmware();
       if (!firmware.empty()) {
         LOG_INF("WEBACT", "Companion firmware update requested: %s", firmware.c_str());
-        startActivityForResult(
-            std::make_unique<SdFirmwareUpdateActivity>(renderer, mappedInput, false, firmware),
-            [this](const ActivityResult&) { requestUpdate(); });
+        startActivityForResult(std::make_unique<SdFirmwareUpdateActivity>(renderer, mappedInput, false, firmware,
+                                                                          /*requireSignature=*/true),
+                               [this](const ActivityResult&) { requestUpdate(); });
         return;
       }
     }
@@ -432,6 +445,7 @@ void CrossPointWebServerActivity::render(RenderLock&&) {
       GUI.drawSubHeader(renderer, Rect{0, metrics.topPadding + metrics.headerHeight, pageWidth, metrics.tabBarHeight},
                         connectedSSID.c_str());
       renderServerRunning();
+      if (pairingPin.active) renderPairingOverlay();
     } else {
       const auto height = renderer.getLineHeight(UI_10_FONT_ID);
       const auto top = (pageHeight - height) / 2;
@@ -518,6 +532,39 @@ void CrossPointWebServerActivity::renderServerRunning() const {
 
   const auto labels = mappedInput.mapLabels(tr(STR_EXIT), "", "", "");
   GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
+}
+
+void CrossPointWebServerActivity::renderPairingOverlay() const {
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  const int pageWidth = renderer.getScreenWidth();
+  const int pageHeight = renderer.getScreenHeight();
+  const int line = renderer.getLineHeight(UI_10_FONT_ID);
+  const int pinLine = renderer.getLineHeight(NOTOSANS_18_FONT_ID);
+  const int pad = metrics.verticalSpacing * 3;
+  const int boxW = pageWidth - metrics.contentSidePadding * 2;
+  const int boxH = pad * 2 + line * 4 + pinLine * 2 + metrics.verticalSpacing * 4;
+  const int x = (pageWidth - boxW) / 2;
+  int y = (pageHeight - boxH) / 2;
+
+  renderer.fillRect(x, y, boxW, boxH, false);
+  renderer.drawRoundedRect(x, y, boxW, boxH, 3, 12, true);
+
+  y += pad;
+  renderer.drawCenteredText(UI_10_FONT_ID, y, tr(STR_PAIRING_TITLE), true, EpdFontFamily::BOLD);
+  y += line + metrics.verticalSpacing;
+  renderer.drawCenteredText(UI_10_FONT_ID, y, pairingPin.name);
+  y += line + metrics.verticalSpacing * 2;
+
+  // "123 456": grouped so it is easy to read off and type.
+  char grouped[8];
+  snprintf(grouped, sizeof(grouped), "%.3s %.3s", pairingPin.pin, pairingPin.pin + 3);
+  y += pinLine / 2;
+  renderer.drawCenteredText(NOTOSANS_18_FONT_ID, y, grouped, true, EpdFontFamily::BOLD);
+  y += pinLine + pinLine / 2 + metrics.verticalSpacing * 2;
+
+  renderer.drawCenteredText(UI_10_FONT_ID, y, tr(STR_PAIRING_ENTER_CODE));
+  y += line;
+  renderer.drawCenteredText(SMALL_FONT_ID, y, tr(STR_PAIRING_EXPIRES));
 }
 
 void CrossPointWebServerActivity::renderWifiIndicator(int subHeaderTop) const {

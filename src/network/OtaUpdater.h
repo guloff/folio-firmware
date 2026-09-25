@@ -22,6 +22,8 @@ class OtaUpdater {
     INTERNAL_UPDATE_ERROR,
     OOM_ERROR,
     WRONG_DEVICE_ERROR,
+    SIGNATURE_MISSING_ERROR,  // release has no <asset>.sig
+    SIGNATURE_INVALID_ERROR,  // image doesn't match the Folio release key
   };
 
   size_t getOtaSize() const { return otaSize; }
