@@ -190,35 +190,8 @@ void FolioHomeActivity::loop() {
 
 void FolioHomeActivity::drawBookCover(const std::string& bookPath, const int x, const int y, const int w,
                                       const int h) const {
-  std::string thumb;
-  if (FsHelpers::hasEpubExtension(bookPath)) {
-    // Large parser object: heap, one at a time.
-    auto epub = makeUniqueNoThrow<Epub>(bookPath, "/.crosspoint");
-    if (epub) {
-      thumb = epub->getThumbBmpPath(h);
-      if (!Storage.exists(thumb.c_str())) {
-        epub->load(false, true);
-        if (!epub->generateThumbBmp(h)) thumb.clear();
-      }
-    }
-  }
-  drawCover(thumb, x, y, w, h);
-}
-
-void FolioHomeActivity::drawCover(const std::string& path, const int x, const int y, const int w, const int h) const {
-  bool drawn = false;
-  if (!path.empty()) {
-    HalFile file;
-    if (Storage.openFileForRead("FOLIO", path, file)) {
-      Bitmap bitmap(file);
-      if (bitmap.parseHeaders() == BmpReaderError::Ok) drawn = renderer.drawBitmap(bitmap, x, y, w, h);
-    }
-  }
-  if (!drawn) {
-    // Placeholder: a framed "book" with the Folio mark.
-    renderer.fillRectDither(x, y, w, h, Color::LightGray);
+  if (!inklink::render::drawBookCover(renderer, bookPath, x, y, w, h)) {
     renderer.drawIcon(BookIcon, x + (w - 32) / 2, y + (h - 32) / 2, 32);
-    renderer.drawRect(x, y, w, h, true);
   }
 }
 

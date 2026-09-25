@@ -1,6 +1,11 @@
 #include "StatsRender.h"
 
+#include <Bitmap.h>
+#include <Epub.h>
+#include <FsHelpers.h>
 #include <GfxRenderer.h>
+#include <HalStorage.h>
+#include <Memory.h>
 #include <I18n.h>
 
 #include <algorithm>
@@ -93,6 +98,33 @@ void drawProgressBar(const GfxRenderer& renderer, const int x, const int y, cons
   renderer.drawRect(x, y, width, height, true);
   const int fill = (width - 4) * percent / 100;
   if (fill > 0) renderer.fillRect(x + 2, y + 2, fill, height - 4, true);
+}
+
+bool drawBookCover(const GfxRenderer& renderer, const std::string& bookPath, const int x, const int y, const int w,
+                   const int h) {
+  bool drawn = false;
+  if (FsHelpers::hasEpubExtension(bookPath)) {
+    // Large parser object: heap, one at a time.
+    auto epub = makeUniqueNoThrow<Epub>(bookPath, "/.crosspoint");
+    if (epub) {
+      const std::string thumb = epub->getThumbBmpPath(h);
+      bool ready = Storage.exists(thumb.c_str());
+      if (!ready) {
+        epub->load(false, true);
+        ready = epub->generateThumbBmp(h);
+      }
+      HalFile file;
+      if (ready && Storage.openFileForRead("INKLINK", thumb, file)) {
+        Bitmap bitmap(file);
+        if (bitmap.parseHeaders() == BmpReaderError::Ok) drawn = renderer.drawBitmap(bitmap, x, y, w, h);
+      }
+    }
+  }
+  if (!drawn) {
+    renderer.fillRectDither(x, y, w, h, Color::LightGray);
+    renderer.drawRect(x, y, w, h, true);
+  }
+  return drawn;
 }
 
 void formatDuration(const uint32_t secs, char* buf, const size_t size) {

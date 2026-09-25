@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "ReadingStats.h"
@@ -20,6 +21,11 @@ int drawHeatmap(const GfxRenderer& renderer, int x, int y, int width, int weeks,
 
 // Horizontal progress bar with a 1px frame.
 void drawProgressBar(const GfxRenderer& renderer, int x, int y, int width, int height, int percent);
+
+// Book cover thumbnail scaled into w x h (EPUB thumbnails are generated and
+// cached on first use). Draws a framed placeholder when there is no cover.
+// Returns true when a real cover was drawn.
+bool drawBookCover(const GfxRenderer& renderer, const std::string& bookPath, int x, int y, int w, int h);
 
 // "1 ч 25 мин" / "25 мин" style duration into buf (uses translated units).
 void formatDuration(uint32_t secs, char* buf, size_t size);

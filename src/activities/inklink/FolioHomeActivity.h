@@ -46,5 +46,4 @@ class FolioHomeActivity final : public Activity {
   void activate(const Target& t);
   // Draws the book's cover thumbnail at height h, generating it on first use.
   void drawBookCover(const std::string& bookPath, int x, int y, int w, int h) const;
-  void drawCover(const std::string& bmpPath, int x, int y, int w, int h) const;
 };

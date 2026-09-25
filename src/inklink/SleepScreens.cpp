@@ -51,15 +51,6 @@ std::vector<std::string> wrapText(const GfxRenderer& r, int fontId, const std::s
   return lines;
 }
 
-bool drawCover(const GfxRenderer& r, const std::string& path, int x, int y, int w, int h) {
-  if (path.empty()) return false;
-  HalFile file;
-  if (!Storage.openFileForRead("INKLINK", path, file)) return false;
-  Bitmap bitmap(file);
-  if (bitmap.parseHeaders() != BmpReaderError::Ok) return false;
-  return r.drawBitmap(bitmap, x, y, w, h);
-}
-
 }  // namespace
 
 bool renderDashboard(const GfxRenderer& renderer) {
@@ -79,8 +70,7 @@ bool renderDashboard(const GfxRenderer& renderer) {
     y += 26;
     constexpr int COVER_W = 150;
     constexpr int COVER_H = 225;
-    const bool hasCover = drawCover(renderer, book.coverBmpPath, margin, y, COVER_W, COVER_H);
-    if (!hasCover) renderer.drawRect(margin, y, COVER_W, COVER_H, true);
+    render::drawBookCover(renderer, book.path, margin, y, COVER_W, COVER_H);
     const int tx = margin + COVER_W + 20;
     const int tw = W - tx - margin;
     int ty = y + 6;
@@ -121,7 +111,13 @@ bool renderDashboard(const GfxRenderer& renderer) {
   y += 36;
 
   // Heatmap.
-  y += render::drawHeatmap(renderer, margin, y, W - 2 * margin, 20, days, clock::today()) + 20;
+  y += render::drawHeatmap(renderer, margin, y, W - 2 * margin, 20, days, clock::today()) + 24;
+
+  // Totals.
+  render::formatDuration(s.totalSecs, dur, sizeof(dur));
+  snprintf(buf, sizeof(buf), "%s: %s  ·  %u %s", tr(STR_INKLINK_TOTAL), dur, static_cast<unsigned>(s.totalPages),
+           tr(STR_INKLINK_PAGES));
+  renderer.drawText(UI_10_FONT_ID, margin, y, buf);
 
   // Footer: sleeping marker.
   renderer.drawCenteredText(UI_10_FONT_ID, renderer.getScreenHeight() - 40, tr(STR_SLEEPING));
