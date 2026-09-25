@@ -65,6 +65,10 @@ class HalStorage {
   bool openFileForWrite(const char* moduleName, const std::string& path, HalFile& file);
   bool openFileForWrite(const char* moduleName, const String& path, HalFile& file);
   bool removeDir(const char* path);
+  // Card capacity and free space in bytes. False when unmounted or the free
+  // count is unknown. The free count scans the FAT (seconds on a large FAT32
+  // card), so callers should cache it.
+  bool volumeSpace(uint64_t& totalBytes, uint64_t& freeBytes);
 
   static HalStorage& getInstance() { return instance; }
 

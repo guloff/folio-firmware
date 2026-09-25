@@ -38,6 +38,13 @@ namespace {
 WebServer* server = nullptr;
 std::string pendingFirmware;
 
+// Card size and free space, measured once per server session: the free-cluster
+// count walks the whole FAT on FAT32 cards.
+bool sdMeasured = false;
+bool sdKnown = false;
+uint64_t sdTotalBytes = 0;
+uint64_t sdFreeBytes = 0;
+
 constexpr const char* JSON = "application/json";
 constexpr const char* LIBRARY_INDEX = "/.crosspoint/library.idx";
 constexpr size_t STREAM_FLUSH_BYTES = 2048;
@@ -128,6 +135,14 @@ void handleInfo() {
   clk["available"] = halClock.isAvailable();
   clk["valid"] = valid;
   clk["epoch"] = static_cast<int64_t>(valid ? now : 0);
+  if (!sdMeasured) {
+    sdMeasured = true;
+    sdKnown = Storage.volumeSpace(sdTotalBytes, sdFreeBytes);
+  }
+  if (sdKnown) {
+    doc["sdTotalMB"] = static_cast<uint32_t>(sdTotalBytes / (1024 * 1024));
+    doc["sdFreeMB"] = static_cast<uint32_t>(sdFreeBytes / (1024 * 1024));
+  }
   JsonObject pair = doc["pairing"].to<JsonObject>();
   pair["required"] = true;
   pair["paired"] = pairing::isPaired();
@@ -573,6 +588,7 @@ void authorized() {
 void registerRoutes(WebServer& s) {
   server = &s;
   pendingFirmware.clear();
+  sdMeasured = false;
   pairing::registerRoutes(s);
   s.on("/api/inklink/info", HTTP_GET, handleInfo);
   s.on("/api/inklink/time", HTTP_POST, authorized<handleSetTime>);
