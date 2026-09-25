@@ -192,7 +192,10 @@ void OtaUpdateActivity::runUpdateInstall() {
     LOG_DBG("OTA", "Update failed: %d", res);
     {
       RenderLock lock(*this);
-      failedDetail = res == OtaUpdater::WRONG_DEVICE_ERROR ? tr(STR_FIRMWARE_WRONG_DEVICE) : nullptr;
+      failedDetail = res == OtaUpdater::WRONG_DEVICE_ERROR          ? tr(STR_FIRMWARE_WRONG_DEVICE)
+                     : res == OtaUpdater::SIGNATURE_MISSING_ERROR ? tr(STR_FW_SIGNATURE_MISSING)
+                     : res == OtaUpdater::SIGNATURE_INVALID_ERROR ? tr(STR_FW_SIGNATURE_INVALID)
+                                                                  : nullptr;
       state = FAILED;
     }
     requestUpdate();

@@ -12,6 +12,7 @@
 #include "activities/util/ConfirmationActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/FirmwareSignature.h"
 #include "network/FirmwareFlasher.h"
 
 void SdFirmwareUpdateActivity::onEnter() {
@@ -118,6 +119,27 @@ bool SdFirmwareUpdateActivity::validateFirmware() {
     }
     return false;
   }
+
+  inklink::fwsig::AppInfo info;
+  if (inklink::fwsig::readAppInfo(firmwarePath.c_str(), info) && info.projectName[0]) {
+    imageLabel = std::string(info.projectName) + " " + info.version;
+  } else {
+    imageLabel = tr(STR_FW_UNKNOWN_IMAGE);
+  }
+
+  // A present-but-wrong signature is always fatal; a missing one only when the
+  // caller requires it (companion app). Manual SD updates may be unsigned.
+  const auto sig = inklink::fwsig::verifyFile(firmwarePath.c_str());
+  signatureValid = sig == inklink::fwsig::Status::VALID;
+  LOG_INF("FW", "image %s, signature %s", imageLabel.c_str(), inklink::fwsig::statusName(sig));
+  if (sig == inklink::fwsig::Status::INVALID || sig == inklink::fwsig::Status::ERROR) {
+    errorMessage = tr(STR_FW_SIGNATURE_INVALID);
+    return false;
+  }
+  if (sig == inklink::fwsig::Status::MISSING && requireSignature) {
+    errorMessage = tr(STR_FW_SIGNATURE_MISSING);
+    return false;
+  }
   return true;
 }
 
@@ -126,12 +148,17 @@ void SdFirmwareUpdateActivity::promptConfirmation() {
     RenderLock lock(*this);
     state = State::CONFIRMING;
   }
-  // Show "Update firmware?" with the file path as the body line.
-  std::string heading = tr(STR_FIRMWARE_UPDATE_PROMPT);
-  // Use the basename only to keep the body short.
-  std::string body = firmwarePath;
-  const auto pos = body.find_last_of('/');
-  if (pos != std::string::npos) body = body.substr(pos + 1);
+  // Heading and image identity; an unsigned image is announced in the bold
+  // heading so it can't be missed.
+  std::string heading;
+  std::string body;
+  if (signatureValid) {
+    heading = tr(STR_FIRMWARE_UPDATE_PROMPT);
+    body = imageLabel + " \xC2\xB7 " + tr(STR_FW_SIGNATURE_VALID);
+  } else {
+    heading = std::string(tr(STR_FW_UNSIGNED)) + " \xC2\xB7 " + tr(STR_FIRMWARE_UPDATE_PROMPT);
+    body = imageLabel + " \xC2\xB7 " + tr(STR_FW_UNSIGNED_HINT);
+  }
 
   startActivityForResult(std::make_unique<ConfirmationActivity>(renderer, mappedInput, heading, body),
                          [this](const ActivityResult& result) { onConfirmationResult(result); });

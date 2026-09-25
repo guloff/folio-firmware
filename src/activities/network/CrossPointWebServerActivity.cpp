@@ -397,13 +397,14 @@ void CrossPointWebServerActivity::loop() {
       lastHandleClientTime = millis();
 
       // The companion uploaded a firmware image and asked to install it. The
-      // update screen validates it and asks for confirmation on the device.
+      // update screen validates it, requires the Folio signature and asks for
+      // confirmation on the device.
       const std::string firmware = inklink::api::takePendingFirmware();
       if (!firmware.empty()) {
         LOG_INF("WEBACT", "Companion firmware update requested: %s", firmware.c_str());
-        startActivityForResult(
-            std::make_unique<SdFirmwareUpdateActivity>(renderer, mappedInput, false, firmware),
-            [this](const ActivityResult&) { requestUpdate(); });
+        startActivityForResult(std::make_unique<SdFirmwareUpdateActivity>(renderer, mappedInput, false, firmware,
+                                                                          /*requireSignature=*/true),
+                               [this](const ActivityResult&) { requestUpdate(); });
         return;
       }
     }

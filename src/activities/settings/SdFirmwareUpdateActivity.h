@@ -31,10 +31,13 @@ class SdFirmwareUpdateActivity : public Activity {
 
   // preselectedPath skips the file picker (InkLink companion upload); the
   // image is still validated and the user still confirms on the device.
+  // requireSignature refuses images without a valid Folio signature (.bin.sig);
+  // otherwise an unsigned image may be installed after a prominent warning.
   explicit SdFirmwareUpdateActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, bool recoveryMode = false,
-                                    std::string preselectedPath = "")
+                                    std::string preselectedPath = "", bool requireSignature = false)
       : Activity("SdFirmwareUpdate", renderer, mappedInput),
         recoveryMode(recoveryMode),
+        requireSignature(requireSignature),
         preselectedPath(std::move(preselectedPath)) {}
 
   void onEnter() override;
@@ -46,7 +49,10 @@ class SdFirmwareUpdateActivity : public Activity {
  private:
   State state = State::PICKING;
   bool recoveryMode = false;
+  bool requireSignature = false;
   std::string preselectedPath;
+  bool signatureValid = false;
+  std::string imageLabel;  // "Folio 0.2.0-x4pro" from the image's app descriptor
 
   std::string firmwarePath;
   size_t firmwareSize = 0;

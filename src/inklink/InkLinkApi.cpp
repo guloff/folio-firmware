@@ -18,6 +18,7 @@
 
 #include "Annotations.h"
 #include "CrossPointSettings.h"
+#include "FirmwareSignature.h"
 #include "InkLinkClock.h"
 #include "JsonLines.h"
 #include "ReadingStats.h"
@@ -534,6 +535,18 @@ void handleFirmwareApply() {
   }
   if (!pendingFirmware.empty()) return sendError(409, "an update is already waiting for confirmation");
   if (!Storage.exists(path)) return sendError(404, "file not found");
+  // Companion updates must be signed with the Folio release key. The update
+  // screen checks again before flashing.
+  switch (fwsig::verifyFile(path)) {
+    case fwsig::Status::VALID:
+      break;
+    case fwsig::Status::MISSING:
+      return sendError(422, "signature missing");
+    case fwsig::Status::INVALID:
+      return sendError(422, "signature invalid");
+    case fwsig::Status::ERROR:
+      return sendError(500, "firmware unreadable");
+  }
   pendingFirmware = path;
   JsonDocument resp;
   resp["ok"] = true;
