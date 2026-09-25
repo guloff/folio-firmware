@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "Annotations.h"
+#include "ApiResponder.h"
 #include "CrossPointSettings.h"
 #include "FirmwareSignature.h"
 #include "InkLinkClock.h"
@@ -49,20 +50,30 @@ constexpr const char* JSON = "application/json";
 constexpr const char* LIBRARY_INDEX = "/.crosspoint/library.idx";
 constexpr size_t STREAM_FLUSH_BYTES = 2048;
 
-void sendDoc(int code, const JsonDocument& doc) {
-  std::string out;
-  serializeJson(doc, out);
-  server->send(code, JSON, out.c_str());
-}
+// WebServer transport: whole documents with server->send(), streams as
+// chunked transfer (unknown length, empty chunk at the end).
+class HttpResponder final : public Responder {
+ public:
+  void send(int status, const char* json, size_t) override { server->send(status, JSON, json); }
+  void sendError(int status, const char* message) override {
+    JsonDocument doc;
+    doc["ok"] = false;
+    doc["error"] = message;
+    std::string out;
+    serializeJson(doc, out);
+    server->send(status, JSON, out.c_str());
+  }
+  void beginStream() override {
+    server->setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server->send(200, JSON, "");
+  }
+  void write(const char* data, size_t len) override { server->sendContent(data, len); }
+  void endStream() override { server->sendContent(""); }
+};
 
-void sendOk() { server->send(200, JSON, "{\"ok\":true}"); }
+HttpResponder http;
 
-void sendError(int code, const char* message) {
-  JsonDocument doc;
-  doc["ok"] = false;
-  doc["error"] = message;
-  sendDoc(code, doc);
-}
+void sendError(int code, const char* message) { http.sendError(code, message); }
 
 bool parseBody(JsonDocument& doc) {
   if (!server->hasArg("plain")) {
@@ -77,48 +88,83 @@ bool parseBody(JsonDocument& doc) {
   return true;
 }
 
-// Streams a JSON document of the form {"<key>":[ ...items... ]} in chunks so a
-// long history never has to exist as one string in RAM.
+// Room kept for "]", the caller's trailer, the continuation fields and "}".
+constexpr size_t TRAILER_RESERVE = 160;
+
+// Writes a JSON document of the form {"<key>":[ ...items... ]} in chunks so a
+// long history never has to exist as one string in RAM. A bounded responder
+// (BLE) gets as many whole items as fit plus "more":true and "nextOffset".
 class ArrayStreamer {
  public:
-  explicit ArrayStreamer(const char* key) {
-    server->setContentLength(CONTENT_LENGTH_UNKNOWN);
-    server->send(200, JSON, "");
+  // `skip` leading items are dropped; `base` is the list index of the first
+  // item this stream sees (books pages), so nextOffset = base + skip + sent.
+  ArrayStreamer(Responder& out, const char* key, size_t skip = 0, size_t base = 0)
+      : out(out), skip(skip), next(base + skip), cap(out.capacity()) {
+    out.beginStream();
     buf.reserve(STREAM_FLUSH_BYTES + 512);
     buf = "{\"";
     buf += key;
     buf += "\":[";
   }
-  void add(const JsonDocument& item) {
-    if (count++ > 0) buf.push_back(',');
+  // False once the response is full; callers stop producing items.
+  bool add(const JsonDocument& item) {
+    if (full) return false;
+    if (seen < skip) {
+      seen++;
+      return true;
+    }
     // serializeJson(doc, std::string&) replaces the string, so go via scratch.
     scratch.clear();
     serializeJson(item, scratch);
+    // The first item always goes in: a lone oversized item surfaces as the
+    // responder's overflow error instead of an endless empty continuation.
+    if (count > 0 && cap != SIZE_MAX && produced + buf.size() + 1 + scratch.size() + TRAILER_RESERVE > cap) {
+      full = true;
+      return false;
+    }
+    if (count++ > 0) buf.push_back(',');
     buf += scratch;
+    next++;
     if (buf.size() >= STREAM_FLUSH_BYTES) flush();
+    return true;
   }
   void finish(const char* trailer = nullptr) {
     buf += "]";
     if (trailer) buf += trailer;
+    if (full) {
+      char more[48];
+      snprintf(more, sizeof(more), ",\"more\":true,\"nextOffset\":%u", static_cast<unsigned>(next));
+      buf += more;
+    }
     buf += "}";
     flush();
-    server->sendContent("");
+    out.endStream();
   }
 
  private:
   void flush() {
     if (buf.empty()) return;
-    server->sendContent(buf.c_str(), buf.size());
+    out.write(buf.c_str(), buf.size());
+    produced += buf.size();
     buf.clear();
   }
+  Responder& out;
   std::string buf;
   std::string scratch;
   size_t count = 0;
+  size_t seen = 0;
+  size_t skip;
+  size_t next;
+  size_t cap;
+  size_t produced = 0;
+  bool full = false;
 };
 
 // ---- info / time --------------------------------------------------------
 
-void handleInfo() {
+}  // namespace
+
+void info(Responder& out, bool authorized) {
   JsonDocument doc;
   doc["api"] = API_VERSION;
   doc["firmware"] = CROSSPOINT_VERSION;
@@ -146,32 +192,33 @@ void handleInfo() {
   JsonObject pair = doc["pairing"].to<JsonObject>();
   pair["required"] = true;
   pair["paired"] = pairing::isPaired();
-  pair["authorized"] = pairing::authorized(*server);
+  pair["authorized"] = authorized;
   JsonArray features = doc["features"].to<JsonArray>();
   for (const char* f : {"stats", "library", "highlights", "vocab", "screenshots", "sleep", "ota", "pairing"}) {
     features.add(f);
   }
-  sendDoc(200, doc);
+  sendDoc(out, 200, doc);
 }
 
-void handleSetTime() {
-  JsonDocument doc;
-  if (!parseBody(doc)) return;
+void setTime(Responder& out, const JsonDocument& doc) {
   const int64_t epoch = doc["epoch"] | static_cast<int64_t>(0);
   // Once the clock is known good, refuse jumps far into the future: a wrong
   // RTC would push every new session past "today" and break streaks.
   time_t current = 0;
   if (SETTINGS.clockHasBeenSynced && clock::nowUtc(current) && epoch > static_cast<int64_t>(current) + 2 * 86400) {
-    return sendError(400, "epoch too far in the future");
+    return out.sendError(400, "epoch too far in the future");
   }
   const bool hasOffset = doc["tzOffsetMin"].is<int>();
   const int offset = doc["tzOffsetMin"] | 0;
   if (!clock::setFromCompanion(static_cast<time_t>(epoch), offset, hasOffset)) {
-    sendError(halClock.isAvailable() ? 400 : 501, halClock.isAvailable() ? "invalid epoch" : "no RTC on this device");
+    const bool rtc = halClock.isAvailable();
+    out.sendError(rtc ? 400 : 501, rtc ? "invalid epoch" : "no RTC on this device");
     return;
   }
-  sendOk();
+  sendOk(out);
 }
+
+namespace {
 
 // ---- stats --------------------------------------------------------------
 
@@ -196,25 +243,25 @@ bool streamSession(JsonObjectConst obj, void* raw) {
   ctx->item["pages"] = obj["p"] | 0u;
   ctx->item["pct"] = obj["c"] | -1;
   ctx->item["day"] = day;
-  ctx->out->add(ctx->item);
-  return true;
+  return ctx->out->add(ctx->item);
 }
 
-void handleSessions() {
-  const int64_t since = server->hasArg("since") ? atoll(server->arg("since").c_str()) : 0;
-  if (!jsonl::readable(ReadingStats::SESSIONS_PATH)) return sendError(500, "sessions unreadable");
-  ArrayStreamer out("sessions");
+}  // namespace
+
+void sessions(Responder& out, int64_t since, size_t skip) {
+  if (!jsonl::readable(ReadingStats::SESSIONS_PATH)) return out.sendError(500, "sessions unreadable");
+  ArrayStreamer arr(out, "sessions", skip);
   JsonDocument item;
-  SessionStreamCtx ctx{&out, since, item};
+  SessionStreamCtx ctx{&arr, since, item};
   jsonl::forEach(ReadingStats::SESSIONS_PATH, streamSession, &ctx);
-  out.finish();
+  arr.finish();
 }
 
-void handleStats() {
+void stats(Responder& out) {
   StatsSummary s;
   std::vector<DayTotal> days;
   if (!ReadingStats::get().summarize(s, &days)) {
-    sendError(500, "failed to read sessions");
+    out.sendError(500, "failed to read sessions");
     return;
   }
   JsonDocument doc;
@@ -236,8 +283,10 @@ void handleStats() {
     o["s"] = d.secs;
     o["p"] = d.pages;
   }
-  sendDoc(200, doc);
+  sendDoc(out, 200, doc);
 }
+
+namespace {
 
 // ---- books & library ----------------------------------------------------
 
@@ -303,23 +352,28 @@ bool queryUint(const char* name, size_t& out, bool& present) {
   return true;
 }
 
-constexpr size_t MAX_BOOKS_PAGE = 200;
-
 void handleBooks() {
   // ?offset=&limit= pages the list (limit capped at 200); without them every
   // book is sent. Both forms carry "total".
-  size_t offset = 0;
-  size_t limit = MAX_BOOKS_PAGE;
+  BooksPage page;
   bool hasOffset = false;
   bool hasLimit = false;
-  if (!queryUint("offset", offset, hasOffset) || !queryUint("limit", limit, hasLimit)) {
+  if (!queryUint("offset", page.offset, hasOffset) || !queryUint("limit", page.limit, hasLimit)) {
     return sendError(400, "offset and limit must be non-negative integers");
   }
-  const bool paged = hasOffset || hasLimit;
-  if (limit > MAX_BOOKS_PAGE) limit = MAX_BOOKS_PAGE;
+  page.paged = hasOffset || hasLimit;
+  books(http, page);
+}
+
+}  // namespace
+
+void books(Responder& out, const BooksPage& page) {
+  const bool paged = page.paged;
+  const size_t offset = page.offset;
+  const size_t limit = page.limit > MAX_BOOKS_PAGE ? MAX_BOOKS_PAGE : page.limit;
 
   // Union of indexed books, recent books and books with reading history.
-  std::map<std::string, BookRow> books;
+  std::map<std::string, BookRow> rows;
   {
     library::LibraryIndexFile index;
     if (index.open(LIBRARY_INDEX)) {
@@ -328,18 +382,18 @@ void handleBooks() {
         if (!index.readRecord(i, rec)) continue;
         std::string path;
         if (!index.readPath(rec, path) || path.empty()) continue;
-        BookRow& row = books[path];
+        BookRow& row = rows[path];
         index.readTitle(rec, row.title);
         index.readAuthor(rec, row.author);
       }
     }
   }
-  if (books.empty()) {
+  if (rows.empty()) {
     char name[256];
-    scanBooks("/", 0, books, name);
+    scanBooks("/", 0, rows, name);
   }
   for (const auto& rb : RECENT_BOOKS.getBooks()) {
-    BookRow& row = books[rb.path];
+    BookRow& row = rows[rb.path];
     if (!rb.title.empty()) row.title = rb.title;
     if (!rb.author.empty()) row.author = rb.author;
   }
@@ -348,7 +402,7 @@ void handleBooks() {
   std::map<std::string, const BookTotal*> totalByPath;
   for (const auto& t : totals) {
     totalByPath[t.path] = &t;
-    books[t.path];  // books read before indexing still show up
+    rows[t.path];  // books read before indexing still show up
   }
 
   JsonDocument lib;
@@ -370,8 +424,8 @@ void handleBooks() {
 
   // Page selection over the books still on the card, in path order.
   std::vector<const std::pair<const std::string, BookRow>*> present;
-  present.reserve(books.size());
-  for (const auto& kv : books) {
+  present.reserve(rows.size());
+  for (const auto& kv : rows) {
     if (Storage.exists(kv.first.c_str())) present.push_back(&kv);
   }
   const size_t total = present.size();
@@ -389,7 +443,7 @@ void handleBooks() {
     snprintf(trailer, sizeof(trailer), ",\"total\":%u", static_cast<unsigned>(total));
   }
 
-  ArrayStreamer out("books");
+  ArrayStreamer arr(out, "books", 0, first);
   JsonDocument item;
   for (size_t i = first; i < first + count; i++) {
     const auto& kv = *present[i];
@@ -415,10 +469,12 @@ void handleBooks() {
     if (sb != shelvesByBook.end()) {
       for (const auto& id : sb->second) shelves.add(id.c_str());
     }
-    out.add(item);
+    if (!arr.add(item)) break;
   }
-  out.finish(trailer);
+  arr.finish(trailer);
 }
+
+namespace {
 
 void handleGetLibrary() {
   std::string json;
@@ -434,7 +490,7 @@ void handleGetLibrary() {
     doc["shelves"].to<JsonArray>();
     doc["status"].to<JsonObject>();
     doc["goals"]["dailyMinutes"] = Shelves::DEFAULT_GOAL_MINUTES;
-    sendDoc(200, doc);
+    sendDoc(http, 200, doc);
     return;
   }
   server->send(200, JSON, json.c_str());
@@ -451,7 +507,7 @@ void handlePostLibrary() {
     sendError(400, error ? error : "rejected");
     return;
   }
-  sendOk();
+  sendOk(http);
 }
 
 // ---- highlights & vocabulary ---------------------------------------------
@@ -459,6 +515,7 @@ void handlePostLibrary() {
 struct HighlightStreamCtx {
   ArrayStreamer* out;
   const char* book;
+  int64_t since;
   JsonDocument& item;
 };
 
@@ -466,6 +523,8 @@ bool streamHighlight(JsonObjectConst obj, void* raw) {
   auto* ctx = static_cast<HighlightStreamCtx*>(raw);
   const char* book = obj["b"] | "";
   if (ctx->book && strcmp(ctx->book, book) != 0) return true;
+  const int64_t created = obj["ts"] | static_cast<int64_t>(0);
+  if (ctx->since > 0 && created != 0 && created < ctx->since) return true;
   ctx->item.clear();
   ctx->item["id"] = obj["id"] | "";
   ctx->item["book"] = book;
@@ -474,22 +533,30 @@ bool streamHighlight(JsonObjectConst obj, void* raw) {
   ctx->item["note"] = obj["n"] | "";
   ctx->item["chapter"] = obj["ch"] | "";
   ctx->item["pct"] = obj["c"] | -1;
-  ctx->item["created"] = obj["ts"] | static_cast<int64_t>(0);
-  ctx->out->add(ctx->item);
-  return true;
+  ctx->item["created"] = created;
+  return ctx->out->add(ctx->item);
 }
 
 void handleHighlights() {
   String book;
   const bool filter = server->hasArg("book");
   if (filter) book = server->arg("book");
-  if (!jsonl::readable(Annotations::HIGHLIGHTS_PATH)) return sendError(500, "highlights unreadable");
-  ArrayStreamer out("highlights");
-  JsonDocument item;
-  HighlightStreamCtx ctx{&out, filter ? book.c_str() : nullptr, item};
-  jsonl::forEach(Annotations::HIGHLIGHTS_PATH, streamHighlight, &ctx);
-  out.finish();
+  const int64_t since = server->hasArg("since") ? atoll(server->arg("since").c_str()) : 0;
+  highlights(http, filter ? book.c_str() : nullptr, since, 0);
 }
+
+}  // namespace
+
+void highlights(Responder& out, const char* book, int64_t since, size_t skip) {
+  if (!jsonl::readable(Annotations::HIGHLIGHTS_PATH)) return out.sendError(500, "highlights unreadable");
+  ArrayStreamer arr(out, "highlights", skip);
+  JsonDocument item;
+  HighlightStreamCtx ctx{&arr, book, since, item};
+  jsonl::forEach(Annotations::HIGHLIGHTS_PATH, streamHighlight, &ctx);
+  arr.finish();
+}
+
+namespace {
 
 void handleHighlightUpdate() {
   JsonDocument doc;
@@ -499,7 +566,7 @@ void handleHighlightUpdate() {
   const char* note = doc["note"] | "";
   if (strlen(note) > Annotations::MAX_NOTE_BYTES) return sendError(413, "note too long");
   if (!Annotations::updateHighlightNote(id, note)) return sendError(404, "highlight not found");
-  sendOk();
+  sendOk(http);
 }
 
 void handleHighlightDelete() {
@@ -508,7 +575,7 @@ void handleHighlightDelete() {
   const char* id = doc["id"] | "";
   if (!id[0]) return sendError(400, "missing id");
   if (!Annotations::deleteHighlight(id)) return sendError(404, "highlight not found");
-  sendOk();
+  sendOk(http);
 }
 
 struct VocabEntry {
@@ -534,10 +601,14 @@ bool collectVocab(JsonObjectConst obj, void* raw) {
   return true;
 }
 
-void handleVocab() {
+}  // namespace
+
+void vocab(Responder& out, size_t skip) {
   std::map<std::string, VocabEntry> words;
-  if (!jsonl::forEach(Annotations::VOCAB_PATH, collectVocab, &words)) return sendError(500, "vocabulary unreadable");
-  ArrayStreamer out("words");
+  if (!jsonl::forEach(Annotations::VOCAB_PATH, collectVocab, &words)) {
+    return out.sendError(500, "vocabulary unreadable");
+  }
+  ArrayStreamer arr(out, "words", skip);
   JsonDocument item;
   for (const auto& kv : words) {
     item.clear();
@@ -546,10 +617,12 @@ void handleVocab() {
     item["book"] = kv.second.book.c_str();
     item["created"] = kv.second.created;
     item["count"] = kv.second.count;
-    out.add(item);
+    if (!arr.add(item)) break;
   }
-  out.finish();
+  arr.finish();
 }
+
+namespace {
 
 void handleVocabDelete() {
   JsonDocument doc;
@@ -557,14 +630,15 @@ void handleVocabDelete() {
   const char* word = doc["word"] | "";
   if (!word[0]) return sendError(400, "missing word");
   if (!Annotations::deleteVocabWord(word)) return sendError(404, "word not found");
-  sendOk();
+  sendOk(http);
 }
 
 // ---- files: screenshots, sleep images, firmware ----------------------------
 
 // Lists regular, non-hidden files with the given extension in `dir`.
-void streamDir(const char* key, const char* dir, const char* ext, const char* trailer = nullptr) {
-  ArrayStreamer out(key);
+void streamDir(Responder& out, const char* key, const char* dir, const char* ext, size_t skip = 0,
+               const char* trailer = nullptr) {
+  ArrayStreamer arr(out, key, skip);
   JsonDocument item;
   HalFile root = Storage.open(dir);
   if (root && root.isDirectory()) {
@@ -579,13 +653,13 @@ void streamDir(const char* key, const char* dir, const char* ext, const char* tr
       item["name"] = name;
       item["path"] = (std::string(dir) + "/" + name).c_str();
       item["size"] = static_cast<uint64_t>(f.fileSize64());
-      out.add(item);
+      if (!arr.add(item)) break;
     }
   }
-  out.finish(trailer);
+  arr.finish(trailer);
 }
 
-void handleScreenshots() { streamDir("screenshots", "/screenshots", ".bmp"); }
+void handleScreenshots() { streamDir(http, "screenshots", "/screenshots", ".bmp"); }
 
 void handleSleep() {
   // "/.sleep" wins over "/sleep" in SleepActivity; report whichever is live.
@@ -593,7 +667,7 @@ void handleSleep() {
   Storage.ensureDirectoryExists(dir);
   char trailer[48];
   snprintf(trailer, sizeof(trailer), ",\"dir\":\"%s\",\"mode\":%u", dir, static_cast<unsigned>(SETTINGS.sleepScreen));
-  streamDir("images", dir, ".bmp", trailer);
+  streamDir(http, "images", dir, ".bmp", 0, trailer);
 }
 
 void handleFirmwareApply() {
@@ -624,8 +698,25 @@ void handleFirmwareApply() {
   resp["ok"] = true;
   resp["accepted"] = true;
   resp["confirmOnDevice"] = true;
-  sendDoc(200, resp);
+  sendDoc(http, 200, resp);
 }
+
+void handleInfo() { info(http, pairing::authorized(*server)); }
+
+void handleSetTime() {
+  JsonDocument doc;
+  if (!parseBody(doc)) return;
+  setTime(http, doc);
+}
+
+void handleSessions() {
+  const int64_t since = server->hasArg("since") ? atoll(server->arg("since").c_str()) : 0;
+  sessions(http, since, 0);
+}
+
+void handleStats() { stats(http); }
+
+void handleVocab() { vocab(http, 0); }
 
 // Mutating routes run only for a paired phone (X-InkLink-Token).
 template <void (*Handler)()>
@@ -634,6 +725,19 @@ void authorized() {
 }
 
 }  // namespace
+
+void sendDoc(Responder& out, int status, const JsonDocument& doc) {
+  std::string json;
+  serializeJson(doc, json);
+  out.send(status, json.c_str(), json.size());
+}
+
+void sendOk(Responder& out) {
+  static constexpr char OK[] = "{\"ok\":true}";
+  out.send(200, OK, sizeof(OK) - 1);
+}
+
+void screenshots(Responder& out, size_t skip) { streamDir(out, "screenshots", "/screenshots", ".bmp", skip); }
 
 void registerRoutes(WebServer& s) {
   server = &s;
