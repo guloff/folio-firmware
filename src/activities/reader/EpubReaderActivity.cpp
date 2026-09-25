@@ -239,8 +239,35 @@ bool EpubReaderActivity::loadBook() {
     }
   }
 
+  if (hasInitialJump) applyInitialJump();
+
   loadCachedBookmarks();
   return true;
+}
+
+// Stored locations can outlive the layout they were taken in: the page index
+// is clamped once the section is paginated (render path), a negative page
+// means the chapter start, and a spine index the book no longer has falls
+// back to the stored book percent (or the reading position if unknown).
+void EpubReaderActivity::applyInitialJump() {
+  hasInitialJump = false;
+  const int spineCount = epub->getSpineItemsCount();
+  if (initialJumpSpine >= 0 && initialJumpSpine < spineCount) {
+    currentSpineIndex = initialJumpSpine;
+    const int page = std::clamp(initialJumpPage, 0, static_cast<int>(UINT16_MAX) - 1);
+    pendingPageJump = static_cast<uint16_t>(page);
+    nextPageNumber = page;
+    clearDeferredReposition();  // the old reading position must not remap the target page
+    LOG_INF("ERS", "Open at stored location: spine %d page %d", initialJumpSpine, page);
+    return;
+  }
+  if (initialJumpPercent >= 0) {
+    LOG_INF("ERS", "Stored spine %d out of range (%d), opening at %d%%", initialJumpSpine, spineCount,
+            initialJumpPercent);
+    jumpToPercent(initialJumpPercent);
+    return;
+  }
+  LOG_ERR("ERS", "Stored spine %d out of range (%d), keeping reading position", initialJumpSpine, spineCount);
 }
 
 ChapterPosition EpubReaderActivity::chapterPosition() const {

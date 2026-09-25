@@ -312,6 +312,14 @@ void ActivityManager::goToReader(std::string path, const bool allowFastInitialRe
   }
 }
 
+void ActivityManager::goToReaderAt(std::string path, const int spine, const int page, const int percent) {
+  if (path.empty()) return;
+  auto activity = ReaderActivity::create(renderer, mappedInput, std::move(path), false);
+  if (!activity) return;  // create() logged the OOM
+  activity->setInitialPosition(spine, page, percent);
+  replaceActivity(std::move(activity));
+}
+
 void ActivityManager::goToSleep(bool fromTimeout) {
   replaceActivity(std::make_unique<SleepActivity>(renderer, mappedInput, fromTimeout));
   loop();  // Important: sleep screen must be rendered immediately, the caller will go to sleep right after this returns
