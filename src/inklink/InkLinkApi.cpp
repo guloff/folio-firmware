@@ -288,7 +288,36 @@ std::string titleFromFileName(const std::string& path) {
   return name;
 }
 
+// Parses an optional non-negative integer query argument.
+bool queryUint(const char* name, size_t& out, bool& present) {
+  present = server->hasArg(name);
+  if (!present) return true;
+  const String v = server->arg(name);
+  if (v.length() == 0 || v.length() > 9) return false;
+  size_t n = 0;
+  for (size_t i = 0; i < v.length(); i++) {
+    if (v[i] < '0' || v[i] > '9') return false;
+    n = n * 10 + static_cast<size_t>(v[i] - '0');
+  }
+  out = n;
+  return true;
+}
+
+constexpr size_t MAX_BOOKS_PAGE = 200;
+
 void handleBooks() {
+  // ?offset=&limit= pages the list (limit capped at 200); without them every
+  // book is sent. Both forms carry "total".
+  size_t offset = 0;
+  size_t limit = MAX_BOOKS_PAGE;
+  bool hasOffset = false;
+  bool hasLimit = false;
+  if (!queryUint("offset", offset, hasOffset) || !queryUint("limit", limit, hasLimit)) {
+    return sendError(400, "offset and limit must be non-negative integers");
+  }
+  const bool paged = hasOffset || hasLimit;
+  if (limit > MAX_BOOKS_PAGE) limit = MAX_BOOKS_PAGE;
+
   // Union of indexed books, recent books and books with reading history.
   std::map<std::string, BookRow> books;
   {
@@ -339,11 +368,32 @@ void handleBooks() {
     for (size_t r = 0; r < recentBooks.size(); r++) recentRank.emplace(recentBooks[r].path, static_cast<int>(r));
   }
 
+  // Page selection over the books still on the card, in path order.
+  std::vector<const std::pair<const std::string, BookRow>*> present;
+  present.reserve(books.size());
+  for (const auto& kv : books) {
+    if (Storage.exists(kv.first.c_str())) present.push_back(&kv);
+  }
+  const size_t total = present.size();
+  size_t first = 0;
+  size_t count = total;
+  if (paged) {
+    first = offset < total ? offset : total;
+    count = limit < total - first ? limit : total - first;
+  }
+  char trailer[64];
+  if (paged) {
+    snprintf(trailer, sizeof(trailer), ",\"total\":%u,\"offset\":%u,\"limit\":%u", static_cast<unsigned>(total),
+             static_cast<unsigned>(offset), static_cast<unsigned>(limit));
+  } else {
+    snprintf(trailer, sizeof(trailer), ",\"total\":%u", static_cast<unsigned>(total));
+  }
+
   ArrayStreamer out("books");
   JsonDocument item;
-  for (const auto& kv : books) {
+  for (size_t i = first; i < first + count; i++) {
+    const auto& kv = *present[i];
     const std::string& path = kv.first;
-    if (!Storage.exists(path.c_str())) continue;
     item.clear();
     item["path"] = path.c_str();
     const std::string fallbackTitle = kv.second.title.empty() ? titleFromFileName(path) : std::string();
@@ -367,7 +417,7 @@ void handleBooks() {
     }
     out.add(item);
   }
-  out.finish();
+  out.finish(trailer);
 }
 
 void handleGetLibrary() {
