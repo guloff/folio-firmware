@@ -8,7 +8,6 @@
 #include <HalStorage.h>
 #include <LibraryIndexFile.h>
 #include <Logging.h>
-#include <PersistableStore.h>
 #include <WebServer.h>
 
 #include <cstring>
@@ -136,6 +135,12 @@ void handleSetTime() {
   JsonDocument doc;
   if (!parseBody(doc)) return;
   const int64_t epoch = doc["epoch"] | static_cast<int64_t>(0);
+  // Once the clock is known good, refuse jumps far into the future: a wrong
+  // RTC would push every new session past "today" and break streaks.
+  time_t current = 0;
+  if (SETTINGS.clockHasBeenSynced && clock::nowUtc(current) && epoch > static_cast<int64_t>(current) + 2 * 86400) {
+    return sendError(400, "epoch too far in the future");
+  }
   const bool hasOffset = doc["tzOffsetMin"].is<int>();
   const int offset = doc["tzOffsetMin"] | 0;
   if (!clock::setFromCompanion(static_cast<time_t>(epoch), offset, hasOffset)) {
@@ -156,7 +161,8 @@ struct SessionStreamCtx {
 bool streamSession(JsonObjectConst obj, void* raw) {
   auto* ctx = static_cast<SessionStreamCtx*>(raw);
   const int64_t start = obj["s"] | static_cast<int64_t>(0);
-  if (ctx->since > 0 && start < ctx->since) return true;
+  // Undated sessions (start 0) are always sent: they can't be ordered by time.
+  if (ctx->since > 0 && start != 0 && start < ctx->since) return true;
   char day[12];
   clock::formatDay(obj["day"] | 0u, day, sizeof(day));
   ctx->item.clear();
@@ -173,6 +179,7 @@ bool streamSession(JsonObjectConst obj, void* raw) {
 
 void handleSessions() {
   const int64_t since = server->hasArg("since") ? atoll(server->arg("since").c_str()) : 0;
+  if (!jsonl::readable(ReadingStats::SESSIONS_PATH)) return sendError(500, "sessions unreadable");
   ArrayStreamer out("sessions");
   JsonDocument item;
   SessionStreamCtx ctx{&out, since, item};
@@ -226,19 +233,20 @@ bool isBookFile(const char* name) {
 }
 
 // Fallback when the library index hasn't been built yet: walk the card
-// (skipping dot-folders) the same depth the index builder uses.
-void scanBooks(const std::string& dir, int depth, std::map<std::string, BookRow>& out) {
-  if (depth > 5 || out.size() >= 4096) return;
+// (skipping dot-folders) the same depth the index builder uses. `name` is one
+// buffer shared by every recursion level.
+constexpr size_t MAX_SCANNED_BOOKS = 4096;
+void scanBooks(const std::string& dir, int depth, std::map<std::string, BookRow>& out, char (&name)[256]) {
+  if (depth > 5 || out.size() >= MAX_SCANNED_BOOKS) return;
   HalFile root = Storage.open(dir.c_str());
   if (!root || !root.isDirectory()) return;
-  char name[256];
-  for (HalFile f = root.openNextFile(); f; f = root.openNextFile()) {
+  for (HalFile f = root.openNextFile(); f && out.size() < MAX_SCANNED_BOOKS; f = root.openNextFile()) {
     f.getName(name, sizeof(name));
     if (name[0] == '.') continue;
     const std::string path = (dir == "/" ? "/" : dir + "/") + name;
     if (f.isDirectory()) {
       f.close();
-      scanBooks(path, depth + 1, out);
+      scanBooks(path, depth + 1, out, name);
     } else if (isBookFile(name)) {
       out[path];
     }
@@ -274,7 +282,10 @@ void handleBooks() {
       }
     }
   }
-  if (books.empty()) scanBooks("/", 0, books);
+  if (books.empty()) {
+    char name[256];
+    scanBooks("/", 0, books, name);
+  }
   for (const auto& rb : RECENT_BOOKS.getBooks()) {
     BookRow& row = books[rb.path];
     if (!rb.title.empty()) row.title = rb.title;
@@ -289,11 +300,20 @@ void handleBooks() {
   }
 
   JsonDocument lib;
-  PersistableStoreBase::readDocFromFile(Shelves::PATH, lib);
+  {
+    std::string libJson;
+    if (Shelves::readDocument(libJson) > 0) deserializeJson(lib, libJson);
+  }
   std::map<std::string, std::vector<std::string>> shelvesByBook;
   for (JsonObjectConst s : lib["shelves"].as<JsonArrayConst>()) {
     const char* id = s["id"] | "";
     for (JsonVariantConst b : s["books"].as<JsonArrayConst>()) shelvesByBook[b | ""].emplace_back(id);
+  }
+
+  std::map<std::string, int> recentRank;
+  {
+    const auto& recentBooks = RECENT_BOOKS.getBooks();
+    for (size_t r = 0; r < recentBooks.size(); r++) recentRank.emplace(recentBooks[r].path, static_cast<int>(r));
   }
 
   ArrayStreamer out("books");
@@ -306,21 +326,17 @@ void handleBooks() {
     const std::string fallbackTitle = kv.second.title.empty() ? titleFromFileName(path) : std::string();
     item["title"] = kv.second.title.empty() ? fallbackTitle.c_str() : kv.second.title.c_str();
     item["author"] = kv.second.author.c_str();
-    item["progress"] = loadBookProgress(path);
     auto t = totalByPath.find(path);
+    auto rr = recentRank.find(path);
+    // Reading progress costs a cache-file read per book; only books that were
+    // ever opened (history or recents) can have one.
+    const bool opened = t != totalByPath.end() || rr != recentRank.end();
+    item["progress"] = opened ? loadBookProgress(path) : -1;
     item["lastRead"] = static_cast<int64_t>(t != totalByPath.end() ? t->second->lastRead : 0);
     item["secs"] = t != totalByPath.end() ? t->second->secs : 0u;
     item["status"] = lib["status"][path.c_str()] | "";
     // Position in the device's recent list (0 = last opened), -1 when absent.
-    int recentRank = -1;
-    const auto& recentBooks = RECENT_BOOKS.getBooks();
-    for (size_t r = 0; r < recentBooks.size(); r++) {
-      if (recentBooks[r].path == path) {
-        recentRank = static_cast<int>(r);
-        break;
-      }
-    }
-    item["recent"] = recentRank;
+    item["recent"] = rr != recentRank.end() ? rr->second : -1;
     JsonArray shelves = item["shelves"].to<JsonArray>();
     auto sb = shelvesByBook.find(path);
     if (sb != shelvesByBook.end()) {
@@ -332,15 +348,23 @@ void handleBooks() {
 }
 
 void handleGetLibrary() {
-  JsonDocument doc;
-  if (!PersistableStoreBase::readDocFromFile(Shelves::PATH, doc) || !doc.is<JsonObject>()) {
-    doc.clear();
+  std::string json;
+  const int state = Shelves::readDocument(json);
+  if (state < 0) {
+    // An unreadable document must not look empty: the app would POST it back.
+    sendError(500, "library.json unreadable");
+    return;
+  }
+  if (state == 0) {
+    JsonDocument doc;
     doc["version"] = 1;
     doc["shelves"].to<JsonArray>();
     doc["status"].to<JsonObject>();
     doc["goals"]["dailyMinutes"] = Shelves::DEFAULT_GOAL_MINUTES;
+    sendDoc(200, doc);
+    return;
   }
-  sendDoc(200, doc);
+  server->send(200, JSON, json.c_str());
 }
 
 void handlePostLibrary() {
@@ -386,6 +410,7 @@ void handleHighlights() {
   String book;
   const bool filter = server->hasArg("book");
   if (filter) book = server->arg("book");
+  if (!jsonl::readable(Annotations::HIGHLIGHTS_PATH)) return sendError(500, "highlights unreadable");
   ArrayStreamer out("highlights");
   JsonDocument item;
   HighlightStreamCtx ctx{&out, filter ? book.c_str() : nullptr, item};
@@ -398,7 +423,9 @@ void handleHighlightUpdate() {
   if (!parseBody(doc)) return;
   const char* id = doc["id"] | "";
   if (!id[0]) return sendError(400, "missing id");
-  if (!Annotations::updateHighlightNote(id, doc["note"] | "")) return sendError(404, "highlight not found");
+  const char* note = doc["note"] | "";
+  if (strlen(note) > Annotations::MAX_NOTE_BYTES) return sendError(413, "note too long");
+  if (!Annotations::updateHighlightNote(id, note)) return sendError(404, "highlight not found");
   sendOk();
 }
 
@@ -436,7 +463,7 @@ bool collectVocab(JsonObjectConst obj, void* raw) {
 
 void handleVocab() {
   std::map<std::string, VocabEntry> words;
-  jsonl::forEach(Annotations::VOCAB_PATH, collectVocab, &words);
+  if (!jsonl::forEach(Annotations::VOCAB_PATH, collectVocab, &words)) return sendError(500, "vocabulary unreadable");
   ArrayStreamer out("words");
   JsonDocument item;
   for (const auto& kv : words) {
@@ -501,9 +528,11 @@ void handleFirmwareApply() {
   if (!parseBody(doc)) return;
   const char* path = doc["path"] | "";
   const size_t len = strlen(path);
-  if (len < 5 || path[0] != '/' || strcasecmp(path + len - 4, ".bin") != 0 || strstr(path, "..")) {
-    return sendError(400, "path must be an absolute .bin path");
+  if (len < 15 || strncmp(path, "/firmware/", 10) != 0 || strcasecmp(path + len - 4, ".bin") != 0 ||
+      strstr(path, "..")) {
+    return sendError(400, "path must be /firmware/<name>.bin");
   }
+  if (!pendingFirmware.empty()) return sendError(409, "an update is already waiting for confirmation");
   if (!Storage.exists(path)) return sendError(404, "file not found");
   pendingFirmware = path;
   JsonDocument resp;
@@ -517,6 +546,7 @@ void handleFirmwareApply() {
 
 void registerRoutes(WebServer& s) {
   server = &s;
+  pendingFirmware.clear();
   s.on("/api/inklink/info", HTTP_GET, handleInfo);
   s.on("/api/inklink/time", HTTP_POST, handleSetTime);
   s.on("/api/inklink/sessions", HTTP_GET, handleSessions);
@@ -534,6 +564,8 @@ void registerRoutes(WebServer& s) {
   s.on("/api/inklink/firmware/apply", HTTP_POST, handleFirmwareApply);
   LOG_DBG("INKLINK", "companion API routes registered");
 }
+
+void clearPendingFirmware() { pendingFirmware.clear(); }
 
 std::string takePendingFirmware() {
   std::string p;

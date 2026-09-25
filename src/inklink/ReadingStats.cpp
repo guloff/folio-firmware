@@ -2,9 +2,11 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <HalStorage.h>
 #include <Logging.h>
 
 #include <algorithm>
+#include <climits>
 #include <map>
 #include <set>
 
@@ -31,23 +33,29 @@ void ReadingStats::beginSession(const std::string& bookPath, const std::string& 
   LOG_DBG("INKLINK", "session start: %s", bookPath.c_str());
 }
 
-void ReadingStats::accrue() {
+void ReadingStats::accrue(const bool closing) {
   const uint32_t now = millis();
   const uint32_t delta = now - lastInteractionMs_;
-  activeMs_ += std::min(delta, IDLE_CAP_MS);
+  if (delta <= IDLE_CAP_MS) {
+    activeMs_ += delta;
+  } else if (!closing) {
+    // A long pause before a page turn: count one capped stretch of reading.
+    activeMs_ += IDLE_CAP_MS;
+  }
+  // A long pause before closing (e.g. auto-sleep) was the device lying idle.
   lastInteractionMs_ = now;
 }
 
 void ReadingStats::notePageTurn(const bool forward) {
   if (!open_) return;
-  accrue();
+  accrue(false);
   if (forward) pages_++;
 }
 
 void ReadingStats::endSession(const int endPercent) {
   if (!open_) return;
   open_ = false;
-  accrue();
+  accrue(true);
   const uint32_t secs = activeMs_ / 1000;
   if (secs < MIN_SESSION_SECS && pages_ == 0) {
     LOG_DBG("INKLINK", "session dropped (too short: %us)", static_cast<unsigned>(secs));
@@ -77,67 +85,103 @@ void ReadingStats::endSession(const int endPercent) {
 
 namespace {
 
-struct DayCtx {
+struct AggCtx {
   std::map<uint32_t, DayTotal>* days;
-  StatsSummary* summary;
+  std::map<std::string, BookTotal>* books;
+  StatsSummary* totals;
   std::set<std::string>* finished;
 };
 
-bool collectDay(JsonObjectConst obj, void* raw) {
-  auto* ctx = static_cast<DayCtx*>(raw);
+bool collect(JsonObjectConst obj, void* raw) {
+  auto* ctx = static_cast<AggCtx*>(raw);
   const uint32_t secs = obj["d"] | 0u;
   const uint32_t pages = obj["p"] | 0u;
   const uint32_t day = obj["day"] | 0u;
-  if (ctx->summary) {
-    ctx->summary->totalSecs += secs;
-    ctx->summary->totalPages += pages;
-    ctx->summary->sessions++;
-    if ((obj["c"] | -1) >= 100 && ctx->finished) ctx->finished->insert(obj["b"] | "");
-  }
-  if (day != 0 && ctx->days) {
+  const char* path = obj["b"] | "";
+  const int percent = obj["c"] | -1;
+  ctx->totals->totalSecs += secs;
+  ctx->totals->totalPages += pages;
+  ctx->totals->sessions++;
+  if (percent >= 100 && path[0]) ctx->finished->insert(path);
+  if (day != 0) {
     auto& t = (*ctx->days)[day];
     t.day = day;
     t.secs += secs;
     t.pages += pages;
+  }
+  if (path[0]) {
+    auto& b = (*ctx->books)[path];
+    if (b.path.empty()) b.path = path;
+    b.secs += secs;
+    b.pages += pages;
+    const time_t start = static_cast<time_t>(obj["s"] | static_cast<int64_t>(0));
+    if (start >= b.lastRead) {
+      b.lastRead = start;
+      b.lastPercent = percent;
+    }
   }
   return true;
 }
 
 }  // namespace
 
-bool ReadingStats::loadDays(std::vector<DayTotal>& out) const {
+bool ReadingStats::refreshCache() const {
+  int64_t size = 0;
+  jsonl::recoverTmp(SESSIONS_PATH);
+  if (Storage.exists(SESSIONS_PATH)) {
+    HalFile f = Storage.open(SESSIONS_PATH, O_RDONLY);
+    if (!f) {
+      LOG_ERR("INKLINK", "sessions journal unreadable");
+      return false;
+    }
+    size = static_cast<int64_t>(f.fileSize());
+  }
+  if (size == cachedSize) return true;
+
   std::map<uint32_t, DayTotal> days;
-  DayCtx ctx{&days, nullptr, nullptr};
-  if (!jsonl::forEach(SESSIONS_PATH, collectDay, &ctx)) return false;
-  out.clear();
-  out.reserve(days.size());
-  for (const auto& kv : days) out.push_back(kv.second);
+  std::map<std::string, BookTotal> books;
+  std::set<std::string> finished;
+  StatsSummary totals;
+  AggCtx ctx{&days, &books, &totals, &finished};
+  if (!jsonl::forEach(SESSIONS_PATH, collect, &ctx)) return false;
+  totals.booksFinished = static_cast<uint32_t>(finished.size());
+
+  cachedDays.clear();
+  cachedDays.reserve(days.size());
+  for (const auto& kv : days) cachedDays.push_back(kv.second);
+  cachedBooks.clear();
+  cachedBooks.reserve(books.size());
+  for (auto& kv : books) cachedBooks.push_back(std::move(kv.second));
+  cachedTotals = totals;
+  cachedSize = size;
   return true;
 }
 
 bool ReadingStats::summarize(StatsSummary& out, std::vector<DayTotal>* daysOut) const {
   out = StatsSummary{};
-  std::map<uint32_t, DayTotal> days;
-  std::set<std::string> finished;
-  DayCtx ctx{&days, &out, &finished};
-  if (!jsonl::forEach(SESSIONS_PATH, collectDay, &ctx)) return false;
-  out.booksFinished = static_cast<uint32_t>(finished.size());
+  if (!refreshCache()) return false;
+  out.totalSecs = cachedTotals.totalSecs;
+  out.totalPages = cachedTotals.totalPages;
+  out.sessions = cachedTotals.sessions;
+  out.booksFinished = cachedTotals.booksFinished;
 
   const uint32_t today = clock::today();
   if (today != 0) {
-    auto it = days.find(today);
-    if (it != days.end()) {
-      out.todaySecs = it->second.secs;
-      out.todayPages = it->second.pages;
+    auto it = std::lower_bound(cachedDays.begin(), cachedDays.end(), today,
+                               [](const DayTotal& d, uint32_t v) { return d.day < v; });
+    if (it != cachedDays.end() && it->day == today) {
+      out.todaySecs = it->secs;
+      out.todayPages = it->pages;
     }
   }
 
-  // Streaks over days that meet the threshold.
+  // Streaks over days that meet the threshold; days after "today" (a clock
+  // that was wrong for a while) are ignored.
   int32_t prevOrd = INT32_MIN;
   uint32_t run = 0;
-  for (const auto& kv : days) {
-    if (kv.second.secs < STREAK_MIN_SECS) continue;
-    const int32_t ord = clock::dayToOrdinal(kv.first);
+  for (const auto& d : cachedDays) {
+    if (d.secs < STREAK_MIN_SECS || (today != 0 && d.day > today)) continue;
+    const int32_t ord = clock::dayToOrdinal(d.day);
     run = (prevOrd != INT32_MIN && ord == prevOrd + 1) ? run + 1 : 1;
     out.longestStreak = std::max(out.longestStreak, run);
     prevOrd = ord;
@@ -148,41 +192,25 @@ bool ReadingStats::summarize(StatsSummary& out, std::vector<DayTotal>* daysOut) 
     if (prevOrd == todayOrd || prevOrd == todayOrd - 1) out.currentStreak = run;
   }
 
-  if (daysOut) {
-    daysOut->clear();
-    daysOut->reserve(days.size());
-    for (const auto& kv : days) daysOut->push_back(kv.second);
-  }
+  if (daysOut) *daysOut = cachedDays;
   return true;
 }
-
-namespace {
-
-bool collectBook(JsonObjectConst obj, void* raw) {
-  auto* books = static_cast<std::map<std::string, BookTotal>*>(raw);
-  const char* path = obj["b"] | "";
-  if (!path[0]) return true;
-  auto& b = (*books)[path];
-  if (b.path.empty()) b.path = path;
-  b.secs += obj["d"] | 0u;
-  b.pages += obj["p"] | 0u;
-  const time_t start = static_cast<time_t>(obj["s"] | static_cast<int64_t>(0));
-  if (start >= b.lastRead) {
-    b.lastRead = start;
-    b.lastPercent = obj["c"] | -1;
-  }
-  return true;
-}
-
-}  // namespace
 
 bool ReadingStats::loadBookTotals(std::vector<BookTotal>& out) const {
-  std::map<std::string, BookTotal> books;
-  if (!jsonl::forEach(SESSIONS_PATH, collectBook, &books)) return false;
-  out.clear();
-  out.reserve(books.size());
-  for (auto& kv : books) out.push_back(std::move(kv.second));
+  if (!refreshCache()) return false;
+  out = cachedBooks;
   return true;
+}
+
+BookTotal ReadingStats::bookTotal(const std::string& path) const {
+  if (refreshCache()) {
+    for (const auto& b : cachedBooks) {
+      if (b.path == path) return b;
+    }
+  }
+  BookTotal none;
+  none.path = path;
+  return none;
 }
 
 }  // namespace inklink

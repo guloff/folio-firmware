@@ -6,6 +6,8 @@
 
 #include "ReadingStats.h"
 
+#include <EpdFontFamily.h>
+
 class GfxRenderer;
 
 // Drawing helpers shared by the on-device statistics screen and the dashboard
@@ -26,6 +28,12 @@ void drawProgressBar(const GfxRenderer& renderer, int x, int y, int width, int h
 // cached on first use). Draws a framed placeholder when there is no cover.
 // Returns true when a real cover was drawn.
 bool drawBookCover(const GfxRenderer& renderer, const std::string& bookPath, int x, int y, int w, int h);
+
+// Greedy word wrap into at most maxLines lines. Words wider than maxWidth are
+// cut by UTF-8 code point with "…"; when text remains after the last line,
+// that line ends with "…". Splits at ASCII spaces only.
+std::vector<std::string> wrapText(const GfxRenderer& renderer, int fontId, const std::string& text, int maxWidth,
+                                  size_t maxLines, EpdFontFamily::Style style = EpdFontFamily::REGULAR);
 
 // "1 ч 25 мин" / "25 мин" style duration into buf (uses translated units).
 void formatDuration(uint32_t secs, char* buf, size_t size);

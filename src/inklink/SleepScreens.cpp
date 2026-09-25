@@ -22,37 +22,6 @@
 
 namespace inklink::sleep {
 
-namespace {
-
-// Greedy word wrap into at most maxLines lines; the last line gets an ellipsis
-// when text remains. Works on UTF-8 because it only splits at ASCII spaces.
-std::vector<std::string> wrapText(const GfxRenderer& r, int fontId, const std::string& text, int maxWidth,
-                                  size_t maxLines, EpdFontFamily::Style style = EpdFontFamily::REGULAR) {
-  std::vector<std::string> lines;
-  lines.reserve(maxLines);
-  std::string line;
-  size_t pos = 0;
-  while (pos < text.size() && lines.size() < maxLines) {
-    size_t next = text.find(' ', pos);
-    if (next == std::string::npos) next = text.size();
-    const std::string word = text.substr(pos, next - pos);
-    pos = next + 1;
-    if (word.empty()) continue;
-    const std::string candidate = line.empty() ? word : line + " " + word;
-    if (r.getTextWidth(fontId, candidate.c_str(), style) <= maxWidth || line.empty()) {
-      line = candidate;
-    } else {
-      lines.push_back(line);
-      line = word;
-    }
-  }
-  if (!line.empty() && lines.size() < maxLines) lines.push_back(line);
-  if (pos < text.size() && !lines.empty()) lines.back() += "…";
-  return lines;
-}
-
-}  // namespace
-
 bool renderDashboard(const GfxRenderer& renderer) {
   const int W = renderer.getScreenWidth();
   const int margin = 28;
@@ -74,11 +43,11 @@ bool renderDashboard(const GfxRenderer& renderer) {
     const int tx = margin + COVER_W + 20;
     const int tw = W - tx - margin;
     int ty = y + 6;
-    for (const auto& l : wrapText(renderer, UI_12_FONT_ID, book.title, tw, 3, EpdFontFamily::BOLD)) {
+    for (const auto& l : render::wrapText(renderer, UI_12_FONT_ID, book.title, tw, 3, EpdFontFamily::BOLD)) {
       renderer.drawText(UI_12_FONT_ID, tx, ty, l.c_str(), true, EpdFontFamily::BOLD);
       ty += 28;
     }
-    for (const auto& l : wrapText(renderer, UI_10_FONT_ID, book.author, tw, 2)) {
+    for (const auto& l : render::wrapText(renderer, UI_10_FONT_ID, book.author, tw, 2)) {
       renderer.drawText(UI_10_FONT_ID, tx, ty, l.c_str());
       ty += 24;
     }
@@ -95,7 +64,10 @@ bool renderDashboard(const GfxRenderer& renderer) {
   // Today and streak.
   StatsSummary s;
   std::vector<DayTotal> days;
-  ReadingStats::get().summarize(s, &days);
+  if (!ReadingStats::get().summarize(s, &days) && recent.empty()) {
+    // Nothing trustworthy to show: let the caller draw the default screen.
+    return false;
+  }
   const uint32_t goal = Shelves::dailyGoalMinutes();
   render::formatDuration(s.todaySecs, dur, sizeof(dur));
   snprintf(buf, sizeof(buf), "%s: %s / %u %s", tr(STR_INKLINK_TODAY), dur, static_cast<unsigned>(goal),
@@ -134,7 +106,7 @@ bool renderQuote(const GfxRenderer& renderer) {
   const int margin = 44;
   renderer.clearScreen();
 
-  const auto lines = wrapText(renderer, NOTOSERIF_16_FONT_ID, text, W - 2 * margin, 16);
+  const auto lines = render::wrapText(renderer, NOTOSERIF_16_FONT_ID, text, W - 2 * margin, 16);
   constexpr int LINE_H = 34;
   const int blockH = static_cast<int>(lines.size()) * LINE_H;
   int y = (H - blockH) / 2 - 20;
@@ -150,7 +122,7 @@ bool renderQuote(const GfxRenderer& renderer) {
   renderer.drawLine(W - margin - 120, y, W - margin, y, 2, true);
   y += 16;
   if (!title.empty()) {
-    for (const auto& l : wrapText(renderer, UI_10_FONT_ID, title, W - 2 * margin, 2, EpdFontFamily::ITALIC)) {
+    for (const auto& l : render::wrapText(renderer, UI_10_FONT_ID, title, W - 2 * margin, 2, EpdFontFamily::ITALIC)) {
       const int tw = renderer.getTextWidth(UI_10_FONT_ID, l.c_str(), EpdFontFamily::ITALIC);
       renderer.drawText(UI_10_FONT_ID, W - margin - tw, y, l.c_str(), true, EpdFontFamily::ITALIC);
       y += 24;

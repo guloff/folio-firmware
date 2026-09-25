@@ -41,6 +41,11 @@ void drawCell(const GfxRenderer& r, int x, int y, int size, int level) {
     case 2:
       r.fillRectDither(x, y, size, size, Color::DarkGray);
       break;
+    case 3:
+      // Black with a light core: distinct from the solid top level.
+      r.fillRect(x, y, size, size, true);
+      if (size >= 5) r.fillRectDither(x + 2, y + 2, size - 4, size - 4, Color::LightGray);
+      break;
     default:
       r.fillRect(x, y, size, size, true);
       break;
@@ -125,6 +130,59 @@ bool drawBookCover(const GfxRenderer& renderer, const std::string& bookPath, con
     renderer.drawRect(x, y, w, h, true);
   }
   return drawn;
+}
+
+namespace {
+
+// Drops the last UTF-8 code point.
+void popCodePoint(std::string& s) {
+  while (!s.empty()) {
+    const unsigned char c = static_cast<unsigned char>(s.back());
+    s.pop_back();
+    if ((c & 0xC0) != 0x80) break;
+  }
+}
+
+std::string fitWithEllipsis(const GfxRenderer& r, int fontId, std::string s, int maxWidth,
+                            EpdFontFamily::Style style) {
+  while (!s.empty() && r.getTextWidth(fontId, (s + "…").c_str(), style) > maxWidth) popCodePoint(s);
+  return s + "…";
+}
+
+}  // namespace
+
+std::vector<std::string> wrapText(const GfxRenderer& r, const int fontId, const std::string& text, const int maxWidth,
+                                  const size_t maxLines, const EpdFontFamily::Style style) {
+  std::vector<std::string> lines;
+  if (maxLines == 0) return lines;
+  lines.reserve(maxLines);
+  std::string line;
+  size_t pos = 0;
+  bool truncated = false;
+  while (pos < text.size()) {
+    size_t next = text.find(' ', pos);
+    if (next == std::string::npos) next = text.size();
+    std::string word = text.substr(pos, next - pos);
+    pos = next + 1;
+    if (word.empty()) continue;
+    if (r.getTextWidth(fontId, word.c_str(), style) > maxWidth) word = fitWithEllipsis(r, fontId, word, maxWidth, style);
+    const std::string candidate = line.empty() ? word : line + " " + word;
+    if (line.empty() || r.getTextWidth(fontId, candidate.c_str(), style) <= maxWidth) {
+      line = candidate;
+      continue;
+    }
+    if (lines.size() + 1 == maxLines) {
+      truncated = true;
+      break;
+    }
+    lines.push_back(line);
+    line = word;
+  }
+  if (!line.empty()) {
+    if (truncated) line = fitWithEllipsis(r, fontId, line, maxWidth, style);
+    lines.push_back(line);
+  }
+  return lines;
 }
 
 void formatDuration(const uint32_t secs, char* buf, const size_t size) {

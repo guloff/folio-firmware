@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 #include "InkLinkClock.h"
 #include "JsonLines.h"
@@ -19,6 +20,14 @@ time_t nowOrZero() {
   time_t t = 0;
   clock::nowUtc(t);
   return t;
+}
+
+// Longest prefix of s with at most maxBytes bytes that ends on a UTF-8 boundary.
+std::string truncateUtf8(const std::string& s, size_t maxBytes) {
+  if (s.size() <= maxBytes) return s;
+  size_t cut = maxBytes;
+  while (cut > 0 && (static_cast<unsigned char>(s[cut]) & 0xC0) == 0x80) cut--;
+  return s.substr(0, cut) + "…";
 }
 
 void makeId(char* buf, size_t size) {
@@ -62,7 +71,8 @@ bool Annotations::addHighlight(const HighlightRecord& rec, std::string* idOut) {
   doc["id"] = id;
   doc["b"] = rec.book.c_str();
   doc["t"] = rec.title.c_str();
-  doc["x"] = rec.text.c_str();
+  const std::string text = truncateUtf8(rec.text, MAX_TEXT_BYTES);
+  doc["x"] = text.c_str();
   doc["n"] = "";
   doc["ch"] = rec.chapter.c_str();
   doc["c"] = rec.percent;
@@ -76,7 +86,8 @@ bool Annotations::addHighlight(const HighlightRecord& rec, std::string* idOut) {
 }
 
 bool Annotations::updateHighlightNote(const char* id, const char* note) {
-  IdCtx ctx{id, note ? note : "", false};
+  const std::string capped = truncateUtf8(note ? note : "", MAX_NOTE_BYTES);
+  IdCtx ctx{id, capped.c_str(), false};
   return jsonl::rewrite(HIGHLIGHTS_PATH, rewriteHighlight, &ctx) && ctx.found;
 }
 

@@ -289,7 +289,12 @@ void XtcReaderActivity::renderPage() {
 }
 
 bool XtcReaderActivity::pageTurn(bool isForward) {
-  inklink::ReadingStats::get().notePageTurn(isForward);
+  const bool moved = pageTurnMove(isForward);
+  if (moved) inklink::ReadingStats::get().notePageTurn(isForward);
+  return moved;
+}
+
+bool XtcReaderActivity::pageTurnMove(bool isForward) {
   if (!xtc) return false;
   if (isForward) {
     if (currentPage < xtc->getPageCount()) {
@@ -306,7 +311,13 @@ bool XtcReaderActivity::pageTurn(bool isForward) {
 }
 
 bool XtcReaderActivity::skipPages(int amount) {
-  inklink::ReadingStats::get().notePageTurn(amount > 0);
+  const bool moved = skipPagesMove(amount);
+  // A chapter jump is reading activity but not a read page.
+  if (moved) inklink::ReadingStats::get().notePageTurn(false);
+  return moved;
+}
+
+bool XtcReaderActivity::skipPagesMove(int amount) {
   if (!xtc) return false;
   int newPage = static_cast<int>(currentPage) + amount;
   if (newPage < 0) newPage = 0;

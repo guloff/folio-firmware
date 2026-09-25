@@ -190,6 +190,10 @@ class EpubReaderActivity final : public ReaderActivity {
   void renderBook() override;
   void onEndOfBookRendered() override;
 
+  // Position changes behind pageTurn()/skipPages(), which add session accounting.
+  bool pageTurnMove(bool isForward);
+  bool skipPagesMove(int amount);
+
  public:
   explicit EpubReaderActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, std::string bookPath,
                               bool allowFastInitialRefresh)

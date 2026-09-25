@@ -46,6 +46,10 @@ class TxtReaderActivity final : public ReaderActivity {
   std::string getBookTitle() const override { return txt ? txt->getTitle() : ""; }
   void renderBook() override;
 
+  // Position changes behind pageTurn()/skipPages(), which add session accounting.
+  bool pageTurnMove(bool isForward);
+  bool skipPagesMove(int amount);
+
  public:
   explicit TxtReaderActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, std::string bookPath,
                              bool allowFastInitialRefresh)

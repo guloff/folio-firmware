@@ -3,9 +3,10 @@
 #include <ArduinoJson.h>
 #include <HalStorage.h>
 #include <Logging.h>
-#include <PersistableStore.h>
 
 #include <cstring>
+
+#include "JsonLines.h"
 
 namespace inklink {
 
@@ -15,14 +16,45 @@ bool validStatus(const char* s) {
   return strcmp(s, "want") == 0 || strcmp(s, "reading") == 0 || strcmp(s, "done") == 0 || strcmp(s, "dropped") == 0;
 }
 
-bool loadDoc(JsonDocument& doc) { return PersistableStoreBase::readDocFromFile(Shelves::PATH, doc); }
+enum class Load { Missing, Ok, Corrupt };
+
+// Reads the whole document (size-checked, so it never meets a truncating reader).
+Load loadDoc(JsonDocument& doc) {
+  jsonl::recoverTmp(Shelves::PATH);
+  if (!Storage.exists(Shelves::PATH)) return Load::Missing;
+  HalFile f = Storage.open(Shelves::PATH, O_RDONLY);
+  if (!f) {
+    LOG_ERR("INKLINK", "library.json unreadable");
+    return Load::Corrupt;
+  }
+  const size_t size = f.fileSize();
+  if (size == 0 || size > Shelves::MAX_DOC_BYTES) {
+    LOG_ERR("INKLINK", "library.json has bad size %u", static_cast<unsigned>(size));
+    return Load::Corrupt;
+  }
+  std::string text(size, '\0');
+  if (f.read(text.data(), size) != static_cast<int>(size) ||
+      deserializeJson(doc, text) != DeserializationError::Ok || !doc.is<JsonObject>()) {
+    LOG_ERR("INKLINK", "library.json corrupt");
+    return Load::Corrupt;
+  }
+  return Load::Ok;
+}
+
+bool saveDoc(const JsonDocument& doc) {
+  std::string out;
+  serializeJson(doc, out);
+  return jsonl::writeAtomic(Shelves::PATH, out);
+}
 
 }  // namespace
 
 bool Shelves::loadShelves(std::vector<Shelf>& out) {
   out.clear();
   JsonDocument doc;
-  if (!loadDoc(doc)) return true;  // no document yet = no shelves
+  const Load state = loadDoc(doc);
+  if (state == Load::Missing) return true;  // no document yet = no shelves
+  if (state == Load::Corrupt) return false;
   JsonArrayConst shelves = doc["shelves"].as<JsonArrayConst>();
   out.reserve(shelves.size());
   for (JsonObjectConst s : shelves) {
@@ -42,13 +74,13 @@ bool Shelves::loadShelves(std::vector<Shelf>& out) {
 
 std::string Shelves::statusOf(const std::string& path) {
   JsonDocument doc;
-  if (!loadDoc(doc)) return "";
+  if (loadDoc(doc) != Load::Ok) return "";
   return doc["status"][path.c_str()] | "";
 }
 
 uint32_t Shelves::dailyGoalMinutes() {
   JsonDocument doc;
-  if (!loadDoc(doc)) return DEFAULT_GOAL_MINUTES;
+  if (loadDoc(doc) != Load::Ok) return DEFAULT_GOAL_MINUTES;
   const uint32_t goal = doc["goals"]["dailyMinutes"] | DEFAULT_GOAL_MINUTES;
   return goal > 0 && goal <= 24 * 60 ? goal : DEFAULT_GOAL_MINUTES;
 }
@@ -80,8 +112,7 @@ bool Shelves::replaceDocument(const char* json, const size_t len, const char*& e
     }
   }
   doc["version"] = 1;
-  Storage.ensureDirectoryExists("/.crosspoint/inklink");
-  if (!PersistableStoreBase::writeDocToFile(PATH, doc)) {
+  if (!saveDoc(doc)) {
     error = "write failed";
     return false;
   }
@@ -89,18 +120,37 @@ bool Shelves::replaceDocument(const char* json, const size_t len, const char*& e
 }
 
 bool Shelves::setStatus(const std::string& path, const char* status) {
+  if (status && status[0] && !validStatus(status)) return false;
   JsonDocument doc;
-  loadDoc(doc);
-  if (!doc.is<JsonObject>()) doc.to<JsonObject>();
+  const Load state = loadDoc(doc);
+  if (state == Load::Corrupt) {
+    // Never replace a document we couldn't read with a near-empty one.
+    LOG_ERR("INKLINK", "status not saved: library.json unreadable");
+    return false;
+  }
+  if (state == Load::Missing) doc.to<JsonObject>();
   if (!status || !status[0]) {
     doc["status"].as<JsonObject>().remove(path.c_str());
   } else {
-    if (!validStatus(status)) return false;
     doc["status"][path.c_str()] = status;
   }
   doc["version"] = 1;
-  Storage.ensureDirectoryExists("/.crosspoint/inklink");
-  return PersistableStoreBase::writeDocToFile(PATH, doc);
+  return saveDoc(doc);
+}
+
+int Shelves::readDocument(std::string& json) {
+  JsonDocument doc;
+  switch (loadDoc(doc)) {
+    case Load::Missing:
+      return 0;
+    case Load::Corrupt:
+      return -1;
+    case Load::Ok:
+      break;
+  }
+  json.clear();
+  serializeJson(doc, json);
+  return 1;
 }
 
 void Shelves::autoUpdateStatus(const std::string& path, const int percent) {

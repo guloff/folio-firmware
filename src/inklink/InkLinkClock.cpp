@@ -77,8 +77,13 @@ bool setFromCompanion(const time_t utc, const int tzOffsetMinutes, const bool ap
   }
   // A named zone the user picked on the device wins (it knows DST rules); a
   // never-chosen zone follows the phone's current offset.
-  if (applyOffset && SETTINGS.clockTimezone == 255 && tzOffsetMinutes > -15 * 60 && tzOffsetMinutes < 15 * 60) {
-    const int q = 48 + tzOffsetMinutes / 15;
+  // Real-world offsets span UTC-12:00..UTC+14:00; the legacy setting stores
+  // quarter hours biased by 48 (0..104).
+  const bool offsetValid = tzOffsetMinutes >= -12 * 60 && tzOffsetMinutes <= 14 * 60;
+  if (applyOffset && !offsetValid) LOG_ERR("INKLINK", "Ignoring timezone offset %d min", tzOffsetMinutes);
+  if (applyOffset && offsetValid && SETTINGS.clockTimezone == 255) {
+    const int rounded = tzOffsetMinutes >= 0 ? (tzOffsetMinutes + 7) / 15 : -((-tzOffsetMinutes + 7) / 15);
+    const int q = 48 + rounded;
     if (SETTINGS.clockUtcOffsetQ != q) {
       SETTINGS.clockUtcOffsetQ = static_cast<uint8_t>(q);
       settingsDirty = true;

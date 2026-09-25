@@ -1072,7 +1072,12 @@ void EpubReaderActivity::toggleAutoPageTurn(const uint8_t selectedPageTurnOption
 }
 
 bool EpubReaderActivity::pageTurn(bool isForwardTurn) {
-  inklink::ReadingStats::get().notePageTurn(isForwardTurn);
+  const bool moved = pageTurnMove(isForwardTurn);
+  if (moved) inklink::ReadingStats::get().notePageTurn(isForwardTurn);
+  return moved;
+}
+
+bool EpubReaderActivity::pageTurnMove(bool isForwardTurn) {
   if (!section) return false;
   {
     RenderLock lock;
@@ -1114,7 +1119,13 @@ bool EpubReaderActivity::pageTurn(bool isForwardTurn) {
 }
 
 bool EpubReaderActivity::skipPages(int amount) {
-  inklink::ReadingStats::get().notePageTurn(amount > 0);
+  const bool moved = skipPagesMove(amount);
+  // A chapter jump is reading activity but not a read page.
+  if (moved) inklink::ReadingStats::get().notePageTurn(false);
+  return moved;
+}
+
+bool EpubReaderActivity::skipPagesMove(int amount) {
   if (!section) return false;
   if (amount > 0) {
     RenderLock lock;

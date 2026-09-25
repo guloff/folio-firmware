@@ -139,6 +139,14 @@ void ReadingStatsActivity::render(RenderLock&&) {
   int y = metrics.topPadding + metrics.headerHeight + metrics.verticalSpacing + 8;
   char buf[96];
   char dur[40];
+  if (!loaded) {
+    // Zeros would look like real data; say what happened instead.
+    renderer.drawText(UI_12_FONT_ID, margin, y, tr(STR_INKLINK_STATS_ERROR), true, EpdFontFamily::BOLD);
+    const auto labels = mappedInput.mapLabels(tr(STR_BACK), "", "", "");
+    GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
+    renderer.displayBuffer();
+    return;
+  }
 
   // Today vs goal.
   inklink::render::formatDuration(summary.todaySecs, dur, sizeof(dur));
@@ -194,6 +202,12 @@ ShelvesActivity::ShelvesActivity(GfxRenderer& renderer, MappedInputManager& mapp
 void ShelvesActivity::onEnter() {
   UiListActivity::onEnter();
   inklink::Shelves::loadShelves(shelves);
+  // Books deleted or moved on the card would be dead rows.
+  for (auto& shelf : shelves) {
+    shelf.books.erase(std::remove_if(shelf.books.begin(), shelf.books.end(),
+                                     [](const std::string& p) { return !Storage.exists(p.c_str()); }),
+                      shelf.books.end());
+  }
   openShelf = -1;
   rebuildRows();
 }
@@ -271,8 +285,7 @@ void ShelvesActivity::activateIndex(const int index) {
     rebuildRows();
     return;
   }
-  const std::string path = shelves[openShelf].books[index];
-  if (Storage.exists(path.c_str())) activityManager.goToReader(path);
+  activityManager.goToReader(shelves[openShelf].books[index]);
 }
 
 void ShelvesActivity::onBackButton() {
@@ -293,6 +306,7 @@ namespace {
 struct CollectCtx {
   std::vector<std::string>* texts;
   std::vector<std::string>* titles;
+  std::vector<std::string>* books;
   size_t max;
 };
 
@@ -300,10 +314,12 @@ bool collectHighlight(JsonObjectConst obj, void* raw) {
   auto* ctx = static_cast<CollectCtx*>(raw);
   ctx->texts->emplace_back(obj["x"] | "");
   ctx->titles->emplace_back(obj["t"] | "");
+  ctx->books->emplace_back(obj["b"] | "");
   // Keep only the newest `max` (file order is oldest first).
   if (ctx->texts->size() > ctx->max) {
     ctx->texts->erase(ctx->texts->begin());
     ctx->titles->erase(ctx->titles->begin());
+    ctx->books->erase(ctx->books->begin());
   }
   return true;
 }
@@ -313,12 +329,15 @@ void HighlightsActivity::onEnter() {
   UiListActivity::onEnter();
   texts.clear();
   titles.clear();
+  books.clear();
   texts.reserve(MAX_ITEMS + 1);
   titles.reserve(MAX_ITEMS + 1);
-  CollectCtx ctx{&texts, &titles, MAX_ITEMS};
+  books.reserve(MAX_ITEMS + 1);
+  CollectCtx ctx{&texts, &titles, &books, MAX_ITEMS};
   inklink::jsonl::forEach(inklink::Annotations::HIGHLIGHTS_PATH, collectHighlight, &ctx);
   std::reverse(texts.begin(), texts.end());
   std::reverse(titles.begin(), titles.end());
+  std::reverse(books.begin(), books.end());
   rowItems.clear();
   rowItems.reserve(texts.size());
   for (size_t i = 0; i < texts.size(); i++) {
@@ -331,6 +350,14 @@ void HighlightsActivity::onEnter() {
 }
 
 const char* HighlightsActivity::headerTitle() const { return tr(STR_INKLINK_HIGHLIGHTS); }
+
+void HighlightsActivity::activateIndex(const int index) {
+  if (index < 0 || index >= static_cast<int>(books.size())) return;
+  const std::string& path = books[index];
+  if (path.empty() || !Storage.exists(path.c_str())) return;
+  app.clearTapFlash();
+  activityManager.goToReader(path);
+}
 
 void HighlightsActivity::buildScreen(UiScreen& screen) {
   applyListMargins(renderer, screen);

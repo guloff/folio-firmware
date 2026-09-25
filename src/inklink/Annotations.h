@@ -23,6 +23,9 @@ class Annotations {
  public:
   static constexpr const char* HIGHLIGHTS_PATH = "/.crosspoint/inklink/highlights.jsonl";
   static constexpr const char* VOCAB_PATH = "/.crosspoint/inklink/vocab.jsonl";
+  // Caps keep every record well under jsonl::MAX_LINE.
+  static constexpr size_t MAX_TEXT_BYTES = 4000;
+  static constexpr size_t MAX_NOTE_BYTES = 2000;
 
   // Returns false on I/O failure. `idOut` (optional) receives the new id.
   static bool addHighlight(const HighlightRecord& rec, std::string* idOut = nullptr);

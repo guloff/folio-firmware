@@ -78,11 +78,13 @@ class HighlightsActivity final : public UiListActivity {
   static constexpr size_t MAX_ITEMS = 200;
   std::vector<std::string> texts;
   std::vector<std::string> titles;
+  std::vector<std::string> books;
   std::vector<freeink::ui::ListItem> rowItems;
   freeink::ui::ListItem placeholder{};
 
   int listCount() const override { return static_cast<int>(rowItems.size()); }
   const char* headerTitle() const override;
   void buildScreen(UiScreen& screen) override;
-  void activateIndex(int) override {}
+  // Opens the highlighted book (at its saved reading position).
+  void activateIndex(int index) override;
 };

@@ -35,6 +35,7 @@ class FolioHomeActivity final : public Activity {
   inklink::StatsSummary summary;
   uint32_t goalMinutes = 0;
   int currentPercent = -1;
+  std::vector<int> recentPercents;  // parallel to `recent`
   uint32_t secsLeftEstimate = 0;  // 0 = not enough history for an estimate
   std::vector<Target> targets;
   int focus = 0;

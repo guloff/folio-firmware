@@ -57,15 +57,24 @@ class ReadingStats {
   void endSession(int endPercent);
   bool sessionOpen() const { return open_; }
 
-  // Per-day totals, ascending by day, only days with activity. Sessions with an
-  // unknown date (clock never set) are excluded here but still count in totals.
-  bool loadDays(std::vector<DayTotal>& out) const;
+  // Totals, streaks and (optionally) per-day totals ascending by day, only days
+  // with activity. Sessions with an unknown date (clock never set) count in
+  // totals but not in days. False when the journal can't be read.
   bool summarize(StatsSummary& out, std::vector<DayTotal>* daysOut = nullptr) const;
   bool loadBookTotals(std::vector<BookTotal>& out) const;
+  // Reading history for one book (secs == 0 when none).
+  BookTotal bookTotal(const std::string& path) const;
 
  private:
   ReadingStats() = default;
-  void accrue();
+  void accrue(bool closing);
+  // Aggregates parsed from sessions.jsonl, reused while the file size is
+  // unchanged (the journal is append-only, so size identifies its content).
+  bool refreshCache() const;
+  mutable int64_t cachedSize = -1;
+  mutable std::vector<DayTotal> cachedDays;
+  mutable std::vector<BookTotal> cachedBooks;
+  mutable StatsSummary cachedTotals;  // totals only; today/streak derived per call
 
   bool open_ = false;
   std::string path_;

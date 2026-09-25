@@ -42,34 +42,12 @@ constexpr int STRIP_COVER_W = 110;
 constexpr int STRIP_COVER_H = 165;
 constexpr int NAV_H = 86;
 
-// Greedy word wrap (splits at ASCII spaces only, safe for UTF-8).
+// Draws wrapped text and returns the number of lines used.
 int drawWrapped(const GfxRenderer& r, int fontId, const std::string& text, int x, int y, int maxWidth, int lineH,
                 int maxLines, EpdFontFamily::Style style) {
-  std::string line;
-  int lines = 0;
-  size_t pos = 0;
-  while (pos <= text.size() && lines < maxLines) {
-    size_t next = text.find(' ', pos);
-    if (next == std::string::npos) next = text.size();
-    const std::string word = text.substr(pos, next - pos);
-    pos = next + 1;
-    const std::string candidate = line.empty() ? word : line + " " + word;
-    if (!line.empty() && r.getTextWidth(fontId, candidate.c_str(), style) > maxWidth) {
-      const bool last = lines == maxLines - 1;
-      r.drawText(fontId, x, y + lines * lineH, last ? (line + "…").c_str() : line.c_str(), true, style);
-      lines++;
-      line = word;
-      if (last) return lines;
-    } else {
-      line = candidate;
-    }
-    if (next == text.size()) break;
-  }
-  if (!line.empty() && lines < maxLines) {
-    r.drawText(fontId, x, y + lines * lineH, line.c_str(), true, style);
-    lines++;
-  }
-  return lines;
+  const auto lines = inklink::render::wrapText(r, fontId, text, maxWidth, static_cast<size_t>(maxLines), style);
+  for (size_t i = 0; i < lines.size(); i++) r.drawText(fontId, x, y + static_cast<int>(i) * lineH, lines[i].c_str(), true, style);
+  return static_cast<int>(lines.size());
 }
 
 }  // namespace
@@ -85,19 +63,18 @@ void FolioHomeActivity::onEnter() {
     if (recent.size() > MAX_RECENT_STRIP) break;  // 1 on the card + strip
   }
   currentPercent = recent.empty() ? -1 : loadBookProgress(recent.front().path);
+  // Progress for the strip is read once here, not on every repaint.
+  recentPercents.clear();
+  recentPercents.reserve(recent.size());
+  for (const auto& b : recent) recentPercents.push_back(&b == &recent.front() ? currentPercent : loadBookProgress(b.path));
   // Personal pace: time spent in this book so far per percent read. Needs a
   // few percent and ten minutes of history to be more than noise.
   secsLeftEstimate = 0;
   if (!recent.empty() && currentPercent >= 3 && currentPercent < 100) {
-    std::vector<inklink::BookTotal> totals;
-    if (inklink::ReadingStats::get().loadBookTotals(totals)) {
-      for (const auto& t : totals) {
-        if (t.path == recent.front().path && t.secs >= 600) {
-          secsLeftEstimate = static_cast<uint32_t>(static_cast<uint64_t>(t.secs) * (100 - currentPercent) /
-                                                   static_cast<uint32_t>(currentPercent));
-          break;
-        }
-      }
+    const inklink::BookTotal t = inklink::ReadingStats::get().bookTotal(recent.front().path);
+    if (t.secs >= 600) {
+      secsLeftEstimate = static_cast<uint32_t>(static_cast<uint64_t>(t.secs) * (100 - currentPercent) /
+                                               static_cast<uint32_t>(currentPercent));
     }
   }
   inklink::ReadingStats::get().summarize(summary, &days);
@@ -208,7 +185,9 @@ void FolioHomeActivity::render(RenderLock&&) {
   int rightX = W - MARGIN - renderer.getTextWidth(UI_10_FONT_ID, buf);
   renderer.drawText(UI_10_FONT_ID, rightX, 16, buf);
   char clockBuf[12];
-  if (halClock.formatTime(clockBuf, sizeof(clockBuf), SETTINGS.clockFormat == 1)) {
+  time_t nowUtc = 0;
+  // An RTC that was never set would show a made-up time.
+  if (inklink::clock::nowUtc(nowUtc) && halClock.formatTime(clockBuf, sizeof(clockBuf), SETTINGS.clockFormat == 1)) {
     rightX -= renderer.getTextWidth(UI_10_FONT_ID, clockBuf) + 16;
     renderer.drawText(UI_10_FONT_ID, rightX, 16, clockBuf);
   }
@@ -262,7 +241,7 @@ void FolioHomeActivity::render(RenderLock&&) {
     for (const auto& t : targets) {
       if (t.kind != RECENT) continue;
       drawBookCover(recent[t.index].path, t.x, t.y, t.w, t.h);
-      const int pct = loadBookProgress(recent[t.index].path);
+      const int pct = recentPercents[t.index];
       if (pct >= 0) inklink::render::drawProgressBar(renderer, t.x, t.y + t.h + 6, t.w, 8, pct);
     }
   }

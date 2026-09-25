@@ -248,6 +248,12 @@ void DictionaryWordSelectActivity::loop() {
   }
 
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
+    if (highlightMode && anchor >= 0) {
+      // First Back drops the range start; the next one leaves the mode.
+      anchor = -1;
+      requestUpdate();
+      return;
+    }
     finish();
     return;
   }
@@ -466,7 +472,7 @@ void DictionaryWordSelectActivity::saveHighlight() {
   }
   const bool ok = inklink::Annotations::addHighlight(rec);
   popup = ok ? Popup::Saved : Popup::Error;
-  popupMsg = ok ? StrId::STR_INKLINK_HIGHLIGHT_SAVED : StrId::STR_DICT_ERROR;
+  popupMsg = ok ? StrId::STR_INKLINK_HIGHLIGHT_SAVED : StrId::STR_INKLINK_HIGHLIGHT_FAILED;
   popupTime = millis();
   requestUpdate();
 }
