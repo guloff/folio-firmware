@@ -16,6 +16,7 @@
 #include "TxtReaderActivity.h"
 #include "XtcReaderActivity.h"
 #include "inklink/ReadingStats.h"
+#include "inklink/Shelves.h"
 #include "util/BookProgress.h"
 
 ReaderActivity::ReaderActivity(const char* name, GfxRenderer& renderer, MappedInputManager& mappedInput,
@@ -81,7 +82,9 @@ void ReaderActivity::onExit() {
   Activity::onExit();
 
   if (inklink::ReadingStats::get().sessionOpen()) {
-    inklink::ReadingStats::get().endSession(loadBookProgress(bookPath));
+    const int percent = loadBookProgress(bookPath);
+    inklink::ReadingStats::get().endSession(percent);
+    inklink::Shelves::autoUpdateStatus(bookPath, percent);
   }
 
   // Keep rebuildable font buffers from pinning the heap between reading sessions.

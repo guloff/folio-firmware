@@ -410,8 +410,13 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
     }
   }
   if (highlightMode && anchor < 0 && popup == Popup::None) {
-    // First-time hint for the two-step selection.
-    renderer.drawCenteredText(UI_10_FONT_ID, 8, tr(STR_INKLINK_HIGHLIGHT_HINT));
+    // Two-step selection hint on a white band at the bottom edge, where it
+    // can't cover the words being chosen.
+    const int bandH = renderer.getLineHeight(UI_10_FONT_ID) + 12;
+    const int bandY = renderer.getScreenHeight() - bandH;
+    renderer.fillRect(0, bandY, renderer.getScreenWidth(), bandH, false);
+    renderer.drawLine(0, bandY, renderer.getScreenWidth() - 1, bandY, true);
+    renderer.drawCenteredText(UI_10_FONT_ID, bandY + 6, tr(STR_INKLINK_HIGHLIGHT_HINT));
   }
 
   drawHints();

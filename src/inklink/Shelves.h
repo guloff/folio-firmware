@@ -32,6 +32,9 @@ class Shelves {
   static bool replaceDocument(const char* json, size_t len, const char*& error);
   // Sets one book's status (used from the device's reader menu).
   static bool setStatus(const std::string& path, const char* status);
+  // After a reading session: finished books become "done", opened ones become
+  // "reading" unless the user already filed them as done/dropped.
+  static void autoUpdateStatus(const std::string& path, int percent);
 };
 
 }  // namespace inklink

@@ -103,4 +103,15 @@ bool Shelves::setStatus(const std::string& path, const char* status) {
   return PersistableStoreBase::writeDocToFile(PATH, doc);
 }
 
+void Shelves::autoUpdateStatus(const std::string& path, const int percent) {
+  const std::string current = statusOf(path);
+  const char* next = nullptr;
+  if (percent >= 100) {
+    if (current != "done") next = "done";
+  } else if (current.empty() || current == "want") {
+    next = "reading";
+  }
+  if (next) setStatus(path, next);
+}
+
 }  // namespace inklink
