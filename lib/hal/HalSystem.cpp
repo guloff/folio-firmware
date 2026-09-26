@@ -165,7 +165,7 @@ std::string getPanicInfo(bool full) {
   } else {
     std::string info;
 
-    info += "CrossPoint version: " CROSSPOINT_VERSION;
+    info += "Folio version: " CROSSPOINT_VERSION;
     // A lockup or hardware watchdog resets without running any panic hook, so
     // the reason and stack come back empty; the reset cause is then the only
     // way to tell those apart from a true panic.
