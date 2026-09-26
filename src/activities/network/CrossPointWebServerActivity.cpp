@@ -18,6 +18,7 @@
 #include "activities/settings/SdFirmwareUpdateActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/BleSync.h"
 #include "inklink/InkLinkApi.h"
 #include "util/QrUtils.h"
 #include "util/TaskWatchdog.h"
@@ -70,6 +71,9 @@ int barsForRssi(int rssi, int currentBars) {
 void CrossPointWebServerActivity::onEnter() {
   Activity::onEnter();
 
+  // BLE and Wi-Fi together don't fit the internal heap next to the web
+  // server; leaving this screen reboots, which brings BLE back.
+  inklink::blesync::shutdown();
   LOG_DBG("WEBACT", "Free heap at onEnter: %d bytes", ESP.getFreeHeap());
 
   // Heap-critical transition: WiFi (~45KB) plus the web server have to fit in

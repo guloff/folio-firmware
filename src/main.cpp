@@ -38,6 +38,7 @@
 #include "platform/UsbSerialJtagHandoff.h"
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
+#include "inklink/BleSync.h"
 #include "inklink/BootHealth.h"
 #include "util/Timezones.h"
 
@@ -288,6 +289,7 @@ void enterDeepSleep(bool fromTimeout = false) {
     Storage.remove(SLEEP_FRAME_FILE);
   }
 
+  inklink::blesync::shutdown();
   // Tear down WiFi so the modem power domain isn't held alive across deep sleep.
   // Wake from deep sleep is effectively a chip reset, so no state needs to survive.
   if (WiFi.getMode() != WIFI_MODE_NULL) {
@@ -582,6 +584,7 @@ void setup() {
   }
 
   allowSleepAt = millis() + 2000;
+  inklink::blesync::begin();
 }
 
 void loop() {
@@ -610,6 +613,8 @@ void loop() {
   }
 
   halTiltSensor.update(SETTINGS.tiltPageTurn, SETTINGS.orientation, activityManager.isReaderActivity());
+  // After the USB-drive branch above: BLE requests read the SD card.
+  inklink::blesync::loop();
 
   renderer.setFadingFix(SETTINGS.fadingFix);
 
@@ -646,7 +651,7 @@ void loop() {
   // Check for any user activity (button press or release) or active background work
   static unsigned long lastActivityTime = millis();
   if (gpio.wasAnyPressed() || gpio.wasAnyReleased() || gpio.wasTouchActivity() || halTiltSensor.hadActivity() ||
-      activityManager.preventAutoSleep()) {
+      activityManager.preventAutoSleep() || inklink::blesync::busy()) {
     lastActivityTime = millis();         // Reset inactivity timer
     powerManager.setPowerSaving(false);  // Restore normal CPU frequency on user activity
   }
