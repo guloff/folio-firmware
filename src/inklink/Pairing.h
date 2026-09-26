@@ -22,8 +22,9 @@ constexpr uint8_t PIN_ATTEMPTS = 5;
 // Registers pair/start and pair/finish and resets the per-session PIN state.
 void registerRoutes(WebServer& server);
 
-// True when the request carries a token of a paired device.
-bool authorized(WebServer& server);
+// True when the request carries a token of a paired device in
+// X-InkLink-Token; `allowBasic` (WebDAV) also accepts it as the Basic password.
+bool authorized(WebServer& server, bool allowBasic = false);
 // Sends 401 {"ok":false,"error":"pairing required"}; WebDAV requests also get
 // a Basic challenge so clients prompt for the token as a password.
 void sendPairingRequired(WebServer& server, bool webdav = false);

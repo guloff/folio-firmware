@@ -190,10 +190,13 @@ bool pinLive() {
   return pinActive;
 }
 
-// Pulls the token out of X-InkLink-Token or the Basic-auth password.
-bool requestToken(WebServer& s, char (&out)[TOKEN_HEX + 1]) {
+// Pulls the token out of X-InkLink-Token or, for WebDAV only, the Basic-auth
+// password: browsers replay cached Basic credentials on cross-site form
+// posts, a custom header they never add on their own.
+bool requestToken(WebServer& s, bool allowBasic, char (&out)[TOKEN_HEX + 1]) {
   String value = s.header(TOKEN_HEADER);
   if (value.length() == 0) {
+    if (!allowBasic) return false;
     const String auth = s.header("Authorization");
     if (!auth.startsWith("Basic ")) return false;
     // base64("name:token") of a 64-char token is at most ~130 chars.
@@ -403,9 +406,9 @@ bool tokenValid(const char* tokenHex, size_t len) {
   return matchesDigest(digest);
 }
 
-bool authorized(WebServer& s) {
+bool authorized(WebServer& s, bool allowBasic) {
   char token[TOKEN_HEX + 1];
-  if (!requestToken(s, token)) return false;
+  if (!requestToken(s, allowBasic, token)) return false;
   return tokenValid(token, TOKEN_HEX);
 }
 
@@ -415,7 +418,7 @@ void sendPairingRequired(WebServer& s, bool webdav) {
 }
 
 bool requireAuth(WebServer& s, bool webdav) {
-  if (authorized(s)) return true;
+  if (authorized(s, webdav)) return true;
   LOG_INF("PAIR", "401 %s", s.uri().c_str());
   sendPairingRequired(s, webdav);
   return false;

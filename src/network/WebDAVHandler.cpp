@@ -50,7 +50,7 @@ void WebDAVHandler::raw(WebServer& server, const String& uri, HTTPRaw& raw) {
   if (raw.status == RAW_START) {
     _putPath = getRequestPath(server);
     // Unpaired clients never get a temp file; handle() answers 401.
-    if (!inklink::pairing::authorized(server) || isProtectedPath(_putPath)) {
+    if (!inklink::pairing::authorized(server, /*allowBasic=*/true) || isProtectedPath(_putPath)) {
       _putOk = false;
       return;
     }
