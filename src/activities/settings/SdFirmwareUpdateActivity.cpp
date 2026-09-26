@@ -132,8 +132,12 @@ bool SdFirmwareUpdateActivity::validateFirmware() {
   const auto sig = inklink::fwsig::verifyFile(firmwarePath.c_str());
   signatureValid = sig == inklink::fwsig::Status::VALID;
   LOG_INF("FW", "image %s, signature %s", imageLabel.c_str(), inklink::fwsig::statusName(sig));
-  if (sig == inklink::fwsig::Status::INVALID || sig == inklink::fwsig::Status::ERROR) {
+  if (sig == inklink::fwsig::Status::INVALID) {
     errorMessage = tr(STR_FW_SIGNATURE_INVALID);
+    return false;
+  }
+  if (sig == inklink::fwsig::Status::ERROR) {  // unreadable image or OOM: not a verdict on the signature
+    errorMessage = tr(STR_FIRMWARE_FILE_OPEN_FAILED);
     return false;
   }
   if (sig == inklink::fwsig::Status::MISSING && requireSignature) {
