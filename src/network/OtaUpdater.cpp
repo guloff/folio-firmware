@@ -52,7 +52,10 @@ OtaUpdater::OtaUpdaterError OtaUpdater::checkForUpdate() {
       releaseParser.feed(reinterpret_cast<const char*>(data + offset), 1);
       offset++;
       if (releaseParser.foundTag()) {
-        snprintf(assetName, sizeof(assetName), "folio-%s%s.bin", releaseParser.getTagName(), assetSuffix);
+        // Tags are "vX.Y.Z", assets "folio-X.Y.Z-<board>.bin" (release.yml).
+        const char* version = releaseParser.getTagName();
+        if (*version == 'v' || *version == 'V') version++;
+        snprintf(assetName, sizeof(assetName), "folio-%s%s.bin", version, assetSuffix);
         releaseParser.setFirmwareAssetName(assetName);
         assetNameSet = true;
       }
