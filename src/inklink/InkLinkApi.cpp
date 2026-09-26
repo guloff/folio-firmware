@@ -636,30 +636,46 @@ void handleVocabDelete() {
 // ---- files: screenshots, sleep images, firmware ----------------------------
 
 // Lists regular, non-hidden files with the given extension in `dir`.
+// Lists `ext` files of `dir`; with `subdirs` also those one level down
+// (reader screenshots go to /screenshots/<book title>/), tagged with "book".
+bool streamDirFiles(ArrayStreamer& arr, JsonDocument& item, const std::string& dir, const char* ext, bool subdirs,
+                    const char* book) {
+  HalFile root = Storage.open(dir.c_str());
+  if (!root || !root.isDirectory()) return true;
+  char name[256];
+  const size_t extLen = strlen(ext);
+  for (HalFile f = root.openNextFile(); f; f = root.openNextFile()) {
+    f.getName(name, sizeof(name));
+    if (name[0] == '.') continue;
+    if (f.isDirectory()) {
+      if (!subdirs) continue;
+      const std::string sub = dir + "/" + name;
+      const std::string title = name;
+      f.close();
+      if (!streamDirFiles(arr, item, sub, ext, false, title.c_str())) return false;
+      continue;
+    }
+    const size_t len = strlen(name);
+    if (len < extLen || strcasecmp(name + len - extLen, ext) != 0) continue;
+    item.clear();
+    item["name"] = name;
+    item["path"] = (dir + "/" + name).c_str();
+    item["size"] = static_cast<uint64_t>(f.fileSize64());
+    if (book) item["book"] = book;
+    if (!arr.add(item)) return false;
+  }
+  return true;
+}
+
 void streamDir(Responder& out, const char* key, const char* dir, const char* ext, size_t skip = 0,
-               const char* trailer = nullptr) {
+               const char* trailer = nullptr, bool subdirs = false) {
   ArrayStreamer arr(out, key, skip);
   JsonDocument item;
-  HalFile root = Storage.open(dir);
-  if (root && root.isDirectory()) {
-    char name[256];
-    const size_t extLen = strlen(ext);
-    for (HalFile f = root.openNextFile(); f; f = root.openNextFile()) {
-      if (f.isDirectory()) continue;
-      f.getName(name, sizeof(name));
-      const size_t len = strlen(name);
-      if (name[0] == '.' || len < extLen || strcasecmp(name + len - extLen, ext) != 0) continue;
-      item.clear();
-      item["name"] = name;
-      item["path"] = (std::string(dir) + "/" + name).c_str();
-      item["size"] = static_cast<uint64_t>(f.fileSize64());
-      if (!arr.add(item)) break;
-    }
-  }
+  streamDirFiles(arr, item, dir, ext, subdirs, nullptr);
   arr.finish(trailer);
 }
 
-void handleScreenshots() { streamDir(http, "screenshots", "/screenshots", ".bmp"); }
+void handleScreenshots() { streamDir(http, "screenshots", "/screenshots", ".bmp", 0, nullptr, true); }
 
 void handleSleep() {
   // "/.sleep" wins over "/sleep" in SleepActivity; report whichever is live.
@@ -737,7 +753,9 @@ void sendOk(Responder& out) {
   out.send(200, OK, sizeof(OK) - 1);
 }
 
-void screenshots(Responder& out, size_t skip) { streamDir(out, "screenshots", "/screenshots", ".bmp", skip); }
+void screenshots(Responder& out, size_t skip) {
+  streamDir(out, "screenshots", "/screenshots", ".bmp", skip, nullptr, true);
+}
 
 void registerRoutes(WebServer& s) {
   server = &s;
