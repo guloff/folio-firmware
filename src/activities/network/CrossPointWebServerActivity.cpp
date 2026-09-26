@@ -25,9 +25,9 @@
 
 namespace {
 // AP Mode configuration
-constexpr const char* AP_SSID = "CrossPoint-Reader";
+constexpr const char* AP_SSID = "Folio-Reader";
 constexpr const char* AP_PASSWORD = nullptr;  // Open network for ease of use
-constexpr const char* AP_HOSTNAME = "crosspoint";
+constexpr const char* AP_HOSTNAME = "folio";
 constexpr uint8_t AP_CHANNEL = 1;
 constexpr uint8_t AP_MAX_CONNECTIONS = 4;
 constexpr int QR_CODE_WIDTH = 198;
@@ -48,7 +48,7 @@ void stopDnsServer() {
 void restartMdns(const char* hostname, const char* tag) {
   MDNS.end();
   if (MDNS.begin(hostname)) {
-    // Bonjour records let the InkLink iOS app find the reader without an IP.
+    // Bonjour records let the FolioLink iOS app find the reader without an IP.
     MDNS.addService("http", "tcp", 80);
     MDNS.addService("inklink", "tcp", 80);
     LOG_DBG(tag, "mDNS started: http://%s.local/", hostname);
