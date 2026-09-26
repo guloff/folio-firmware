@@ -117,8 +117,8 @@ void InkLinkHubActivity::activateIndex(const int index) {
 
 void InkLinkHubActivity::confirmResetPairing() {
   auto confirm =
-      makeUniqueNoThrow<ConfirmationActivity>(renderer, mappedInput, tr(STR_RESET_PAIRING), tr(STR_RESET_PAIRING_CONFIRM),
-                                              tr(STR_RESET_PAIRING_ACTION));
+      makeUniqueNoThrow<ConfirmationActivity>(renderer, mappedInput, tr(STR_RESET_PAIRING),
+                                              tr(STR_RESET_PAIRING_CONFIRM), tr(STR_RESET_PAIRING_ACTION));
   if (!confirm) {
     LOG_ERR("INKLINK", "OOM: reset pairing confirmation");
     return;
