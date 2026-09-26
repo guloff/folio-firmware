@@ -160,7 +160,7 @@ void SdFirmwareUpdateActivity::promptConfirmation() {
     body = imageLabel + " \xC2\xB7 " + tr(STR_FW_UNSIGNED_HINT);
   }
 
-  startActivityForResult(std::make_unique<ConfirmationActivity>(renderer, mappedInput, heading, body),
+  startActivityForResult(std::make_unique<ConfirmationActivity>(renderer, mappedInput, heading, body, tr(STR_FW_INSTALL)),
                          [this](const ActivityResult& result) { onConfirmationResult(result); });
 }
 

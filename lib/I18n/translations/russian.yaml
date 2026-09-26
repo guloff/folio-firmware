@@ -463,6 +463,8 @@ STR_FW_UNSIGNED_HINT: "Ставьте, только если собрали об
 STR_FW_SIGNATURE_INVALID: "Подпись не прошла"
 STR_FW_SIGNATURE_MISSING: "Нет файла подписи"
 STR_FW_UNKNOWN_IMAGE: "Неизвестный образ"
+STR_FW_INSTALL: "Установить"
+STR_RESET_PAIRING_ACTION: "Сбросить"
 STR_FIRMWARE_FILE_OPEN_FAILED: "Не удалось открыть файл"
 STR_FIRMWARE_WRITE_FAILED: "Ошибка записи прошивки"
 STR_FIRMWARE_UPDATE_DO_NOT_POWER_OFF: "Не выключайте питание!"
