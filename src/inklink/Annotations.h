@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <ctime>
 #include <string>
 
@@ -31,6 +32,9 @@ class Annotations {
   static bool addHighlight(const HighlightRecord& rec, std::string* idOut = nullptr);
   static bool updateHighlightNote(const char* id, const char* note);
   static bool deleteHighlight(const char* id);
+  // Bumped after every successful add/edit/delete so in-RAM views of the file
+  // (the reader's highlight marks) know when to reload. Main loop only.
+  static uint32_t generation();
   // Random highlight text for the quote sleep screen; false when none exist.
   static bool randomHighlight(std::string& text, std::string& title);
 

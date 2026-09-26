@@ -341,6 +341,8 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t folioHome = 1;
   // Folio: BLE sync channel for the InkLink app (X4 Pro builds with FOLIO_BLE_SYNC).
   uint8_t bluetoothSync = 0;
+  // Folio: draw saved highlights with a light-gray background on reader pages.
+  uint8_t showHighlights = 1;
   // Show the title and author read from inside each book rather than its
   // filename. Users can disable this to make index rebuilds skip EPUB parsing.
   uint8_t libraryUseMetadata = 1;

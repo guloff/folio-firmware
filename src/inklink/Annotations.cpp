@@ -16,6 +16,8 @@ namespace inklink {
 
 namespace {
 
+uint32_t highlightsGeneration = 0;
+
 time_t nowOrZero() {
   time_t t = 0;
   clock::nowUtc(t);
@@ -80,6 +82,7 @@ bool Annotations::addHighlight(const HighlightRecord& rec, std::string* idOut) {
   doc["pg"] = rec.page;
   doc["ts"] = static_cast<int64_t>(nowOrZero());
   if (!jsonl::append(HIGHLIGHTS_PATH, doc)) return false;
+  highlightsGeneration++;
   if (idOut) *idOut = id;
   LOG_INF("INKLINK", "highlight saved (%u chars)", static_cast<unsigned>(rec.text.size()));
   return true;
@@ -88,13 +91,19 @@ bool Annotations::addHighlight(const HighlightRecord& rec, std::string* idOut) {
 bool Annotations::updateHighlightNote(const char* id, const char* note) {
   const std::string capped = truncateUtf8(note ? note : "", MAX_NOTE_BYTES);
   IdCtx ctx{id, capped.c_str(), false};
-  return jsonl::rewrite(HIGHLIGHTS_PATH, rewriteHighlight, &ctx) && ctx.found;
+  const bool ok = jsonl::rewrite(HIGHLIGHTS_PATH, rewriteHighlight, &ctx) && ctx.found;
+  if (ok) highlightsGeneration++;
+  return ok;
 }
 
 bool Annotations::deleteHighlight(const char* id) {
   IdCtx ctx{id, nullptr, false};
-  return jsonl::rewrite(HIGHLIGHTS_PATH, rewriteHighlight, &ctx) && ctx.found;
+  const bool ok = jsonl::rewrite(HIGHLIGHTS_PATH, rewriteHighlight, &ctx) && ctx.found;
+  if (ok) highlightsGeneration++;
+  return ok;
 }
+
+uint32_t Annotations::generation() { return highlightsGeneration; }
 
 namespace {
 struct PickCtx {

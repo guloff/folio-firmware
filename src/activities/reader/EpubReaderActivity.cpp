@@ -46,6 +46,7 @@
 #include "util/BookmarkUtil.h"
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
+#include "inklink/HighlightMarks.h"
 #include "inklink/ReadingStats.h"
 
 namespace {
@@ -1666,13 +1667,22 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int or
     if (absoluteImageGrayscale) renderStatusBar();
   };
 
+  // Saved highlights: a dithered light-gray background drawn into the B/W
+  // frame before the text, so the text on top stays crisp.
+  inklink::marks::refresh(epub->getPath());
+  const auto drawHighlightMarks = [&]() {
+    inklink::marks::drawPage(renderer, *page, currentSpineIndex, fontId, orientedMarginLeft, orientedMarginTop);
+  };
+
   if (pageHasImagesNeedingDecode) {
+    drawHighlightMarks();
     page->renderWithImagePlaceholders(renderer, fontId, orientedMarginLeft, orientedMarginTop);
     renderStatusBar();
     renderer.displayBuffer(HalDisplay::FAST_REFRESH);
     renderer.clearScreen();
   }
 
+  drawHighlightMarks();
   page->render(renderer, fontId, orientedMarginLeft, orientedMarginTop);
   renderStatusBar();
   const auto tBwRender = millis();
