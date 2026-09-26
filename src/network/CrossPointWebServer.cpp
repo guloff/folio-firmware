@@ -96,6 +96,29 @@ bool isProtectedItemName(const String& name) {
   return false;
 }
 
+// /.crosspoint holds the device stores (Wi-Fi, OPDS and sync credentials,
+// settings, pairing). A normalized path at or below it is readable only by a
+// paired client. The first real segment is compared the way FAT resolves it:
+// "." segments skipped, case ignored, trailing dots and spaces dropped.
+bool isDeviceStorePath(const String& normalizedPath) {
+  static constexpr char STORE[] = ".crosspoint";
+  constexpr size_t STORE_LEN = sizeof(STORE) - 1;
+  const char* p = normalizedPath.c_str();
+  while (*p) {
+    while (*p == '/') p++;
+    const char* end = p;
+    while (*end && *end != '/') end++;
+    size_t len = static_cast<size_t>(end - p);
+    if (len == 1 && p[0] == '.') {
+      p = end;
+      continue;
+    }
+    while (len > 0 && (p[len - 1] == '.' || p[len - 1] == ' ')) len--;
+    return len == STORE_LEN && strncasecmp(p, STORE, STORE_LEN) == 0;
+  }
+  return false;
+}
+
 }  // namespace
 
 // File listing page template - now using generated headers:
@@ -540,6 +563,7 @@ void CrossPointWebServer::handleFileListData() const {
   if (server->hasArg("path")) {
     currentPath = normalizeWebPath(server->arg("path"));
   }
+  if (isDeviceStorePath(currentPath) && !inklink::pairing::requireAuth(*server)) return;
 
   server->setContentLength(CONTENT_LENGTH_UNKNOWN);
   server->send(200, "application/json", "");
@@ -587,6 +611,7 @@ void CrossPointWebServer::handleDownload() const {
     server->send(400, "text/plain", "Invalid path");
     return;
   }
+  if (isDeviceStorePath(itemPath) && !inklink::pairing::requireAuth(*server)) return;
 
   const String itemName = itemPath.substring(itemPath.lastIndexOf('/') + 1);
   if (itemName.startsWith(".")) {
