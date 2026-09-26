@@ -239,8 +239,35 @@ bool EpubReaderActivity::loadBook() {
     }
   }
 
+  if (hasInitialJump) applyInitialJump();
+
   loadCachedBookmarks();
   return true;
+}
+
+// Stored locations can outlive the layout they were taken in: the page index
+// is clamped once the section is paginated (render path), a negative page
+// means the chapter start, and a spine index the book no longer has falls
+// back to the stored book percent (or the reading position if unknown).
+void EpubReaderActivity::applyInitialJump() {
+  hasInitialJump = false;
+  const int spineCount = epub->getSpineItemsCount();
+  if (initialJumpSpine >= 0 && initialJumpSpine < spineCount) {
+    currentSpineIndex = initialJumpSpine;
+    const int page = std::clamp(initialJumpPage, 0, static_cast<int>(UINT16_MAX) - 1);
+    pendingPageJump = static_cast<uint16_t>(page);
+    nextPageNumber = page;
+    clearDeferredReposition();  // the old reading position must not remap the target page
+    LOG_INF("ERS", "Open at stored location: spine %d page %d", initialJumpSpine, page);
+    return;
+  }
+  if (initialJumpPercent >= 0) {
+    LOG_INF("ERS", "Stored spine %d out of range (%d), opening at %d%%", initialJumpSpine, spineCount,
+            initialJumpPercent);
+    jumpToPercent(initialJumpPercent);
+    return;
+  }
+  LOG_ERR("ERS", "Stored spine %d out of range (%d), keeping reading position", initialJumpSpine, spineCount);
 }
 
 ChapterPosition EpubReaderActivity::chapterPosition() const {
@@ -312,7 +339,7 @@ void EpubReaderActivity::showBuildPopup(GfxRenderer& renderer, int& pagesUntilFu
   buildPopupPending = false;
 }
 
-void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode) {
+void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode, const int startX, const int startY) {
   if (!highlightMode && SETTINGS.dictionaryName[0] == '\0') {
     showDictionaryMessage = true;
     dictionaryMessageTime = millis();
@@ -338,7 +365,8 @@ void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode) {
   context.page = section->currentPage;
   startActivityForResult(std::make_unique<DictionaryWordSelectActivity>(renderer, mappedInput, std::move(page),
                                                                         orientedMarginLeft, orientedMarginTop,
-                                                                        std::move(context), highlightMode),
+                                                                        std::move(context), highlightMode, startX,
+                                                                        startY),
                          [this](const ActivityResult&) { requestUpdate(); });
 }
 
@@ -598,6 +626,19 @@ void EpubReaderActivity::loop() {
         return;
       default:
         break;
+    }
+  }
+
+  // Touch equivalent of Menu -> Highlight -> Confirm: a long-press on the page
+  // opens highlight mode with the pressed word as the range start. The
+  // long-press suppresses the rest of the contact, so the lift is not also a
+  // page-turn tap.
+  if (!atEndOfBook && section && SETTINGS.touchReaderControls && mappedInput.hasTouch()) {
+    int pressX = 0;
+    int pressY = 0;
+    if (mappedInput.wasScreenLongPress(pressX, pressY)) {
+      openDictionaryWordSelect(true, pressX, pressY);
+      return;
     }
   }
 

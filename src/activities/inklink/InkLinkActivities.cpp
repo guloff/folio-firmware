@@ -326,19 +326,28 @@ struct CollectCtx {
   std::vector<std::string>* texts;
   std::vector<std::string>* titles;
   std::vector<std::string>* books;
+  std::vector<HighlightsActivity::Location>* locations;
   size_t max;
 };
+
+int16_t clampedInt(JsonObjectConst obj, const char* key, const int lo, const int hi) {
+  const int v = obj[key] | -1;
+  return static_cast<int16_t>(v < lo || v > hi ? -1 : v);
+}
 
 bool collectHighlight(JsonObjectConst obj, void* raw) {
   auto* ctx = static_cast<CollectCtx*>(raw);
   ctx->texts->emplace_back(obj["x"] | "");
   ctx->titles->emplace_back(obj["t"] | "");
   ctx->books->emplace_back(obj["b"] | "");
+  ctx->locations->push_back({clampedInt(obj, "sp", 0, INT16_MAX), clampedInt(obj, "pg", 0, INT16_MAX),
+                             static_cast<int8_t>(clampedInt(obj, "c", 0, 100))});
   // Keep only the newest `max` (file order is oldest first).
   if (ctx->texts->size() > ctx->max) {
     ctx->texts->erase(ctx->texts->begin());
     ctx->titles->erase(ctx->titles->begin());
     ctx->books->erase(ctx->books->begin());
+    ctx->locations->erase(ctx->locations->begin());
   }
   return true;
 }
@@ -349,23 +358,43 @@ void HighlightsActivity::onEnter() {
   texts.clear();
   titles.clear();
   books.clear();
+  locations.clear();
   texts.reserve(MAX_ITEMS + 1);
   titles.reserve(MAX_ITEMS + 1);
   books.reserve(MAX_ITEMS + 1);
-  CollectCtx ctx{&texts, &titles, &books, MAX_ITEMS};
+  locations.reserve(MAX_ITEMS + 1);
+  CollectCtx ctx{&texts, &titles, &books, &locations, MAX_ITEMS};
   inklink::jsonl::forEach(inklink::Annotations::HIGHLIGHTS_PATH, collectHighlight, &ctx);
   std::reverse(texts.begin(), texts.end());
   std::reverse(titles.begin(), titles.end());
   std::reverse(books.begin(), books.end());
+  std::reverse(locations.begin(), locations.end());
+  // A highlight outlives its book file: such rows stay readable but are
+  // disabled and say why. One existence check per distinct book.
+  subtitles.clear();
+  subtitles.reserve(texts.size());
+  std::string lastPath;
+  bool lastExists = false;
   rowItems.clear();
   rowItems.reserve(texts.size());
   for (size_t i = 0; i < texts.size(); i++) {
+    if (i == 0 || books[i] != lastPath) {
+      lastPath = books[i];
+      lastExists = !lastPath.empty() && Storage.exists(lastPath.c_str());
+    }
+    subtitles.push_back(titles[i]);
+    if (!lastExists) {
+      if (!subtitles.back().empty()) subtitles.back() += " \xC2\xB7 ";
+      subtitles.back() += tr(STR_INKLINK_BOOK_MISSING);
+    }
     fui::ListItem item;
     item.label = texts[i].c_str();
-    item.subtitle = titles[i].c_str();
     item.actionValue = static_cast<int16_t>(i);
+    item.enabled = lastExists;
     rowItems.push_back(item);
   }
+  // subtitles is complete: its c_str() pointers are stable from here on.
+  for (size_t i = 0; i < rowItems.size(); i++) rowItems[i].subtitle = subtitles[i].c_str();
 }
 
 const char* HighlightsActivity::headerTitle() const { return tr(STR_INKLINK_HIGHLIGHTS); }
@@ -373,9 +402,13 @@ const char* HighlightsActivity::headerTitle() const { return tr(STR_INKLINK_HIGH
 void HighlightsActivity::activateIndex(const int index) {
   if (index < 0 || index >= static_cast<int>(books.size())) return;
   const std::string& path = books[index];
-  if (path.empty() || !Storage.exists(path.c_str())) return;
+  if (path.empty() || !Storage.exists(path.c_str())) {
+    LOG_ERR("INKLINK", "highlight book missing: %s", path.c_str());
+    return;  // the row is shown disabled with "book not found"
+  }
+  const Location& at = locations[index];
   app.clearTapFlash();
-  activityManager.goToReader(path);
+  activityManager.goToReaderAt(path, at.spine, at.page, at.percent);
 }
 
 void HighlightsActivity::buildScreen(UiScreen& screen) {

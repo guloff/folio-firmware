@@ -88,6 +88,9 @@ class ActivityManager {
   void goToLibrary();
   void goToBrowser();
   void goToReader(std::string path, bool allowFastInitialRefresh = false);
+  // Opens a book at a stored spine/page (saved highlight); see
+  // ReaderActivity::setInitialPosition.
+  void goToReaderAt(std::string path, int spine, int page, int percent);
   void goToSleep(bool fromTimeout = false);
   void goToBoot();
   void goToFullScreenMessage(std::string message, EpdFontFamily::Style style = EpdFontFamily::REGULAR);

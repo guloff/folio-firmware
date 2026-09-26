@@ -24,6 +24,12 @@ class EpubReaderActivity final : public ReaderActivity {
   int currentSpineIndex = 0;
   int nextPageNumber = 0;
   std::optional<uint16_t> pendingPageJump;
+  // setInitialPosition(): applied once in loadBook, over progress.bin.
+  bool hasInitialJump = false;
+  int initialJumpSpine = -1;
+  int initialJumpPage = -1;
+  int initialJumpPercent = -1;
+  void applyInitialJump();
   std::string pendingAnchor;
   int cachedSpineIndex = 0;
   int cachedChapterTotalPageCount = 0;
@@ -161,7 +167,9 @@ class EpubReaderActivity final : public ReaderActivity {
   std::string moreRowValue(int row) const;
   void activateMoreRow(int row);
   void openFootnoteSelect(bool reopenMenuOnCancel);
-  void openDictionaryWordSelect(bool highlightMode = false);
+  // startX/startY: a long-pressed point on the page; that word starts the
+  // highlight range.
+  void openDictionaryWordSelect(bool highlightMode = false, int startX = -1, int startY = -1);
   bool launchKOReaderSync();
   unsigned long confirmLongPressThreshold() const;
   void toggleAutoPageTurn(uint8_t selectedPageTurnOption);
@@ -201,6 +209,13 @@ class EpubReaderActivity final : public ReaderActivity {
   ~EpubReaderActivity() override;
 
   void loop() override;
+
+  void setInitialPosition(int spine, int page, int percent) override {
+    initialJumpSpine = spine;
+    initialJumpPage = page;
+    initialJumpPercent = percent;
+    hasInitialJump = true;
+  }
 
   bool pageTurn(bool isForward) override;
   bool skipPages(int amount) override;

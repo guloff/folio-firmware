@@ -51,6 +51,9 @@ class Activity {
   virtual bool handleForcedRefresh() { return false; }
   virtual bool isHomeActivity() const { return false; }
   virtual bool handleHomeGesture() { return false; }
+  // True while the screen uses free-form drags itself (e.g. text selection):
+  // ActivityManager then skips the global edge gestures (Home, light panel).
+  virtual bool suppressesEdgeGestures() const { return false; }
   virtual ScreenshotInfo getScreenshotInfo() const { return {}; }
 
   // Start a new activity without destroying the current one

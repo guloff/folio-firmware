@@ -1,5 +1,7 @@
 #pragma once
 
+#include <HalMemory.h>
+
 #include <string>
 #include <vector>
 
@@ -17,6 +19,7 @@ class FolioHomeActivity final : public Activity {
       : Activity("FolioHome", renderer, mappedInput) {}
 
   void onEnter() override;
+  void onExit() override;
   void loop() override;
   void render(RenderLock&&) override;
   bool isHomeActivity() const override { return true; }
@@ -43,8 +46,20 @@ class FolioHomeActivity final : public Activity {
   bool focusVisible = false;
   std::vector<inklink::DayTotal> days;
 
+  // PSRAM copy of the composed screen WITHOUT the focus ring: covers are
+  // decoded from SD once per visit, then focus moves and returns from
+  // Shelves/Stats/Menu restore it and draw only the ring (FAST_REFRESH).
+  // Exactly one framebuffer in size, freed in onExit. Null (no PSRAM or OOM)
+  // falls back to the full compose on every render.
+  HalMemory::PsramBuffer baseFrame;
+  size_t baseFrameBytes = 0;
+  bool baseFrameValid = false;
+
   void layoutTargets();
+  void drawHeader() const;
+  void drawFocusRing() const;
   void activate(const Target& t);
   // Draws the book's cover thumbnail at height h, generating it on first use.
-  void drawBookCover(const std::string& bookPath, int x, int y, int w, int h) const;
+  void drawBookCover(const std::string& bookPath, int x, int y, int w, int h);
+  int coverSdReads = 0;  // per render, for the timing log
 };

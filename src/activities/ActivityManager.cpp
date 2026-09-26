@@ -103,7 +103,8 @@ void ActivityManager::loop() {
   }
 
   if (currentActivity) {
-    if (!currentActivity->isHomeActivity() && mappedInput.wasHomeGesture()) {
+    const bool edgeGestures = !currentActivity->suppressesEdgeGestures();
+    if (edgeGestures && !currentActivity->isHomeActivity() && mappedInput.wasHomeGesture()) {
       if (currentActivity->handleHomeGesture()) {
         return;
       }
@@ -124,7 +125,8 @@ void ActivityManager::loop() {
       // The header back button shares this band; its taps stay Back.
       statusBarTap = mappedInput.wasScreenTapped(tx, ty) && ty < 44 && !HeaderBackTapTarget::contains(tx, ty);
     }
-    if (currentActivity->name != "FrontlightPanel" && (statusBarTap || mappedInput.wasLightPanelGesture())) {
+    if (currentActivity->name != "FrontlightPanel" &&
+        (statusBarTap || (edgeGestures && mappedInput.wasLightPanelGesture()))) {
       pushActivity(std::make_unique<FrontlightPanelActivity>(renderer, mappedInput));
       return;
     }
@@ -308,6 +310,14 @@ void ActivityManager::goToReader(std::string path, const bool allowFastInitialRe
   if (activity) {
     replaceActivity(std::move(activity));
   }
+}
+
+void ActivityManager::goToReaderAt(std::string path, const int spine, const int page, const int percent) {
+  if (path.empty()) return;
+  auto activity = ReaderActivity::create(renderer, mappedInput, std::move(path), false);
+  if (!activity) return;  // create() logged the OOM
+  activity->setInitialPosition(spine, page, percent);
+  replaceActivity(std::move(activity));
 }
 
 void ActivityManager::goToSleep(bool fromTimeout) {

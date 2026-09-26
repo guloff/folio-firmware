@@ -54,6 +54,12 @@ class ReaderActivity : public Activity {
   void loop() override;
   void render(RenderLock&& lock) override;
 
+  // Open at a stored location (a saved highlight) instead of the reading
+  // position. Call before the activity is entered. Formats without spine
+  // pages ignore it. `percent` (book %, -1 = unknown) is the fallback when
+  // the spine no longer exists.
+  virtual void setInitialPosition(int spine, int page, int percent) {}
+
   bool isReaderActivity() const final { return true; }
   bool handleForcedRefresh() final;
 };

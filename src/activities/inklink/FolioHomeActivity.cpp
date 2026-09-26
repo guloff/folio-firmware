@@ -9,10 +9,12 @@
 #include <HalPowerManager.h>
 #include <HalStorage.h>
 #include <I18n.h>
+#include <Logging.h>
 #include <Memory.h>
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 
 #include "CrossPointSettings.h"
 #include "InkLinkActivities.h"
@@ -82,7 +84,21 @@ void FolioHomeActivity::onEnter() {
   layoutTargets();
   focus = 0;
   focusVisible = !BoardConfig::hasTouch();
+  baseFrameValid = false;
+  baseFrameBytes = renderer.getBufferSize();
+  baseFrame = HalMemory::allocatePsram(baseFrameBytes);
+  if (!baseFrame) {
+    LOG_ERR("FOLIO", "PSRAM frame cache unavailable (%u bytes); rendering uncached", unsigned(baseFrameBytes));
+    baseFrameBytes = 0;
+  }
   requestUpdate();
+}
+
+void FolioHomeActivity::onExit() {
+  baseFrame.reset();
+  baseFrameBytes = 0;
+  baseFrameValid = false;
+  Activity::onExit();
 }
 
 void FolioHomeActivity::layoutTargets() {
@@ -166,20 +182,19 @@ void FolioHomeActivity::loop() {
 }
 
 void FolioHomeActivity::drawBookCover(const std::string& bookPath, const int x, const int y, const int w,
-                                      const int h) const {
+                                      const int h) {
+  coverSdReads++;
   if (!inklink::render::drawBookCover(renderer, bookPath, x, y, w, h)) {
     renderer.drawIcon(BookIcon, x + (w - 32) / 2, y + (h - 32) / 2, 32);
   }
 }
 
-void FolioHomeActivity::render(RenderLock&&) {
-  renderer.clearScreen();
+// Brand, clock and battery. Redrawn on the cached-frame path too, so the
+// clock never goes stale while the ring moves.
+void FolioHomeActivity::drawHeader() const {
   const int W = renderer.getScreenWidth();
-  const int H = renderer.getScreenHeight();
-  char buf[96];
-  char dur[40];
-
-  // Header: brand, clock, battery.
+  char buf[16];
+  renderer.fillRect(0, 0, W, HEADER_H, false);
   renderer.drawText(UI_12_FONT_ID, MARGIN, 12, tr(STR_CROSSPOINT), true, EpdFontFamily::BOLD);
   snprintf(buf, sizeof(buf), "%u%%", static_cast<unsigned>(powerManager.getBatteryPercentage()));
   int rightX = W - MARGIN - renderer.getTextWidth(UI_10_FONT_ID, buf);
@@ -192,6 +207,44 @@ void FolioHomeActivity::render(RenderLock&&) {
     renderer.drawText(UI_10_FONT_ID, rightX, 16, clockBuf);
   }
   renderer.drawLine(MARGIN, HEADER_H, W - MARGIN, HEADER_H, true);
+}
+
+// Focus ring for button navigation (touch users never see it until a button
+// is pressed). Cover tiles get the ring just outside the art: drawn on top of
+// a dark cover it was invisible.
+void FolioHomeActivity::drawFocusRing() const {
+  if (!focusVisible || focus < 0 || focus >= static_cast<int>(targets.size())) return;
+  const Target& f = targets[focus];
+  if (f.kind == RECENT) {
+    renderer.drawRoundedRect(f.x - 5, f.y - 5, f.w + 10, f.h + 10, 3, 6, true);
+  } else {
+    renderer.drawRoundedRect(f.x + 2, f.y + 2, f.w - 4, f.h - 4, 3, 8, true);
+  }
+}
+
+void FolioHomeActivity::render(RenderLock&&) {
+  const unsigned long startMs = millis();
+  uint8_t* const fb = renderer.getFrameBuffer();
+  if (baseFrameValid && baseFrame && fb && renderer.getBufferSize() == baseFrameBytes) {
+    // Nothing on the page changed since the last compose: restore it, refresh
+    // the header, draw the ring. No SD access at all.
+    memcpy(fb, baseFrame.get(), baseFrameBytes);
+    drawHeader();
+    drawFocusRing();
+    const unsigned long composeMs = millis() - startMs;
+    renderer.displayBuffer(HalDisplay::FAST_REFRESH);
+    LOG_INF("FOLIO", "render cached: compose %lu ms, total %lu ms, cover SD reads 0", composeMs, millis() - startMs);
+    return;
+  }
+
+  coverSdReads = 0;
+  renderer.clearScreen();
+  const int W = renderer.getScreenWidth();
+  const int H = renderer.getScreenHeight();
+  char buf[96];
+  char dur[40];
+
+  drawHeader();
 
   // Continue-reading card.
   const int textX = MARGIN + COVER_W + 18;
@@ -281,11 +334,15 @@ void FolioHomeActivity::render(RenderLock&&) {
     for (int i = 0; i < 4; i++) renderer.fillRect(bx + i * 8, base - heights[i], 5, heights[i], true);
   }
 
-  // Focus ring for button navigation (touch users never see it move).
-  if (focusVisible && focus >= 0 && focus < static_cast<int>(targets.size())) {
-    const Target& f = targets[focus];
-    renderer.drawRoundedRect(f.x + 2, f.y + 2, f.w - 4, f.h - 4, 3, 8, true);
+  // Snapshot before the ring so later renders can reuse the whole page.
+  if (baseFrame && fb && renderer.getBufferSize() == baseFrameBytes) {
+    memcpy(baseFrame.get(), fb, baseFrameBytes);
+    baseFrameValid = true;
   }
+  drawFocusRing();
 
-  renderer.displayBuffer();
+  const unsigned long composeMs = millis() - startMs;
+  renderer.displayBuffer(HalDisplay::FAST_REFRESH);
+  LOG_INF("FOLIO", "render full: compose %lu ms, total %lu ms, cover SD reads %d", composeMs, millis() - startMs,
+          coverSdReads);
 }

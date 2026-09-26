@@ -75,17 +75,26 @@ class HighlightsActivity final : public UiListActivity {
   HighlightsActivity(GfxRenderer& renderer, MappedInputManager& mappedInput);
   void onEnter() override;
 
+  // Where each highlight was made (parallel to `books`); -1 = not recorded.
+  struct Location {
+    int16_t spine;
+    int16_t page;
+    int8_t percent;
+  };
+
  private:
   static constexpr size_t MAX_ITEMS = 200;
   std::vector<std::string> texts;
   std::vector<std::string> titles;
   std::vector<std::string> books;
+  std::vector<Location> locations;
+  std::vector<std::string> subtitles;  // title, or title + "book not found"
   std::vector<freeink::ui::ListItem> rowItems;
   freeink::ui::ListItem placeholder{};
 
   int listCount() const override { return static_cast<int>(rowItems.size()); }
   const char* headerTitle() const override;
   void buildScreen(UiScreen& screen) override;
-  // Opens the highlighted book (at its saved reading position).
+  // Opens the highlighted book at the highlight's page.
   void activateIndex(int index) override;
 };
