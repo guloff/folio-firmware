@@ -339,6 +339,8 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t showHiddenFiles = 0;
   // Folio: pocket-library home screen instead of the classic list home.
   uint8_t folioHome = 1;
+  // Folio: BLE sync channel for the InkLink app (X4 Pro builds with FOLIO_BLE_SYNC).
+  uint8_t bluetoothSync = 0;
   // Show the title and author read from inside each book rather than its
   // filename. Users can disable this to make index rebuilds skip EPUB parsing.
   uint8_t libraryUseMetadata = 1;
