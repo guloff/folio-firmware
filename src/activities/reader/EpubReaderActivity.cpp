@@ -267,6 +267,11 @@ void EpubReaderActivity::applyInitialJump() {
     jumpToPercent(initialJumpPercent);
     return;
   }
+  // Highlights saved before locations were recorded carry neither field.
+  if (initialJumpSpine < 0) {
+    LOG_DBG("ERS", "No stored location, opening at the reading position");
+    return;
+  }
   LOG_ERR("ERS", "Stored spine %d out of range (%d), keeping reading position", initialJumpSpine, spineCount);
 }
 
