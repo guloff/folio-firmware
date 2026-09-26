@@ -62,6 +62,10 @@ using namespace inklink::ble;
 // Apple's accessory guidelines list, so iOS discovers it promptly.
 constexpr uint16_t ADV_INTERVAL = 1636;
 constexpr size_t FRAMES_PER_LOOP = 8;
+// A central that hasn't authenticated by then is dropped: the reader serves
+// one connection and advertising stops while it lasts, so a silent stranger
+// would otherwise lock the owner's phone out.
+constexpr uint32_t AUTH_TIMEOUT_MS = 30000;
 // ATT application errors returned on a request write.
 constexpr int ATT_ERR_BUSY = 0x80;            // previous reply still being sent
 constexpr int ATT_ERR_NOT_SUBSCRIBED = 0x81;  // enable notifications first
@@ -90,6 +94,8 @@ bool failed = false;     // init failed; retried only when the setting changes
 bool memWarned = false;
 uint8_t lastSetting = 0xFF;
 uint32_t sessionGen = 0;
+uint32_t sessionStartMs = 0;
+bool authTimeoutSent = false;
 uint8_t ownAddrType = 0;
 uint16_t requestHandle = 0;
 uint16_t responseHandle = 0;
@@ -330,11 +336,20 @@ void loop() {
   const uint32_t gen = link.generation.load();
   if (gen != sessionGen) {
     sessionGen = gen;
+    sessionStartMs = millis();
+    authTimeoutSent = false;
     channel.resetSession();
     uint8_t phase = link.phase.load();
     if (phase == PROCESSING || (phase == READY && link.requestGen != gen)) {
       link.phase.compare_exchange_strong(phase, IDLE);
     }
+  }
+  const uint16_t conn = link.conn.load();
+  if (conn != BLE_HS_CONN_HANDLE_NONE && !channel.state().authorized && !authTimeoutSent &&
+      millis() - sessionStartMs > AUTH_TIMEOUT_MS) {
+    authTimeoutSent = true;
+    LOG_INF("BLE", "no auth within %u s: disconnecting", static_cast<unsigned>(AUTH_TIMEOUT_MS / 1000));
+    ble_gap_terminate(conn, BLE_ERR_REM_USER_CONN_TERM);
   }
   if (link.phase.load() == READY) {
     link.phase.store(PROCESSING);
@@ -342,7 +357,6 @@ void loop() {
   }
   if (link.phase.load() == PROCESSING && channel.pump(sendFrame, nullptr, FRAMES_PER_LOOP)) {
     if (channel.shouldDisconnect()) {
-      const uint16_t conn = link.conn.load();
       if (conn != BLE_HS_CONN_HANDLE_NONE) ble_gap_terminate(conn, BLE_ERR_REM_USER_CONN_TERM);
       LOG_INF("BLE", "too many failed auth attempts: disconnecting");
     }

@@ -35,7 +35,7 @@
 - Кадр ответа: `[seq u16 LE][flags: bit0 последний, bit1 ошибка][payload]`, размер = MTU − 3; склейка
   payload = тот же JSON, что у `GET /api/inklink/*`. До 64 КБ на ответ, списки продолжаются через
   `"more":true,"nextOffset":N` → повтор с `"offset":N`.
-- Команды: `auth{token}` (обязательна на каждое соединение; 5 неверных — разрыв), `info`, `stats`,
+- Команды: `auth{token}` (обязательна на каждое соединение; 5 неверных или 30 с без неё — разрыв), `info`, `stats`,
   `sessions{since,offset}`, `books{offset,limit}`, `highlights{book,since,offset}`, `vocab{offset}`,
   `screenshots{offset}`, `time{epoch,tzOffsetMin}`. Файлы по BLE не передаются.
 - Проверка без устройства: `CROSSPOINT_SIM_BLE_LOOPBACK=<сценарий>` прогоняет команды через тот же
