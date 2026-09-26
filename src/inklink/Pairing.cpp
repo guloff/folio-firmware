@@ -112,12 +112,17 @@ void copyName(char (&dst)[NAME_BYTES], const char* src) {
   if (n == 0) snprintf(dst, NAME_BYTES, "%s", "Phone");
 }
 
+// A read error leaves `loaded` false so the next call retries: treating it as
+// "no devices" would let the next pairing overwrite every other phone's
+// entry. A file that reads fine but is malformed counts as empty (logged).
 void load() {
   if (loaded) return;
-  loaded = true;
   deviceCount = 0;
   jsonl::recoverTmp(PATH);
-  if (!Storage.exists(PATH)) return;
+  if (!Storage.exists(PATH)) {
+    loaded = true;
+    return;
+  }
   std::string text;
   {
     HalFile f;
@@ -127,15 +132,20 @@ void load() {
     }
     const size_t size = f.fileSize();
     if (size == 0 || size > MAX_FILE_BYTES) {
-      LOG_ERR("PAIR", "pairing.json has bad size %u", static_cast<unsigned>(size));
+      LOG_ERR("PAIR", "pairing.json has bad size %u, ignoring it", static_cast<unsigned>(size));
+      loaded = true;
       return;
     }
     text.resize(size);
-    if (f.read(&text[0], size) != static_cast<int>(size)) return;
+    if (f.read(&text[0], size) != static_cast<int>(size)) {
+      LOG_ERR("PAIR", "pairing.json short read");
+      return;
+    }
   }
+  loaded = true;
   JsonDocument doc;
   if (deserializeJson(doc, text) != DeserializationError::Ok) {
-    LOG_ERR("PAIR", "pairing.json is not valid JSON");
+    LOG_ERR("PAIR", "pairing.json is not valid JSON, ignoring it");
     return;
   }
   for (JsonObjectConst d : doc["devices"].as<JsonArrayConst>()) {
@@ -345,17 +355,23 @@ void handleFinish() {
   }
 
   load();
+  if (!loaded) return sendError(500, "could not read pairings");
   uint8_t token[TOKEN_BYTES];
   for (size_t i = 0; i < TOKEN_BYTES; i += 4) {
     const uint32_t r = esp_random();
     memcpy(token + i, &r, 4);
   }
+  // Put back if the new list can't be stored.
+  Device evicted{};
+  size_t evictedAt = MAX_DEVICES;
   if (deviceCount == MAX_DEVICES) {
     // Evict the oldest pairing (smallest creation time; undated ones first).
     size_t oldest = 0;
     for (size_t i = 1; i < deviceCount; i++) {
       if (devices[i].created < devices[oldest].created) oldest = i;
     }
+    evicted = devices[oldest];
+    evictedAt = oldest;
     for (size_t i = oldest; i + 1 < deviceCount; i++) devices[i] = devices[i + 1];
     deviceCount--;
   }
@@ -368,6 +384,11 @@ void handleFinish() {
   deviceCount++;
   if (!save()) {
     deviceCount--;
+    if (evictedAt < MAX_DEVICES) {
+      for (size_t i = deviceCount; i > evictedAt; i--) devices[i] = devices[i - 1];
+      devices[evictedAt] = evicted;
+      deviceCount++;
+    }
     return sendError(500, "could not store pairing");
   }
   pinActive = false;
