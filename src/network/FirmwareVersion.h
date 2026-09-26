@@ -14,9 +14,14 @@ struct Semver {
   int patch = 0;
 };
 
+// "v0.2.0" -> "0.2.0": release assets carry the version without the tag's v.
+inline const char* withoutTagPrefix(const char* tag) {
+  return (tag && (*tag == 'v' || *tag == 'V')) ? tag + 1 : tag;
+}
+
 inline bool parse(const char* text, Semver& out) {
   if (!text) return false;
-  if (*text == 'v' || *text == 'V') text++;
+  text = withoutTagPrefix(text);
   out = Semver{};
   return sscanf(text, "%d.%d.%d", &out.major, &out.minor, &out.patch) >= 2;
 }

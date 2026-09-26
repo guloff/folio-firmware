@@ -53,9 +53,8 @@ OtaUpdater::OtaUpdaterError OtaUpdater::checkForUpdate() {
       offset++;
       if (releaseParser.foundTag()) {
         // Tags are "vX.Y.Z", assets "folio-X.Y.Z-<board>.bin" (release.yml).
-        const char* version = releaseParser.getTagName();
-        if (*version == 'v' || *version == 'V') version++;
-        snprintf(assetName, sizeof(assetName), "folio-%s%s.bin", version, assetSuffix);
+        snprintf(assetName, sizeof(assetName), "folio-%s%s.bin",
+                 firmware_version::withoutTagPrefix(releaseParser.getTagName()), assetSuffix);
         releaseParser.setFirmwareAssetName(assetName);
         assetNameSet = true;
       }

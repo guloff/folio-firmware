@@ -53,6 +53,9 @@ int main(int argc, char** argv) {
   expect(isNewer("v1.0.0", "0.9.9"), "major bump");
   expect(isNewer("v0.1.0", "0.1.0-rc+abc"), "release replaces its RC");
   expect(!isNewer("garbage", "0.1.0"), "unparsable tag never updates");
+  // release.yml names the asset after the tag without its v.
+  expect(strcmp(firmware_version::withoutTagPrefix("v0.2.0"), "0.2.0") == 0, "asset version of tag v0.2.0 is 0.2.0");
+  expect(strcmp(firmware_version::withoutTagPrefix("0.2.0"), "0.2.0") == 0, "tag without v is kept");
 
   printf("%s (%d failure%s)\n", failures ? "FAILED" : "OK", failures, failures == 1 ? "" : "s");
   return failures ? 1 : 0;
