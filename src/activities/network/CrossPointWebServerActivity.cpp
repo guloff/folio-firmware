@@ -550,6 +550,11 @@ void CrossPointWebServerActivity::renderPairingOverlay() const {
   const int x = (pageWidth - boxW) / 2;
   int y = (pageHeight - boxH) / 2;
 
+  // The PIN replaces the URL/QR body (a box over it cut lines in half);
+  // header, network name and button hints stay.
+  const int bodyTop = metrics.topPadding + metrics.headerHeight + metrics.tabBarHeight + 1;
+  const int bodyBottom = pageHeight - metrics.buttonHintsHeight;
+  if (bodyBottom > bodyTop) renderer.fillRect(0, bodyTop, pageWidth, bodyBottom - bodyTop, false);
   renderer.fillRect(x, y, boxW, boxH, false);
   renderer.drawRoundedRect(x, y, boxW, boxH, 3, 12, true);
 
