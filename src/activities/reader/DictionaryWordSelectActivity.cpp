@@ -495,7 +495,15 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
   // still holds a clean page (no popup or sub-activity since the last full
   // repaint). Restore the pixels under the old highlight, draw the new one,
   // and push — skipping the two-pass page render entirely.
-  if (popup == Popup::None && anchor < 0 && snapshotIdx >= 0 && !words.empty() && selected != snapshotIdx) {
+  // The highlight-mode hint band flips edges when the focused word enters the
+  // top band (see below); the fast path cannot move it, so it only runs while
+  // the band stays put.
+  const int hintBandH = renderer.getLineHeight(UI_10_FONT_ID) + 12;
+  const auto underTopBand = [&](int idx) {
+    return highlightMode && idx >= 0 && idx < static_cast<int>(words.size()) && words[idx].y < hintBandH;
+  };
+  if (popup == Popup::None && anchor < 0 && snapshotIdx >= 0 && !words.empty() && selected != snapshotIdx &&
+      underTopBand(selected) == underTopBand(snapshotIdx)) {
     renderer.writeFramebufferRegion(snapshotX, snapshotY, snapshotW, snapshotH, snapshot.get());
     // The full path's PrewarmScope cleared the glyph cache on exit; batch-load
     // just the highlighted word's glyphs before drawing them white-on-black.
@@ -527,13 +535,18 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
     }
   }
   if (highlightMode && popup == Popup::None && (anchor < 0 || mappedInput.hasTouch())) {
-    // Two-step selection hint on a white band at the bottom edge, where it
-    // can't cover the words being chosen. Once anchored, touch users are told
-    // how to finish (buttons keep the Confirm hint below).
-    const int bandH = renderer.getLineHeight(UI_10_FONT_ID) + 12;
-    const int bandY = renderer.getScreenHeight() - bandH;
+    // Two-step selection hint on a white band. A range only grows forward
+    // (the end word is at or after the anchor), so the band goes to the top
+    // edge, over text that can no longer be chosen; it moves to the bottom
+    // only while the anchored/focused word itself sits under the top band.
+    // Once anchored, touch users are told how to finish (buttons keep the
+    // Confirm hint below).
+    const int bandH = hintBandH;
+    const bool keyUnderTop = underTopBand(anchor >= 0 ? anchor : selected);
+    const int bandY = keyUnderTop ? renderer.getScreenHeight() - bandH : 0;
+    const int ruleY = keyUnderTop ? bandY : bandH - 1;
     renderer.fillRect(0, bandY, renderer.getScreenWidth(), bandH, false);
-    renderer.drawLine(0, bandY, renderer.getScreenWidth() - 1, bandY, true);
+    renderer.drawLine(0, ruleY, renderer.getScreenWidth() - 1, ruleY, true);
     renderer.drawCenteredText(UI_10_FONT_ID, bandY + 6,
                               anchor < 0 ? tr(STR_INKLINK_HIGHLIGHT_HINT) : tr(STR_INKLINK_HIGHLIGHT_HINT_END));
   }
