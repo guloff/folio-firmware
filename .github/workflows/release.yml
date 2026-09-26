@@ -21,6 +21,9 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
           submodules: recursive
+          # The write-scoped token must not sit in .git/config while the
+          # build runs third-party tooling; gh gets it explicitly below.
+          persist-credentials: false
 
       - name: Validate release version
         env:
@@ -73,9 +76,10 @@ jobs:
             exit 0
           fi
           umask 077
-          printf '%s\n' "$FOLIO_SIGNING_KEY" > key.pem
-          FOLIO_SIGNING_KEY_FILE=key.pem tools/inklink/sign_firmware.sh "$ASSET"
-          rm -f key.pem
+          key="$RUNNER_TEMP/folio-signing.pem"
+          trap 'rm -f "$key"' EXIT
+          printf '%s\n' "$FOLIO_SIGNING_KEY" > "$key"
+          FOLIO_SIGNING_KEY_FILE="$key" tools/inklink/sign_firmware.sh "$ASSET"
           test "$(stat -c %s "$ASSET.sig")" -eq 64
 
       - name: Attach assets
