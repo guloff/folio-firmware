@@ -80,6 +80,35 @@ std::string exchange(Channel& ch, Loop& l, const std::string& request, bool prin
   return l.assembler.payload();
 }
 
+// Plays the phone side of the challenge-response: hello -> nonce, then
+// auth{proof = HMAC-SHA256(SHA-256(token), "FOLIO-BLE-v1\n" + nonce)}.
+void login(Channel& ch, Loop& l, const std::string& tokenHex) {
+  const std::string hello = exchange(ch, l, "{\"op\":\"hello\"}", true);
+  JsonDocument resp;
+  if (deserializeJson(resp, hello) != DeserializationError::Ok) {
+    *l.out << "!!! unparsable hello reply\n";
+    return;
+  }
+  const std::string nonceHex = resp["nonce"] | "";
+  uint8_t msg[13 + 16];
+  memcpy(msg, "FOLIO-BLE-v1\n", 13);
+  uint8_t token[32] = {};
+  for (size_t i = 0; i < 16 && nonceHex.size() == 32; i++) {
+    msg[13 + i] = static_cast<uint8_t>(std::strtoul(nonceHex.substr(2 * i, 2).c_str(), nullptr, 16));
+  }
+  for (size_t i = 0; i < 32 && tokenHex.size() == 64; i++) {
+    token[i] = static_cast<uint8_t>(std::strtoul(tokenHex.substr(2 * i, 2).c_str(), nullptr, 16));
+  }
+  uint8_t key[32];
+  pairing::sha256Digest(token, sizeof(token), key);
+  uint8_t mac[32];
+  pairing::hmacSha256(key, msg, sizeof(msg), mac);
+  char proof[65];
+  for (size_t i = 0; i < 32; i++) snprintf(proof + 2 * i, 3, "%02x", mac[i]);
+  *l.out << "=== login (token redacted)\n";
+  exchange(ch, l, std::string("{\"op\":\"auth\",\"proof\":\"") + proof + "\"}", true);
+}
+
 // Repeats a list request with offset = nextOffset until "more" is absent.
 void follow(Channel& ch, Loop& l, const std::string& request) {
   JsonDocument req;
@@ -236,6 +265,12 @@ void runLoopbackFromEnv() {
       l.hex = line == "hex on";
     } else if (line == "selftest") {
       selftest(out);
+    } else if (line.rfind("login ", 0) == 0) {
+      login(channel, l, trim(line.substr(6)));
+      if (channel.shouldDisconnect()) {
+        out << "=== transport drops the connection (too many failed auth attempts)\n";
+        channel.resetSession();
+      }
     } else if (line.rfind("follow ", 0) == 0) {
       follow(channel, l, line.substr(7));
     } else {

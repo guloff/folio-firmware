@@ -7,6 +7,7 @@
 #include <string>
 
 #include "ApiResponder.h"
+#include "Pairing.h"
 
 // Transport-independent part of the BLE sync channel (see PROJECT/notes/api.md,
 // "BLE"): request dispatch, the bounded response buffer and the notification
@@ -67,6 +68,9 @@ class BufferResponder final : public api::Responder {
 struct Session {
   bool authorized = false;
   uint8_t authFailures = 0;
+  // Challenge from the last `hello`; single use, consumed by the next `auth`.
+  bool hasNonce = false;
+  uint8_t nonce[pairing::BLE_NONCE_BYTES] = {};
 };
 
 // Runs one JSON request ({"op":"...", ...}) and leaves the reply in `out`.

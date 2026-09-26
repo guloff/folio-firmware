@@ -32,6 +32,15 @@ void sendPairingRequired(WebServer& server, bool webdav = false);
 bool requireAuth(WebServer& server, bool webdav = false);
 // Checks a raw 64-hex-char token (WebSocket AUTH message).
 bool tokenValid(const char* tokenHex, size_t len);
+// BLE challenge-response: true when `proof` equals
+// HMAC-SHA256(key = SHA-256(token), "FOLIO-BLE-v1\n" + nonce) for a paired device.
+// The token itself never crosses the radio link.
+constexpr size_t BLE_NONCE_BYTES = 16;
+bool proofValid(const uint8_t nonce[BLE_NONCE_BYTES], const uint8_t proof[32]);
+// HMAC-SHA256 with a 32-byte key.
+void hmacSha256(const uint8_t key[32], const uint8_t* msg, size_t len, uint8_t out[32]);
+// SHA-256 of `data`.
+void sha256Digest(const uint8_t* data, size_t len, uint8_t out[32]);
 
 // At least one device is paired.
 bool isPaired();

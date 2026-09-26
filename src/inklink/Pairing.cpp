@@ -427,6 +427,49 @@ bool tokenValid(const char* tokenHex, size_t len) {
   return matchesDigest(digest);
 }
 
+void hmacSha256(const uint8_t key[32], const uint8_t* msg, size_t len, uint8_t out[32]) {
+  // RFC 2104 with a 32-byte key (shorter than the 64-byte block, used as is).
+  uint8_t pad[64];
+  uint8_t inner[32];
+  mbedtls_sha256_context ctx;
+  for (int pass = 0; pass < 2; pass++) {
+    const uint8_t fill = pass == 0 ? 0x36 : 0x5c;
+    memset(pad, fill, sizeof(pad));
+    for (size_t i = 0; i < 32; i++) pad[i] ^= key[i];
+    mbedtls_sha256_init(&ctx);
+    mbedtls_sha256_starts(&ctx, 0);
+    mbedtls_sha256_update(&ctx, pad, sizeof(pad));
+    if (pass == 0) {
+      mbedtls_sha256_update(&ctx, msg, len);
+      mbedtls_sha256_finish(&ctx, inner);
+    } else {
+      mbedtls_sha256_update(&ctx, inner, sizeof(inner));
+      mbedtls_sha256_finish(&ctx, out);
+    }
+    mbedtls_sha256_free(&ctx);
+  }
+}
+
+void sha256Digest(const uint8_t* data, size_t len, uint8_t out[32]) { sha256(data, len, out); }
+
+bool proofValid(const uint8_t nonce[BLE_NONCE_BYTES], const uint8_t proof[32]) {
+  static constexpr char LABEL[] = "FOLIO-BLE-v1\n";
+  uint8_t msg[sizeof(LABEL) - 1 + BLE_NONCE_BYTES];
+  memcpy(msg, LABEL, sizeof(LABEL) - 1);
+  memcpy(msg + sizeof(LABEL) - 1, nonce, BLE_NONCE_BYTES);
+  load();
+  // Every paired device is checked in full so timing does not reveal which one matched.
+  uint8_t found = 0;
+  for (size_t i = 0; i < deviceCount; i++) {
+    uint8_t mac[32];
+    hmacSha256(devices[i].hash, msg, sizeof(msg), mac);
+    uint8_t diff = 0;
+    for (size_t b = 0; b < 32; b++) diff |= static_cast<uint8_t>(mac[b] ^ proof[b]);
+    found |= static_cast<uint8_t>(diff == 0);
+  }
+  return found != 0;
+}
+
 bool authorized(WebServer& s, bool allowBasic) {
   char token[TOKEN_HEX + 1];
   if (!requestToken(s, allowBasic, token)) return false;

@@ -2,7 +2,9 @@
 
 #include <ArduinoJson.h>
 #include <Logging.h>
+#include <esp_random.h>
 
+#include <cstdio>
 #include <cstring>
 
 #include "InkLinkApi.h"
@@ -102,12 +104,47 @@ bool readEpoch(const JsonDocument& req, const char* key, int64_t& out) {
   return true;
 }
 
+int hexNibble(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  return -1;
+}
+
+bool parseHex32(const char* hex, uint8_t out[32]) {
+  if (strlen(hex) != 64) return false;
+  for (size_t i = 0; i < 32; i++) {
+    const int hi = hexNibble(hex[2 * i]);
+    const int lo = hexNibble(hex[2 * i + 1]);
+    if (hi < 0 || lo < 0) return false;
+    out[i] = static_cast<uint8_t>((hi << 4) | lo);
+  }
+  return true;
+}
+
+// Issues a fresh single-use challenge for this connection.
+void handleHello(Session& session, BufferResponder& out) {
+  for (size_t i = 0; i < sizeof(session.nonce); i += 4) {
+    const uint32_t r = esp_random();
+    memcpy(session.nonce + i, &r, 4);
+  }
+  session.hasNonce = true;
+  char hex[2 * sizeof(session.nonce) + 1];
+  for (size_t i = 0; i < sizeof(session.nonce); i++) snprintf(hex + 2 * i, 3, "%02x", session.nonce[i]);
+  JsonDocument doc;
+  doc["ok"] = true;
+  doc["nonce"] = hex;
+  api::sendDoc(out, 200, doc);
+}
+
+// auth{proof}: proof = HMAC-SHA256(SHA-256(token), "FOLIO-BLE-v1\n" + nonce), hex.
+// The nonce is consumed by every attempt, so a sniffed proof cannot be replayed.
 void handleAuth(const JsonDocument& req, Session& session, BufferResponder& out) {
-  const char* token = req["token"] | "";
-  const size_t n = strlen(token);
-  // Same check as the HTTP X-InkLink-Token: SHA-256 of the token compared in
-  // constant time against every paired device.
-  if (n == 64 && pairing::tokenValid(token, n)) {
+  if (!session.hasNonce) return out.sendError(409, "hello first");
+  session.hasNonce = false;
+  uint8_t proof[32];
+  const char* hex = req["proof"] | "";
+  if (parseHex32(hex, proof) && pairing::proofValid(session.nonce, proof)) {
     session.authorized = true;
     session.authFailures = 0;
     JsonDocument doc;
@@ -120,7 +157,7 @@ void handleAuth(const JsonDocument& req, Session& session, BufferResponder& out)
   if (session.authFailures < MAX_AUTH_FAILURES) session.authFailures++;
   JsonDocument doc;
   doc["ok"] = false;
-  doc["error"] = "invalid token";
+  doc["error"] = "invalid proof";
   doc["status"] = 401;
   doc["attemptsLeft"] = MAX_AUTH_FAILURES - session.authFailures;
   api::sendDoc(out, 401, doc);
@@ -137,6 +174,7 @@ void dispatch(const char* request, size_t len, Session& session, BufferResponder
   }
   const char* op = req["op"] | "";
   if (!op[0]) return out.sendError(400, "missing op");
+  if (strcmp(op, "hello") == 0) return handleHello(session, out);
   if (strcmp(op, "auth") == 0) return handleAuth(req, session, out);
   if (!session.authorized) return out.sendError(401, "pairing required");
 
