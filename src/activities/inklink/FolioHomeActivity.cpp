@@ -88,7 +88,11 @@ void FolioHomeActivity::onEnter() {
   baseFrameBytes = renderer.getBufferSize();
   baseFrame = HalMemory::allocatePsram(baseFrameBytes);
   if (!baseFrame) {
-    LOG_ERR("FOLIO", "PSRAM frame cache unavailable (%u bytes); rendering uncached", unsigned(baseFrameBytes));
+    // Boards without PSRAM (X4/X3) always render uncached; only a failed
+    // allocation where PSRAM exists is an error.
+    if (HalMemory::getPsramHeap().totalBytes > 0) {
+      LOG_ERR("FOLIO", "OOM: PSRAM frame cache (%u bytes); rendering uncached", unsigned(baseFrameBytes));
+    }
     baseFrameBytes = 0;
   }
   requestUpdate();
@@ -233,7 +237,7 @@ void FolioHomeActivity::render(RenderLock&&) {
     drawFocusRing();
     const unsigned long composeMs = millis() - startMs;
     renderer.displayBuffer(HalDisplay::FAST_REFRESH);
-    LOG_INF("FOLIO", "render cached: compose %lu ms, total %lu ms, cover SD reads 0", composeMs, millis() - startMs);
+    LOG_DBG("FOLIO", "render cached: compose %lu ms, total %lu ms, cover SD reads 0", composeMs, millis() - startMs);
     return;
   }
 
@@ -343,6 +347,6 @@ void FolioHomeActivity::render(RenderLock&&) {
 
   const unsigned long composeMs = millis() - startMs;
   renderer.displayBuffer(HalDisplay::FAST_REFRESH);
-  LOG_INF("FOLIO", "render full: compose %lu ms, total %lu ms, cover SD reads %d", composeMs, millis() - startMs,
+  LOG_DBG("FOLIO", "render full: compose %lu ms, total %lu ms, cover SD reads %d", composeMs, millis() - startMs,
           coverSdReads);
 }
