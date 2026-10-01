@@ -14,7 +14,12 @@
 
 #include <atomic>
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+// ble_hs.h includes ble_hs_stop.h ahead of its own extern "C" block.
+extern "C" {
 #include "host/ble_hs.h"
+}
 #include "host/util/util.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
@@ -69,6 +74,8 @@ constexpr uint32_t AUTH_TIMEOUT_MS = 30000;
 // ATT application errors returned on a request write.
 constexpr int ATT_ERR_BUSY = 0x80;            // previous reply still being sent
 constexpr int ATT_ERR_NOT_SUBSCRIBED = 0x81;  // enable notifications first
+// ble_hs_stop() waits up to 2 s for a link to drop before giving up on it.
+constexpr uint32_t HOST_STOP_WAIT_MS = 5000;
 
 enum Phase : uint8_t { IDLE, READY, PROCESSING };
 
@@ -91,6 +98,7 @@ HalMemory::PsramBuffer requestBuf;
 bool running = false;
 bool suspended = false;  // off until reboot (Wi-Fi screen, deep sleep)
 bool failed = false;     // init failed; retried only when the setting changes
+bool stalled = false;    // host task never stopped: the stack stays up until reboot
 bool memWarned = false;
 uint8_t lastSetting = 0xFF;
 uint32_t sessionGen = 0;
@@ -206,8 +214,40 @@ void onSync() {
 
 void onReset(int reason) { LOG_ERR("BLE", "host reset, reason %d", reason); }
 
+// Shutdown runs on the host task. The NPL port removes a fired timer event
+// from the host queue under a lock that doesn't span cores, so stopping
+// advertising or the host from the main loop (core 1) while the host task
+// (core 0) drains that queue panics with "assert failed:
+// npl_freertos_eventq_remove". The main loop only posts stopEvent, a plain
+// queue send. Notifications and
+// ble_gap_terminate() don't touch host timers and stay on the main loop.
+ble_npl_event stopEvent = {};
+ble_hs_stop_listener stopListener;
+bool hostExit = false;  // host task only
+StaticSemaphore_t hostDoneBuf;
+SemaphoreHandle_t hostDone = nullptr;
+
+void onHostStopped(int status, void*) {
+  if (status != 0) LOG_ERR("BLE", "host stop status %d", status);
+  hostExit = true;
+}
+
+void onStopEvent(ble_npl_event*) {
+  // Preempts advertising, drops the link and calls onHostStopped once it is
+  // gone; a non-zero rc means there was nothing to stop or wait for.
+  const int rc = ble_hs_stop(&stopListener, onHostStopped, nullptr);
+  if (rc != 0) hostExit = true;
+}
+
+// nimble_port_run() leaves only on nimble_port_stop()'s private event, which
+// ble_hs_stop() from the main loop would need; this loop leaves on hostExit.
 void hostTask(void*) {
-  nimble_port_run();  // returns after nimble_port_stop()
+  ble_npl_eventq* queue = nimble_port_get_dflt_eventq();
+  while (!hostExit) {
+    ble_npl_event* ev = ble_npl_eventq_get(queue, BLE_NPL_TIME_FOREVER);
+    if (ev) ble_npl_event_run(ev);
+  }
+  xSemaphoreGive(hostDone);
   nimble_port_freertos_deinit();
 }
 
@@ -236,7 +276,7 @@ void buildGatt() {
 }
 
 bool start() {
-  if (running || suspended || failed) return running;
+  if (running || suspended || failed || stalled) return running;
   if (btMemReleased(BT_MODE_BLE)) {
     if (!memWarned) LOG_INF("BLE", "controller RAM was released at boot; BLE starts after the next restart");
     memWarned = true;
@@ -277,6 +317,10 @@ bool start() {
   }
   ble_svc_gap_device_name_set("Folio");
   ble_att_set_preferred_mtu(MAX_MTU);
+  if (!hostDone) hostDone = xSemaphoreCreateBinaryStatic(&hostDoneBuf);
+  xSemaphoreTake(hostDone, 0);
+  ble_npl_event_init(&stopEvent, onStopEvent, nullptr);  // from the NimBLE pool: after nimble_port_init()
+  hostExit = false;
   link.phase.store(IDLE);
   link.advertise.store(true);
   running = true;
@@ -291,12 +335,19 @@ bool start() {
 void stop() {
   if (!running) return;
   running = false;
-  link.advertise.store(false);
-  const uint16_t conn = link.conn.load();
-  if (conn != BLE_HS_CONN_HANDLE_NONE) ble_gap_terminate(conn, BLE_ERR_REM_USER_CONN_TERM);
-  ble_gap_adv_stop();
+  link.advertise.store(false);  // a disconnect during shutdown must not re-advertise
   const size_t freeBefore = internalFree();
-  if (nimble_port_stop() == 0) nimble_port_deinit();
+  ble_npl_eventq_put(nimble_port_get_dflt_eventq(), &stopEvent);
+  if (xSemaphoreTake(hostDone, pdMS_TO_TICKS(HOST_STOP_WAIT_MS)) != pdTRUE) {
+    // Deinit under a live host task is the race this sequence avoids; a
+    // radio left on until the next restart is the lesser harm.
+    stalled = true;
+    LOG_ERR("BLE", "host task did not stop within %u ms; BLE stays on until restart",
+            static_cast<unsigned>(HOST_STOP_WAIT_MS));
+    return;
+  }
+  ble_npl_event_deinit(&stopEvent);
+  nimble_port_deinit();
   channel.end();
   requestBuf.reset();
   link.conn.store(BLE_HS_CONN_HANDLE_NONE);
