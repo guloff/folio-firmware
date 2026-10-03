@@ -5,9 +5,11 @@
 #include <I18n.h>
 
 #include "CrossPointSettings.h"
+#include "CrossPointState.h"
 #include "MappedInputManager.h"
 #include "ReaderUtils.h"
 #include "components/UITheme.h"
+#include "inklink/PrivacyLock.h"
 
 namespace fui = freeink::ui;
 
@@ -62,6 +64,7 @@ void EpubReaderMenuActivity::buildMenuItems(std::vector<MenuItem>& items, bool h
   items.push_back({MenuAction::GO_HOME, StrId::STR_GO_HOME_BUTTON});
   items.push_back({MenuAction::SYNC, StrId::STR_SYNC_PROGRESS});
   items.push_back({MenuAction::DELETE_CACHE, StrId::STR_DELETE_CACHE});
+  items.push_back({MenuAction::PROTECT_BOOK, StrId::STR_PIN_PROTECT_BOOK});
   items.push_back({MenuAction::TEXT_SETTINGS, StrId::STR_TEXT_SETTINGS});
 }
 
@@ -182,6 +185,10 @@ void EpubReaderMenuActivity::buildScreen(UiScreen& screen) {
       menuRowItems[i].value = I18N.get(SETTINGS.screenInverted ? StrId::STR_STATE_ON : StrId::STR_STATE_OFF);
     } else if (action == MenuAction::FRONTLIGHT) {
       menuRowItems[i].value = I18N.get(Frontlight.isOn() ? StrId::STR_STATE_ON : StrId::STR_STATE_OFF);
+    } else if (action == MenuAction::PROTECT_BOOK) {
+      // The reader records its book in APP_STATE on entry.
+      menuRowItems[i].value =
+          I18N.get(inklink::privacy::isProtected(APP_STATE.openEpubPath) ? StrId::STR_STATE_ON : StrId::STR_STATE_OFF);
     }
   }
 

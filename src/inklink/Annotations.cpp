@@ -11,6 +11,7 @@
 
 #include "InkLinkClock.h"
 #include "JsonLines.h"
+#include "PrivacyLock.h"
 
 namespace inklink {
 
@@ -117,6 +118,8 @@ bool pickRandom(JsonObjectConst obj, void* raw) {
   auto* ctx = static_cast<PickCtx*>(raw);
   const char* text = obj["x"] | "";
   if (!text[0]) return true;
+  // The quote sleep screen never shows a protected book's highlight.
+  if (privacy::isProtected(obj["b"] | "")) return true;
   ctx->seen++;
   if (esp_random() % ctx->seen == 0) {
     *ctx->text = text;

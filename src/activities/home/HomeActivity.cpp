@@ -25,6 +25,7 @@
 #include "activities/inklink/InkLinkActivities.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/PrivacyLock.h"
 
 int HomeActivity::getMenuItemCount() const {
   int count = 5;  // File Browser, Library, File transfer, InkLink, Settings
@@ -48,8 +49,8 @@ void HomeActivity::loadRecentBooks(int maxBooks) {
       break;
     }
 
-    // Skip if file no longer exists
-    if (RecentBooksStore::isMissing(book)) {
+    // Skip if file no longer exists, or is protected and still locked
+    if (RecentBooksStore::isMissing(book) || inklink::privacy::isHidden(book.path)) {
       continue;
     }
 
@@ -88,7 +89,7 @@ void HomeActivity::fillCoverGridFromLibrary() {
       continue;
     if (std::any_of(recentBooks.begin(), recentBooks.end(),
                     [&](const RecentBook& existing) { return existing.path == book.path; }) ||
-        RecentBooksStore::isMissing(book))
+        RecentBooksStore::isMissing(book) || inklink::privacy::isHidden(book.path))
       continue;
     if (!index.readTitle(record, book.title) && !index.readName(record, book.title)) continue;
     index.readAuthor(record, book.author);

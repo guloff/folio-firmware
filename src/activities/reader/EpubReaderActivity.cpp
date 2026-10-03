@@ -41,13 +41,15 @@
 #include "RecentBooksStore.h"
 #include "SdCardFontSystem.h"
 #include "activities/settings/TextSettingsActivity.h"
+#include "activities/util/BookProtection.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/HighlightMarks.h"
+#include "inklink/PrivacyLock.h"
+#include "inklink/ReadingStats.h"
 #include "util/BookmarkUtil.h"
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
-#include "inklink/HighlightMarks.h"
-#include "inklink/ReadingStats.h"
 
 namespace {
 // The X4 Pro and X4 Classic carry the X4's panel but sit outside isXteinkDevice()
@@ -144,6 +146,7 @@ void moveFinishedBookToReadFolder(const std::string& srcPath, const std::string&
   }
 
   RECENT_BOOKS.updatePath(srcPath, dstPath, oldCachePath, newCachePath);
+  inklink::privacy::onPathChanged(srcPath, dstPath);
   if (APP_STATE.openEpubPath == srcPath) {
     APP_STATE.openEpubPath = dstPath;
     APP_STATE.saveToFile();
@@ -369,10 +372,9 @@ void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode, cons
   context.percent = bookPercentFor(chapterPosition());
   context.spine = currentSpineIndex;
   context.page = section->currentPage;
-  startActivityForResult(std::make_unique<DictionaryWordSelectActivity>(renderer, mappedInput, std::move(page),
-                                                                        orientedMarginLeft, orientedMarginTop,
-                                                                        std::move(context), highlightMode, startX,
-                                                                        startY),
+  startActivityForResult(std::make_unique<DictionaryWordSelectActivity>(
+                             renderer, mappedInput, std::move(page), orientedMarginLeft, orientedMarginTop,
+                             std::move(context), highlightMode, startX, startY),
                          [this](const ActivityResult&) { requestUpdate(); });
 }
 
@@ -979,6 +981,11 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
       }
       onGoHome();
       return;
+    }
+    case EpubReaderMenuActivity::MenuAction::PROTECT_BOOK: {
+      toggleBookProtection(*this, renderer, mappedInput, epub->getPath(), epub->getTitle(),
+                           [this] { requestUpdate(); });
+      break;
     }
     case EpubReaderMenuActivity::MenuAction::SCREENSHOT: {
       {
@@ -2531,6 +2538,8 @@ std::string EpubReaderActivity::moreRowValue(int row) const {
       return SETTINGS.screenInverted ? tr(STR_STATE_ON) : tr(STR_STATE_OFF);
     case MA::FRONTLIGHT:
       return Frontlight.isOn() ? tr(STR_STATE_ON) : tr(STR_STATE_OFF);
+    case MA::PROTECT_BOOK:
+      return inklink::privacy::isProtected(epub->getPath()) ? tr(STR_STATE_ON) : tr(STR_STATE_OFF);
     default:
       return "";
   }

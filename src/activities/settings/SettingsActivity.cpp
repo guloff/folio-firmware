@@ -26,6 +26,7 @@
 #include "MappedInputManager.h"
 #include "OpdsServerListActivity.h"
 #include "OtaUpdateActivity.h"
+#include "PrivacySettingsActivity.h"
 #include "SdCardFontSystem.h"
 #include "SdFirmwareUpdateActivity.h"
 #include "SettingsList.h"
@@ -95,6 +96,7 @@ void SettingsActivity::rebuildSettingsLists() {
     controlsSettings.insert(controlsSettings.begin(),
                             SettingInfo::Action(StrId::STR_HOME_BUTTON, SettingAction::HomeButton));
   }
+  systemSettings.push_back(SettingInfo::Action(StrId::STR_PRIVACY, SettingAction::Privacy));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_WIFI_NETWORKS, SettingAction::Network));
   // Clock configuration only exists where the RTC probe found hardware; on
   // clockless boards there is nothing to set.
@@ -433,6 +435,13 @@ void SettingsActivity::toggleCurrentSetting() {
           startActivityForResult(std::move(activity), nullptr);
         } else {
           LOG_ERR("SETTINGS", "OOM: KeyboardLayoutsActivity");
+        }
+        break;
+      case SettingAction::Privacy:
+        if (auto activity = makeUniqueNoThrow<PrivacySettingsActivity>(renderer, mappedInput)) {
+          startActivityForResult(std::move(activity), [this](const ActivityResult&) { requestUpdate(); });
+        } else {
+          LOG_ERR("SETTINGS", "OOM: PrivacySettingsActivity");
         }
         break;
       case SettingAction::About:

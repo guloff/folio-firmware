@@ -23,6 +23,9 @@ const char* statusName(Status s);
 
 // Verifies a signature against an image digest with the embedded public key.
 bool verifyDigest(const uint8_t digest[DIGEST_SIZE], const uint8_t signature[SIGNATURE_SIZE]);
+// Any other message signed with the release key (e.g. a PIN reset challenge);
+// the caller's message carries its own domain prefix.
+bool verifyMessage(const uint8_t* message, size_t len, const uint8_t signature[SIGNATURE_SIZE]);
 
 // Streaming SHA-256 of an image, fed by callers that already read the bytes
 // (the OTA download). Opaque storage keeps mbedtls out of this header.

@@ -20,6 +20,7 @@
 #include "home/FileBrowserActivity.h"
 #include "home/HomeActivity.h"
 #include "inklink/FolioHomeActivity.h"
+#include "inklink/PrivacyLock.h"
 #include "library/LibraryListActivity.h"
 #include "network/CrossPointWebServerActivity.h"
 #include "network/UsbDriveActivity.h"
@@ -29,6 +30,7 @@
 #include "util/BmpViewerActivity.h"
 #include "util/FrontlightPanelActivity.h"
 #include "util/FullScreenMessageActivity.h"
+#include "util/PinEntryActivity.h"
 
 static portMUX_TYPE activityManagerSpinlock = portMUX_INITIALIZER_UNLOCKED;
 
@@ -290,9 +292,40 @@ void ActivityManager::goToBrowser() {
   }
 }
 
+bool ActivityManager::gateProtectedBook(const std::string& path, std::function<void()> open) {
+  namespace privacy = inklink::privacy;
+  if (!privacy::needsPin(path)) return false;
+  // After a PIN reset a protected book first asks for a new PIN.
+  const bool create = !privacy::hasPin();
+  auto pad = makeUniqueNoThrow<PinEntryActivity>(
+      renderer, mappedInput, create ? PinEntryActivity::Mode::Create : PinEntryActivity::Mode::Unlock,
+      create ? StrId::STR_PIN_NEW : StrId::STR_PIN_BOOK_LOCKED, /*cancellable=*/true,
+      [create, open = std::move(open)](const std::string& pin) {
+        if (create && !privacy::setPin(pin.c_str())) return;
+        privacy::unlockBooks();
+        open();
+      });
+  if (!pad) {
+    LOG_ERR("ACT", "OOM: PIN pad");
+    return true;  // stay closed rather than open unchecked
+  }
+  // Over the screen that asked, so Cancel returns there; from boot or the wake
+  // lock there is nothing to return to and Cancel lands on Home.
+  if (!currentActivity || currentActivity->name == "Boot" || currentActivity->name == "PinEntry") {
+    replaceActivity(std::move(pad));
+  } else {
+    pushActivity(std::move(pad));
+  }
+  return true;
+}
+
 void ActivityManager::goToReader(std::string path, const bool allowFastInitialRefresh) {
   if (path.empty()) {
     goToFileBrowser("/");
+    return;
+  }
+
+  if (gateProtectedBook(path, [this, path, allowFastInitialRefresh] { goToReader(path, allowFastInitialRefresh); })) {
     return;
   }
 
@@ -314,6 +347,9 @@ void ActivityManager::goToReader(std::string path, const bool allowFastInitialRe
 
 void ActivityManager::goToReaderAt(std::string path, const int spine, const int page, const int percent) {
   if (path.empty()) return;
+  if (gateProtectedBook(path, [this, path, spine, page, percent] { goToReaderAt(path, spine, page, percent); })) {
+    return;
+  }
   auto activity = ReaderActivity::create(renderer, mappedInput, std::move(path), false);
   if (!activity) return;  // create() logged the OOM
   activity->setInitialPosition(spine, page, percent);

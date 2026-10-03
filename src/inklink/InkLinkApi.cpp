@@ -23,6 +23,7 @@
 #include "InkLinkClock.h"
 #include "JsonLines.h"
 #include "Pairing.h"
+#include "PrivacyLock.h"
 #include "ReadingStats.h"
 #include "RecentBooksStore.h"
 #include "Shelves.h"
@@ -230,6 +231,7 @@ struct SessionStreamCtx {
 
 bool streamSession(JsonObjectConst obj, void* raw) {
   auto* ctx = static_cast<SessionStreamCtx*>(raw);
+  if (privacy::hiddenFromApp(obj["b"] | "")) return true;
   const int64_t start = obj["s"] | static_cast<int64_t>(0);
   // Undated sessions (start 0) are always sent: they can't be ordered by time.
   if (ctx->since > 0 && start != 0 && start < ctx->since) return true;
@@ -426,7 +428,7 @@ void books(Responder& out, const BooksPage& page) {
   std::vector<const std::pair<const std::string, BookRow>*> present;
   present.reserve(rows.size());
   for (const auto& kv : rows) {
-    if (Storage.exists(kv.first.c_str())) present.push_back(&kv);
+    if (!privacy::hiddenFromApp(kv.first.c_str()) && Storage.exists(kv.first.c_str())) present.push_back(&kv);
   }
   const size_t total = present.size();
   size_t first = 0;
@@ -493,6 +495,7 @@ void handleGetLibrary() {
     sendDoc(http, 200, doc);
     return;
   }
+  privacy::filterLibraryForApp(json);
   server->send(200, JSON, json.c_str());
 }
 
@@ -501,7 +504,10 @@ void handlePostLibrary() {
     sendError(400, "missing JSON body");
     return;
   }
-  const String body = server->arg("plain");
+  // The app never saw the protected books: keep their shelves and statuses.
+  std::string body = server->arg("plain").c_str();
+  std::string current;
+  if (Shelves::readDocument(current) > 0) privacy::mergeHiddenLibraryEntries(current.c_str(), body);
   const char* error = nullptr;
   if (!Shelves::replaceDocument(body.c_str(), body.length(), error)) {
     sendError(400, error ? error : "rejected");
@@ -523,6 +529,7 @@ bool streamHighlight(JsonObjectConst obj, void* raw) {
   auto* ctx = static_cast<HighlightStreamCtx*>(raw);
   const char* book = obj["b"] | "";
   if (ctx->book && strcmp(ctx->book, book) != 0) return true;
+  if (privacy::hiddenFromApp(book)) return true;
   const int64_t created = obj["ts"] | static_cast<int64_t>(0);
   if (ctx->since > 0 && created != 0 && created < ctx->since) return true;
   ctx->item.clear();
@@ -588,7 +595,7 @@ struct VocabEntry {
 bool collectVocab(JsonObjectConst obj, void* raw) {
   auto* words = static_cast<std::map<std::string, VocabEntry>*>(raw);
   std::string w = obj["w"] | "";
-  if (w.empty()) return true;
+  if (w.empty() || privacy::hiddenFromApp(obj["b"] | "")) return true;
   for (auto& c : w) c = static_cast<char>(tolower(static_cast<unsigned char>(c)));  // ASCII fold only
   VocabEntry& e = (*words)[w];
   if (e.count++ == 0) e.created = obj["ts"] | static_cast<int64_t>(0);
@@ -648,7 +655,7 @@ bool streamDirFiles(ArrayStreamer& arr, JsonDocument& item, const std::string& d
     f.getName(name, sizeof(name));
     if (name[0] == '.') continue;
     if (f.isDirectory()) {
-      if (!subdirs) continue;
+      if (!subdirs || privacy::hiddenScreenshotFolder(name)) continue;
       const std::string sub = dir + "/" + name;
       const std::string title = name;
       f.close();

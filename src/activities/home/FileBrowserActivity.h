@@ -20,6 +20,8 @@ class FileBrowserActivity final : public UiListActivity {
   void renameSelectedFile(const std::string& oldPath, const std::string& oldEntry, const std::string& newStem,
                           const std::string& extension);
   void deleteSelected();
+  std::string selectedPath() const;
+  void toggleSelectedProtection();
 
   Mode mode = Mode::Books;
 

@@ -27,9 +27,10 @@
 #include "activities/reader/ReaderUtils.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
-#include "inklink/SleepScreens.h"
 #include "images/Logo120.h"
 #include "images/MoonIcon.h"
+#include "inklink/PrivacyLock.h"
+#include "inklink/SleepScreens.h"
 
 namespace {
 
@@ -502,15 +503,37 @@ void releaseSdFontCachesForDecode(const GfxRenderer& renderer) {
 
 }  // namespace
 
+uint8_t SleepActivity::effectiveMode(const bool fromTimeout) {
+  using Mode = CrossPointSettings::SLEEP_SCREEN_MODE;
+  namespace privacy = inklink::privacy;
+  uint8_t mode = SETTINGS.sleepScreen;
+  if (fromTimeout &&
+      SETTINGS.quickResumeSleepScreen == CrossPointSettings::QUICK_RESUME_SLEEP_SCREEN::QUICK_RESUME_AFTER_TIMEOUT) {
+    mode = Mode::QUICK_RESUME;
+  }
+  // Keeps the current frame: a page, or a home screen listing books.
+  const bool showsFrame = mode == Mode::QUICK_RESUME || mode == Mode::TRANSPARENT_CUSTOM;
+  const bool showsCurrentBook = mode == Mode::COVER || (mode == Mode::COVER_CUSTOM && APP_STATE.lastSleepFromReader);
+  if (privacy::deviceLockEnabled()) {
+    // This screen stays on the panel under the next wake's PIN pad.
+    if (showsFrame || showsCurrentBook || mode == Mode::INKLINK_DASHBOARD) return Mode::DARK;
+    if (mode == Mode::COVER_CUSTOM || mode == Mode::INKLINK_QUOTE) return Mode::CUSTOM;
+    return mode;
+  }
+  const bool currentProtected = APP_STATE.lastSleepFromReader && privacy::isProtected(APP_STATE.openEpubPath);
+  // An unlocked session may have protected books on any screen.
+  if (showsFrame && (currentProtected || (privacy::booksUnlocked() && privacy::protectedCount() > 0))) {
+    return Mode::DARK;
+  }
+  if (showsCurrentBook && currentProtected) return mode == Mode::COVER_CUSTOM ? Mode::CUSTOM : Mode::DARK;
+  return mode;
+}
+
 void SleepActivity::onEnter() {
   Activity::onEnter();
 
-  const bool renderQuickResume =
-      SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::QUICK_RESUME ||
-      (fromTimeout &&
-       SETTINGS.quickResumeSleepScreen == CrossPointSettings::QUICK_RESUME_SLEEP_SCREEN::QUICK_RESUME_AFTER_TIMEOUT);
-
-  if (renderQuickResume) {
+  const uint8_t mode = effectiveMode(fromTimeout);
+  if (mode == CrossPointSettings::SLEEP_SCREEN_MODE::QUICK_RESUME) {
     // Quick Resume keeps the current frame as-is, so the driver's inversion
     // state stays too: a night-mode page sleeps in night polarity, and the
     // moon icon inverts with it at transfer like any other draw.
@@ -525,7 +548,7 @@ void SleepActivity::onEnter() {
   // night-mode reader render.
   display.setInverted(false);
 
-  if (SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::TRANSPARENT_CUSTOM) {
+  if (mode == CrossPointSettings::SLEEP_SCREEN_MODE::TRANSPARENT_CUSTOM) {
     // Transparent mode retains the current framebuffer. Materialize any
     // output-level inversion first so the retained content keeps its visible
     // polarity after the display driver returns to normal.
@@ -550,7 +573,7 @@ void SleepActivity::onEnter() {
     GUI.drawPopup(renderer, tr(STR_ENTERING_SLEEP));
   }
 
-  switch (SETTINGS.sleepScreen) {
+  switch (mode) {
     case (CrossPointSettings::SLEEP_SCREEN_MODE::BLANK):
       return renderBlankSleepScreen();
     case (CrossPointSettings::SLEEP_SCREEN_MODE::CUSTOM):

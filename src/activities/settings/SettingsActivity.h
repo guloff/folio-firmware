@@ -28,6 +28,7 @@ enum class SettingAction {
   TextSettings,
   KeyboardLayouts,
   HomeButton,
+  Privacy,
   About,
 };
 

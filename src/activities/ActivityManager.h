@@ -1,11 +1,11 @@
 #pragma once
-
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include <freertos/task.h>
 
 #include <atomic>
 #include <cassert>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -91,6 +91,9 @@ class ActivityManager {
   // Opens a book at a stored spine/page (saved highlight); see
   // ReaderActivity::setInitialPosition.
   void goToReaderAt(std::string path, int spine, int page, int percent);
+  // A protected book (inklink::privacy) opens only after its PIN: shows the
+  // PIN pad and returns true, `open` running once it is accepted.
+  bool gateProtectedBook(const std::string& path, std::function<void()> open);
   void goToSleep(bool fromTimeout = false);
   void goToBoot();
   void goToFullScreenMessage(std::string message, EpdFontFamily::Style style = EpdFontFamily::REGULAR);

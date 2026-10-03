@@ -33,13 +33,19 @@
 #include "activities/Activity.h"
 #include "activities/ActivityManager.h"
 #include "activities/settings/SdFirmwareUpdateActivity.h"
+#ifdef FOLIO_GPIO_PROBE
+#include "activities/util/GpioProbeActivity.h"
+#endif
+#include "activities/boot_sleep/SleepActivity.h"
+#include "activities/util/PinEntryActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/BleSync.h"
+#include "inklink/BootHealth.h"
+#include "inklink/PrivacyLock.h"
 #include "platform/UsbSerialJtagHandoff.h"
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
-#include "inklink/BleSync.h"
-#include "inklink/BootHealth.h"
 #include "util/Timezones.h"
 
 #if CROSSPOINT_VECTOR_FONTS
@@ -268,9 +274,7 @@ void enterDeepSleep(bool fromTimeout = false) {
   inklink::boot::confirmBeforeSleep();
 
   const bool isQuickResumeSleep =
-      SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::QUICK_RESUME ||
-      (fromTimeout &&
-       SETTINGS.quickResumeSleepScreen == CrossPointSettings::QUICK_RESUME_SLEEP_SCREEN::QUICK_RESUME_AFTER_TIMEOUT);
+      SleepActivity::effectiveMode(fromTimeout) == CrossPointSettings::SLEEP_SCREEN_MODE::QUICK_RESUME;
   // Every sleep mode leaves a complete retained frame on the e-ink panel. Keep
   // it visible until the first useful reader or home paint replaces it.
   APP_STATE.showBootScreen = false;
@@ -281,6 +285,8 @@ void enterDeepSleep(bool fromTimeout = false) {
   // a WiFi activity would otherwise silentRestart() here and reboot instead.
   deepSleepInProgress = true;
   activityManager.goToSleep(fromTimeout);
+  // After the sleep screen: it decides what to show from this session's state.
+  inklink::privacy::relock();
 
   if (isQuickResumeSleep) {
     saveSleepFrameBuffer();
@@ -439,6 +445,8 @@ void setup() {
   // UTC-offset setting on first boot after the update).
   timezones::applyToClock();
   RECENT_BOOKS.loadFromFile();
+  inklink::privacy::beginBoot(isSilentReboot);
+  inklink::privacy::loadBooks();
   I18N.setLanguage(static_cast<Language>(SETTINGS.language));
   KOREADER_STORE.loadFromFile();
   OPDS_STORE.loadFromFile();
@@ -534,36 +542,58 @@ void setup() {
   // Output polarity is resolved per render by ActivityManager (night mode
   // inverts only the reading surfaces), so nothing to restore here.
 
+  // Everything after the wake lock: crash report, reader resume or home.
+  auto routeAfterUnlock = [=]() mutable {
+    if (rebootedFromPanic) {
+      // If we rebooted from a panic, go to crash report screen to show the panic info
+      activityManager.goToCrashReport();
+    } else if (resume == BootResume::Silent && snapshotTarget == SILENT_REBOOT_TARGET_READER &&
+               !APP_STATE.openEpubPath.empty()) {
+      activityManager.goToReader(APP_STATE.openEpubPath);
+    } else if (resume == BootResume::Silent && snapshotTarget == SILENT_REBOOT_TARGET_SETTINGS) {
+      // Back out of the WiFi rows and the user is where they left off, not on Home.
+      activityManager.goToSettings();
+    } else if (resume == BootResume::Silent) {
+      // target == home (or reader with no open book): land on home — don't fall
+      // through to the sleep-wake "resume reader" logic, which fires on stale
+      // openEpubPath + lastSleepFromReader from a prior session.
+      activityManager.goHome();
+    } else if (APP_STATE.openEpubPath.empty() || !APP_STATE.lastSleepFromReader ||
+               mappedInputManager.isPressed(MappedInputManager::Button::Back) ||
+               APP_STATE.readerActivityLoadCount > 0) {
+      // Boot to home screen if no book is open, last sleep was not from reader, back button is held, or reader activity
+      // crashed (indicated by readerActivityLoadCount > 0)
+      activityManager.goHome(HomeMenuItem::NONE, needsWakeRefresh);
+    } else {
+      // Clear app state to avoid getting into a boot loop if the epub doesn't load
+      const auto path = APP_STATE.openEpubPath;
+      APP_STATE.openEpubPath = "";
+      APP_STATE.readerActivityLoadCount++;
+      APP_STATE.saveToFile();
+      activityManager.goToReader(path, allowFastInitialReaderRefresh);
+    }
+  };
+
   if (recoveryFirmwareMode) {
     // Skip normal home/reader routing: jump straight into the SD firmware picker.
     activityManager.replaceActivity(
         std::make_unique<SdFirmwareUpdateActivity>(renderer, mappedInputManager, /*recoveryMode=*/true));
-  } else if (rebootedFromPanic) {
-    // If we rebooted from a panic, go to crash report screen to show the panic info
-    activityManager.goToCrashReport();
-  } else if (resume == BootResume::Silent && snapshotTarget == SILENT_REBOOT_TARGET_READER &&
-             !APP_STATE.openEpubPath.empty()) {
-    activityManager.goToReader(APP_STATE.openEpubPath);
-  } else if (resume == BootResume::Silent && snapshotTarget == SILENT_REBOOT_TARGET_SETTINGS) {
-    // Back out of the WiFi rows and the user is where they left off, not on Home.
-    activityManager.goToSettings();
-  } else if (resume == BootResume::Silent) {
-    // target == home (or reader with no open book): land on home — don't fall
-    // through to the sleep-wake "resume reader" logic, which fires on stale
-    // openEpubPath + lastSleepFromReader from a prior session.
-    activityManager.goHome();
-  } else if (APP_STATE.openEpubPath.empty() || !APP_STATE.lastSleepFromReader ||
-             mappedInputManager.isPressed(MappedInputManager::Button::Back) || APP_STATE.readerActivityLoadCount > 0) {
-    // Boot to home screen if no book is open, last sleep was not from reader, back button is held, or reader activity
-    // crashed (indicated by readerActivityLoadCount > 0)
-    activityManager.goHome(HomeMenuItem::NONE, needsWakeRefresh);
+#ifdef FOLIO_GPIO_PROBE
+  } else if (true) {
+    activityManager.replaceActivity(std::make_unique<GpioProbeActivity>(renderer, mappedInputManager));
+#endif
+  } else if (inklink::privacy::deviceLockEnabled() && !inklink::privacy::deviceUnlocked()) {
+    // Nothing of the session shows before the PIN; the sleep screen left on
+    // the panel is one the lock allows (see SleepActivity::effectiveMode).
+    activityManager.replaceActivity(std::make_unique<PinEntryActivity>(
+        renderer, mappedInputManager, PinEntryActivity::Mode::Unlock, StrId::STR_PIN_ENTER, /*cancellable=*/false,
+        [routeAfterUnlock](const std::string&) mutable {
+          inklink::privacy::unlockDevice();
+          routeAfterUnlock();
+        },
+        /*deviceLock=*/true));
   } else {
-    // Clear app state to avoid getting into a boot loop if the epub doesn't load
-    const auto path = APP_STATE.openEpubPath;
-    APP_STATE.openEpubPath = "";
-    APP_STATE.readerActivityLoadCount++;
-    APP_STATE.saveToFile();
-    activityManager.goToReader(path, allowFastInitialReaderRefresh);
+    routeAfterUnlock();
   }
 
   if (resume == BootResume::Silent) {
@@ -644,6 +674,12 @@ void loop() {
         uint8_t* buf = display.getFrameBuffer();
         logSerial.write(buf, bufferSize);
         logSerial.printf("SCREENSHOT_END\n");
+      } else if (cmd == "PINRESET") {
+        // tools/inklink/reset_pin.py signs this with the release key.
+        logSerial.printf("PINRESET_CHALLENGE:%s\n", inklink::privacy::resetChallengeHex().c_str());
+      } else if (cmd.startsWith("PINRESET:")) {
+        const bool ok = inklink::privacy::resetWithSignatureHex(cmd.substring(9).c_str());
+        logSerial.printf(ok ? "PINRESET_OK\n" : "PINRESET_FAIL\n");
       }
     }
   }

@@ -21,6 +21,7 @@
 #include "inklink/InkLinkClock.h"
 #include "inklink/JsonLines.h"
 #include "inklink/Pairing.h"
+#include "inklink/PrivacyLock.h"
 #include "inklink/StatsRender.h"
 #include "util/BookProgress.h"
 
@@ -61,8 +62,8 @@ InkLinkHubActivity::InkLinkHubActivity(GfxRenderer& renderer, MappedInputManager
 void InkLinkHubActivity::onEnter() {
   UiListActivity::onEnter();
   const char* labels[ROW_COUNT] = {tr(STR_INKLINK_PHONE_SYNC), tr(STR_INKLINK_STATS), tr(STR_INKLINK_SHELVES),
-                                   tr(STR_INKLINK_HIGHLIGHTS),  tr(STR_BROWSE_FILES),   tr(STR_FILE_TRANSFER),
-                                   tr(STR_SETTINGS_TITLE),      tr(STR_RESET_PAIRING)};
+                                   tr(STR_INKLINK_HIGHLIGHTS), tr(STR_BROWSE_FILES),  tr(STR_FILE_TRANSFER),
+                                   tr(STR_SETTINGS_TITLE),     tr(STR_RESET_PAIRING)};
   for (int i = 0; i < ROW_COUNT; i++) {
     rows[i] = fui::ListItem{};
     rows[i].label = labels[i];
@@ -116,9 +117,8 @@ void InkLinkHubActivity::activateIndex(const int index) {
 }
 
 void InkLinkHubActivity::confirmResetPairing() {
-  auto confirm =
-      makeUniqueNoThrow<ConfirmationActivity>(renderer, mappedInput, tr(STR_RESET_PAIRING),
-                                              tr(STR_RESET_PAIRING_CONFIRM), tr(STR_RESET_PAIRING_ACTION));
+  auto confirm = makeUniqueNoThrow<ConfirmationActivity>(renderer, mappedInput, tr(STR_RESET_PAIRING),
+                                                         tr(STR_RESET_PAIRING_CONFIRM), tr(STR_RESET_PAIRING_ACTION));
   if (!confirm) {
     LOG_ERR("INKLINK", "OOM: reset pairing confirmation");
     return;
@@ -338,6 +338,7 @@ int16_t clampedInt(JsonObjectConst obj, const char* key, const int lo, const int
 
 bool collectHighlight(JsonObjectConst obj, void* raw) {
   auto* ctx = static_cast<CollectCtx*>(raw);
+  if (inklink::privacy::isHidden(obj["b"] | "")) return true;
   ctx->texts->emplace_back(obj["x"] | "");
   ctx->titles->emplace_back(obj["t"] | "");
   ctx->books->emplace_back(obj["b"] | "");

@@ -14,11 +14,13 @@
 #include "CrossPointState.h"
 #include "MappedInputManager.h"
 #include "RecentBooksStore.h"
+#include "activities/util/BookProtection.h"
 #include "activities/util/ConfirmationActivity.h"
 #include "activities/util/KeyboardEntryActivity.h"
 #include "components/UITheme.h"
 #include "components/UiAppHelpers.h"
 #include "fontIds.h"
+#include "inklink/PrivacyLock.h"
 #include "util/BookCacheUtils.h"
 #include "util/BookmarkUtil.h"
 
@@ -379,19 +381,47 @@ void FileBrowserActivity::showEntryActions() {
   }
 
   const bool isDirectory = files[nav.selected].back() == '/';
-  static constexpr StrId FILE_OPTIONS[] = {StrId::STR_OPEN, StrId::STR_DELETE, StrId::STR_RENAME};
+  static constexpr StrId FILE_OPTIONS[] = {StrId::STR_OPEN, StrId::STR_DELETE, StrId::STR_RENAME,
+                                           StrId::STR_PIN_PROTECT_BOOK};
+  static constexpr StrId PROTECTED_FILE_OPTIONS[] = {StrId::STR_OPEN, StrId::STR_DELETE, StrId::STR_RENAME,
+                                                     StrId::STR_PIN_UNPROTECT_BOOK};
   static constexpr StrId DIRECTORY_OPTIONS[] = {StrId::STR_OPEN, StrId::STR_DELETE};
-  optionPopup.show(StrId::STR_FILENAME, isDirectory ? DIRECTORY_OPTIONS : FILE_OPTIONS, isDirectory ? 2 : 3, 0,
-                   [this](const int index) {
-                     if (index == 0) {
-                       activateSelected();
-                     } else if (index == 1) {
-                       deleteSelected();
-                     } else if (index == 2) {
-                       startRename();
-                     }
-                   });
+  const bool isProtected = !isDirectory && inklink::privacy::isProtected(selectedPath());
+  const StrId* options = isDirectory ? DIRECTORY_OPTIONS : isProtected ? PROTECTED_FILE_OPTIONS : FILE_OPTIONS;
+  optionPopup.show(StrId::STR_FILENAME, options, isDirectory ? 2 : 4, 0, [this](const int index) {
+    if (index == 0) {
+      activateSelected();
+    } else if (index == 1) {
+      deleteSelected();
+    } else if (index == 2) {
+      startRename();
+    } else if (index == 3) {
+      toggleSelectedProtection();
+    }
+  });
   requestUpdate();
+}
+
+std::string FileBrowserActivity::selectedPath() const {
+  std::string path = basepath;
+  if (path.back() != '/') path += "/";
+  return path + files[nav.selected];
+}
+
+void FileBrowserActivity::toggleSelectedProtection() {
+  if (files.empty() || nav.selected < 0 || nav.selected >= listCount()) return;
+  const std::string path = selectedPath();
+  // The screenshot folder is named after the title the reader shows; recents
+  // know it for books already opened, otherwise the file name stands in.
+  std::string title;
+  for (const auto& book : RECENT_BOOKS.getBooks()) {
+    if (book.path == path) title = book.title;
+  }
+  if (title.empty()) {
+    const std::string& entry = files[nav.selected];
+    title = entry.substr(0, entry.size() - getFileExtension(entry).size());
+  }
+  toggleBookProtection(*this, renderer, mappedInput, path, title, [this] { requestUpdate(); });
 }
 
 void FileBrowserActivity::deleteSelected() {
@@ -415,6 +445,7 @@ void FileBrowserActivity::deleteSelected() {
     }
 
     LOG_DBG("FileBrowser", "Deleted successfully");
+    inklink::privacy::onPathRemoved(fullPath);
     {
       RenderLock lock(*this);
       loadFiles();
@@ -497,6 +528,7 @@ void FileBrowserActivity::renameSelectedFile(const std::string& oldPath, const s
   }
 
   RECENT_BOOKS.updatePath(oldPath, newPath, oldCachePath, newCachePath);
+  inklink::privacy::onPathChanged(oldPath, newPath);
   if (APP_STATE.openEpubPath == oldPath) {
     APP_STATE.openEpubPath = newPath;
     if (!APP_STATE.saveToFile()) LOG_ERR("FileBrowser", "Failed to save renamed open-book path");

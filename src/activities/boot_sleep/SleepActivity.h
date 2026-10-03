@@ -12,6 +12,12 @@ class SleepActivity final : public Activity {
       : Activity("Sleep", renderer, mappedInput), fromTimeout(fromTimeout) {}
   void onEnter() override;
 
+  // The sleep screen this sleep draws (SLEEP_SCREEN_MODE; QUICK_RESUME also
+  // for a timeout under "Quick Resume after timeout"). PIN protection swaps
+  // out screens that would show a protected book or, with the wake lock on,
+  // anything of the session. Call before the session relocks.
+  static uint8_t effectiveMode(bool fromTimeout);
+
  private:
   void renderDefaultSleepScreen() const;
   void renderCustomSleepScreen() const;

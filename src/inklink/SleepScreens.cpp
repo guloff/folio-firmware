@@ -13,6 +13,7 @@
 
 #include "Annotations.h"
 #include "InkLinkClock.h"
+#include "PrivacyLock.h"
 #include "ReadingStats.h"
 #include "RecentBooksStore.h"
 #include "Shelves.h"
@@ -32,9 +33,15 @@ bool renderDashboard(const GfxRenderer& renderer) {
   renderer.clearScreen();
 
   // Current book.
-  const auto& recent = RECENT_BOOKS.getBooks();
-  if (!recent.empty()) {
-    const RecentBook& book = recent.front();
+  const RecentBook* current = nullptr;
+  for (const auto& rb : RECENT_BOOKS.getBooks()) {
+    if (!privacy::isProtected(rb.path)) {
+      current = &rb;
+      break;
+    }
+  }
+  if (current) {
+    const RecentBook& book = *current;
     renderer.drawText(UI_10_FONT_ID, margin, y, tr(STR_INKLINK_NOW_READING));
     y += 26;
     constexpr int COVER_W = 150;
@@ -64,7 +71,7 @@ bool renderDashboard(const GfxRenderer& renderer) {
   // Today and streak.
   StatsSummary s;
   std::vector<DayTotal> days;
-  if (!ReadingStats::get().summarize(s, &days) && recent.empty()) {
+  if (!ReadingStats::get().summarize(s, &days) && !current) {
     // Nothing trustworthy to show: let the caller draw the default screen.
     return false;
   }

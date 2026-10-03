@@ -1,9 +1,9 @@
 #include "FolioHomeActivity.h"
 
 #include <Bitmap.h>
+#include <BoardConfig.h>
 #include <Epub.h>
 #include <FsHelpers.h>
-#include <BoardConfig.h>
 #include <GfxRenderer.h>
 #include <HalClock.h>
 #include <HalPowerManager.h>
@@ -26,6 +26,7 @@
 #include "components/icons/settings2.h"
 #include "fontIds.h"
 #include "inklink/InkLinkClock.h"
+#include "inklink/PrivacyLock.h"
 #include "inklink/Shelves.h"
 #include "inklink/StatsRender.h"
 #include "util/BookProgress.h"
@@ -48,7 +49,8 @@ constexpr int NAV_H = 86;
 int drawWrapped(const GfxRenderer& r, int fontId, const std::string& text, int x, int y, int maxWidth, int lineH,
                 int maxLines, EpdFontFamily::Style style) {
   const auto lines = inklink::render::wrapText(r, fontId, text, maxWidth, static_cast<size_t>(maxLines), style);
-  for (size_t i = 0; i < lines.size(); i++) r.drawText(fontId, x, y + static_cast<int>(i) * lineH, lines[i].c_str(), true, style);
+  for (size_t i = 0; i < lines.size(); i++)
+    r.drawText(fontId, x, y + static_cast<int>(i) * lineH, lines[i].c_str(), true, style);
   return static_cast<int>(lines.size());
 }
 
@@ -60,7 +62,7 @@ void FolioHomeActivity::onEnter() {
   const auto& books = RECENT_BOOKS.getBooks();
   recent.reserve(std::min<size_t>(books.size(), MAX_RECENT_STRIP + 1));
   for (const auto& b : books) {
-    if (RecentBooksStore::isMissing(b)) continue;
+    if (RecentBooksStore::isMissing(b) || inklink::privacy::isHidden(b.path)) continue;
     recent.push_back(b);
     if (recent.size() > MAX_RECENT_STRIP) break;  // 1 on the card + strip
   }
@@ -68,7 +70,8 @@ void FolioHomeActivity::onEnter() {
   // Progress for the strip is read once here, not on every repaint.
   recentPercents.clear();
   recentPercents.reserve(recent.size());
-  for (const auto& b : recent) recentPercents.push_back(&b == &recent.front() ? currentPercent : loadBookProgress(b.path));
+  for (const auto& b : recent)
+    recentPercents.push_back(&b == &recent.front() ? currentPercent : loadBookProgress(b.path));
   // Personal pace: time spent in this book so far per percent read. Needs a
   // few percent and ten minutes of history to be more than noise.
   secsLeftEstimate = 0;
@@ -185,8 +188,7 @@ void FolioHomeActivity::loop() {
   }
 }
 
-void FolioHomeActivity::drawBookCover(const std::string& bookPath, const int x, const int y, const int w,
-                                      const int h) {
+void FolioHomeActivity::drawBookCover(const std::string& bookPath, const int x, const int y, const int w, const int h) {
   coverSdReads++;
   if (!inklink::render::drawBookCover(renderer, bookPath, x, y, w, h)) {
     renderer.drawIcon(BookIcon, x + (w - 32) / 2, y + (h - 32) / 2, 32);

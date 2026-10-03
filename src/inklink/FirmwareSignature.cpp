@@ -66,6 +66,10 @@ bool verifyDigest(const uint8_t digest[DIGEST_SIZE], const uint8_t signature[SIG
   return crypto_ed25519_check(signature, PUBLIC_KEY, message, sizeof(message)) == 0;
 }
 
+bool verifyMessage(const uint8_t* message, const size_t len, const uint8_t signature[SIGNATURE_SIZE]) {
+  return crypto_ed25519_check(signature, PUBLIC_KEY, message, len) == 0;
+}
+
 ImageHasher::ImageHasher() {
   mbedtls_sha256_init(shaCtx(ctx));
   mbedtls_sha256_starts(shaCtx(ctx), /*is224=*/0);
