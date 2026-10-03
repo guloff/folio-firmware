@@ -37,8 +37,8 @@ class DictionaryWordSelectActivity final : public Activity {
 
   explicit DictionaryWordSelectActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
                                         std::unique_ptr<Page> page, int marginLeft, int marginTop,
-                                        BookContext context = {}, bool highlightMode = false,
-                                        int startX = -1, int startY = -1)
+                                        BookContext context = {}, bool highlightMode = false, int startX = -1,
+                                        int startY = -1)
       : Activity("DictionaryWordSelect", renderer, mappedInput),
         page(std::move(page)),
         marginLeft(marginLeft),
@@ -74,6 +74,9 @@ class DictionaryWordSelectActivity final : public Activity {
   int wordAt(int x, int y) const;
   int nearestWord(int x, int y, int maxDx = INT_MAX) const;
   bool handleDrag();
+  // Highlight mode on touch boards: the hint band's Cancel target, which
+  // leaves without saving (an accidental long-press has no other way out).
+  bool cancelRect(int& x, int& y, int& w, int& h) const;
   void setRangeEnd(int index);
   void moveVertical(int direction);
   void performLookup();

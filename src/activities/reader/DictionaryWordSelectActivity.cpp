@@ -12,11 +12,11 @@
 #include <cstdlib>
 
 #include "CrossPointSettings.h"
-#include "inklink/HighlightMarks.h"
 #include "DictionaryDefinitionActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
 #include "inklink/Annotations.h"
+#include "inklink/HighlightMarks.h"
 
 namespace {
 
@@ -269,6 +269,27 @@ void DictionaryWordSelectActivity::loop() {
     return;
   }
 
+  int cx = 0;
+  int cy = 0;
+  int cw = 0;
+  int ch = 0;
+  if (cancelRect(cx, cy, cw, ch)) {
+    int tx = 0;
+    int ty = 0;
+    // The band is one text line tall; the target reaches a finger's width
+    // further into the page.
+    constexpr int REACH = 24;
+    const int top = cy == 0 ? cy : cy - REACH;
+    const int bottom = cy == 0 ? cy + ch + REACH : cy + ch;
+    const auto inside = [&] { return tx >= cx - 8 && ty >= top && ty < bottom; };
+    if (mappedInput.wasScreenTapped(tx, ty) && inside()) {
+      finish();
+      return;
+    }
+    // A finger resting on Cancel must not pick the word under the band.
+    if ((mappedInput.wasScreenTouchDown(tx, ty) || mappedInput.isScreenTouchHeld(tx, ty)) && inside()) return;
+  }
+
   // Before Back: a left-to-right drag from the left quarter also reads as the
   // Back swipe, which used to close the screen mid-selection.
   if (highlightMode && !words.empty() && handleDrag()) return;
@@ -471,8 +492,8 @@ void DictionaryWordSelectActivity::drawHints() const {
     return;
   }
   const char* confirmLabel = highlightMode ? tr(STR_INKLINK_HIGHLIGHT) : tr(STR_LOOKUP);
-  const auto labels = mappedInput.mapDirectionalLabels(tr(STR_BACK), confirmLabel, tr(STR_DIR_LEFT),
-                                                       tr(STR_DIR_RIGHT), tr(STR_DIR_UP), tr(STR_DIR_DOWN));
+  const auto labels = mappedInput.mapDirectionalLabels(tr(STR_BACK), confirmLabel, tr(STR_DIR_LEFT), tr(STR_DIR_RIGHT),
+                                                       tr(STR_DIR_UP), tr(STR_DIR_DOWN));
   GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
 }
 
@@ -531,10 +552,26 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
     const bool keyUnderTop = underTopBand(anchor >= 0 ? anchor : selected);
     const int bandY = keyUnderTop ? renderer.getScreenHeight() - bandH : 0;
     const int ruleY = keyUnderTop ? bandY : bandH - 1;
-    renderer.fillRect(0, bandY, renderer.getScreenWidth(), bandH, false);
-    renderer.drawLine(0, ruleY, renderer.getScreenWidth() - 1, ruleY, true);
-    renderer.drawCenteredText(UI_10_FONT_ID, bandY + 6,
-                              anchor < 0 ? tr(STR_INKLINK_HIGHLIGHT_HINT) : tr(STR_INKLINK_HIGHLIGHT_HINT_END));
+    const int screenW = renderer.getScreenWidth();
+    renderer.fillRect(0, bandY, screenW, bandH, false);
+    renderer.drawLine(0, ruleY, screenW - 1, ruleY, true);
+    const char* hint = anchor < 0 ? tr(STR_INKLINK_HIGHLIGHT_HINT) : tr(STR_INKLINK_HIGHLIGHT_HINT_END);
+    int cx = 0;
+    int cy = 0;
+    int cw = 0;
+    int ch = 0;
+    if (cancelRect(cx, cy, cw, ch)) {
+      // Hint on the left, Cancel on the right; a hint too long for what is
+      // left steps down to the small font.
+      const int room = cx - 12 - 8;
+      const int hintFont = renderer.getTextWidth(UI_10_FONT_ID, hint) <= room ? UI_10_FONT_ID : SMALL_FONT_ID;
+      const int hintY = bandY + (bandH - renderer.getLineHeight(hintFont)) / 2;
+      renderer.drawText(hintFont, 12, hintY, hint, true);
+      renderer.drawLine(cx, bandY + 4, cx, bandY + bandH - 5, true);
+      renderer.drawText(UI_10_FONT_ID, cx + 12, bandY + 6, tr(STR_CANCEL), true, EpdFontFamily::BOLD);
+    } else {
+      renderer.drawCenteredText(UI_10_FONT_ID, bandY + 6, hint);
+    }
   }
 
   drawHints();
@@ -549,6 +586,19 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
     return;
   }
   renderer.displayBuffer(HalDisplay::FAST_REFRESH);
+}
+
+bool DictionaryWordSelectActivity::cancelRect(int& x, int& y, int& w, int& h) const {
+  if (!highlightMode || !mappedInput.hasTouch() || words.empty() || popup != Popup::None) return false;
+  // Same band placement as render(): bottom edge only while the key word sits under the top band.
+  const int bandH = renderer.getLineHeight(UI_10_FONT_ID) + 12;
+  const int key = anchor >= 0 ? anchor : selected;
+  const bool keyUnderTop = key >= 0 && key < static_cast<int>(words.size()) && words[key].y < bandH;
+  w = renderer.getTextWidth(UI_10_FONT_ID, tr(STR_CANCEL), EpdFontFamily::BOLD) + 24;
+  h = bandH;
+  x = renderer.getScreenWidth() - w;
+  y = keyUnderTop ? renderer.getScreenHeight() - bandH : 0;
+  return true;
 }
 
 // Inverts every word in the anchored range (reading order, either direction).
