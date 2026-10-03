@@ -569,7 +569,11 @@ def extract_ligatures_fonttools(font_path, codepoints):
 
 def rasterize_font_style(fontfile, size, intervals, style_id=0, force_autohint=False,
                          fallback_fontfile=None):
-    """Rasterize all glyphs for one font style. Returns StyleRasterData."""
+    """Rasterize all glyphs for one font style. Returns StyleRasterData.
+
+    fallback_fontfile: a path or a list of paths, tried in order for code
+    points the primary font lacks (e.g. symbols first, then CJK).
+    """
     import freetype
 
     style_names = {0: "regular", 1: "bold", 2: "italic", 3: "bolditalic"}
@@ -582,10 +586,13 @@ def rasterize_font_style(fontfile, size, intervals, style_id=0, force_autohint=F
     # Invalid_Size_Handle on some fonts.
     face.set_char_size(size << 6, size << 6, 150, 150)
     ligature_glyph_indices = extract_ligature_glyph_indices_fonttools(fontfile)
-    fallback_face = None
-    if fallback_fontfile:
-        fallback_face = freetype.Face(fallback_fontfile)
+    if isinstance(fallback_fontfile, str):
+        fallback_fontfile = [fallback_fontfile]
+    fallback_faces = []
+    for path in fallback_fontfile or []:
+        fallback_face = freetype.Face(path)
         fallback_face.set_char_size(size << 6, size << 6, 150, 150)
+        fallback_faces.append(fallback_face)
 
     load_flags = freetype.FT_LOAD_RENDER
     if force_autohint:
@@ -598,7 +605,7 @@ def rasterize_font_style(fontfile, size, intervals, style_id=0, force_autohint=F
         if glyph_index > 0:
             face.load_glyph(glyph_index, load_flags)
             return face
-        if fallback_face:
+        for fallback_face in fallback_faces:
             fallback_glyph_index = fallback_face.get_char_index(code_point)
             if fallback_glyph_index > 0:
                 fallback_face.load_glyph(fallback_glyph_index, load_flags)
@@ -615,7 +622,7 @@ def rasterize_font_style(fontfile, size, intervals, style_id=0, force_autohint=F
         start = i_start
         for code_point in range(i_start, i_end + 1):
             has_primary = face.get_char_index(code_point) != 0 or code_point in ligature_glyph_indices
-            has_fallback = fallback_face and fallback_face.get_char_index(code_point) != 0
+            has_fallback = any(f.get_char_index(code_point) != 0 for f in fallback_faces)
             if not has_primary and not has_fallback:
                 if start < code_point:
                     validated_intervals.append((start, code_point - 1))
@@ -831,7 +838,7 @@ def generate_cpfont_multistyle(style_fonts, size, intervals, output_path,
     """Generate a multi-style v4 .cpfont file.
 
     style_fonts: dict of {style_id: fontfile_path} e.g. {0: "Regular.ttf", 2: "Italic.ttf"}
-    fallback_style_fonts: optional dict of {style_id: fallback_fontfile_path}
+    fallback_style_fonts: optional dict of {style_id: fallback path or list of paths}
     """
     MAGIC = b"CPFONT\x00\x00"
     HEADER_SIZE = 32
@@ -960,14 +967,14 @@ def main():
                         help="Font file for italic style.")
     parser.add_argument("--bolditalic", dest="font_bolditalic",
                         help="Font file for bold-italic style.")
-    parser.add_argument("--fallback-regular", dest="fallback_regular",
-                        help="Fallback font file for regular style.")
-    parser.add_argument("--fallback-bold", dest="fallback_bold",
-                        help="Fallback font file for bold style.")
-    parser.add_argument("--fallback-italic", dest="fallback_italic",
-                        help="Fallback font file for italic style.")
-    parser.add_argument("--fallback-bolditalic", dest="fallback_bolditalic",
-                        help="Fallback font file for bold-italic style.")
+    parser.add_argument("--fallback-regular", dest="fallback_regular", action="append",
+                        help="Fallback font file for regular style; repeat to chain several, tried in order.")
+    parser.add_argument("--fallback-bold", dest="fallback_bold", action="append",
+                        help="Fallback font file for bold style; repeat to chain several, tried in order.")
+    parser.add_argument("--fallback-italic", dest="fallback_italic", action="append",
+                        help="Fallback font file for italic style; repeat to chain several, tried in order.")
+    parser.add_argument("--fallback-bolditalic", dest="fallback_bolditalic", action="append",
+                        help="Fallback font file for bold-italic style; repeat to chain several, tried in order.")
 
     args = parser.parse_args()
 
