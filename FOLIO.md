@@ -98,7 +98,16 @@ Symbols 2, Math и Noto Sans CJK SC. ~37 тыс. символов: латини�
 python3 -m venv ../.venv && ../.venv/bin/pip install platformio
 git submodule update --init --recursive
 ../.venv/bin/pio run -e x4pro            # образ: .pio/build/x4pro/firmware.bin
+../.venv/bin/pio run -e x4pro-gh_release # релизный образ, побайтно как в CI
+../.venv/bin/pio run -e x4pro-nobt       # без Bluetooth: +23 КБ внутренней памяти
 ```
+
+Релизные образы воспроизводимы: `scripts/reproducible_build.py` убирает из образа пути сборщика и время
+(берётся время коммита), так что локальная сборка `x4pro-gh_release` совпадает с ассетом CI.
+
+`x4pro-nobt` не линкует контроллер Bluetooth (код контроллера занимает 21,3 КБ IRAM даже при выключенной
+настройке; перенести его во флеш можно только пересборкой ESP-IDF, которая теряет USB-накопитель).
+Синхронизации по Bluetooth и пульта в этой сборке нет; обновление по OTA вернёт обычный образ.
 
 Симулятор на Mac (SDL2: `brew install sdl2`), форк лежит в `../simulator`:
 
