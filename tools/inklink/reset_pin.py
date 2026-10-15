@@ -11,7 +11,7 @@ ask for a new PIN before they open.
     ../.venv/bin/python tools/inklink/reset_pin.py --port /dev/cu.usbmodem1101
 
 Key: $FOLIO_SIGNING_KEY_FILE, else ~/Documents/Projects/Folio/secrets/
-folio-signing-ed25519.pem. OpenSSL 3 is required (pkeyutl -rawin).
+folio-signing-ed25519.pem. OpenSSL 3 or newer is required (pkeyutl -rawin).
 
 Simulator: --sim-in <fifo> --sim-log <log> talk to a simulator started with
 CROSSPOINT_SIM_SERIAL_IN=<fifo> and its output redirected to <log>.
@@ -20,6 +20,7 @@ CROSSPOINT_SIM_SERIAL_IN=<fifo> and its output redirected to <log>.
 import argparse
 import glob
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -41,8 +42,9 @@ def openssl():
     if not exe:
         die("openssl not found")
     version = subprocess.run([exe, "version"], capture_output=True, text=True).stdout
-    if not version.startswith("OpenSSL 3"):
-        die(f"OpenSSL 3 required, got: {version.strip()}")
+    m = re.match(r"OpenSSL (\d+)\.", version)
+    if not m or int(m.group(1)) < 3:
+        die(f"OpenSSL 3+ required, got: {version.strip()}")
     return exe
 
 
