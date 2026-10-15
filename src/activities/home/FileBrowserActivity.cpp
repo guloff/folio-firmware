@@ -164,6 +164,12 @@ void FileBrowserActivity::provideRow(void* ctx, const uint16_t index, fui::ListI
     item.value = self->rowExtBuf;
   }
   item.icon = listIconFor(UITheme::getFileIcon(entry));
+  if (inklink::privacy::protectedCount() > 0) {
+    std::string path = self->basepath;
+    if (path.empty() || path.back() != '/') path += '/';
+    path += entry;
+    if (inklink::privacy::isProtected(path)) item.icon = freeink::ui::bitmapFromIcon(icon_lock_24);
+  }
   item.actionValue = static_cast<int16_t>(index);
 }
 

@@ -131,6 +131,10 @@ class LibraryListActivity final : public UiTabListActivity {
   // read order; the modification-time list follows with those books skipped.
   // Entries below pinnedCount() are store rows; the rest go through rowFor().
   int pinnedCount() const;
+  // Store book behind pinned entry `entry`, or nullptr when out of range.
+  const RecentBook* pinnedBook(int entry) const;
+  // Book row `entry` is PIN-protected (one index path read, only while any book is).
+  bool rowIsProtected(int entry);
   // Re-match the store against the index (chunked scan). Call whenever the
   // index or the store changes.
   void resolvePinned();
@@ -179,6 +183,9 @@ class LibraryListActivity final : public UiTabListActivity {
   // book is not in the index), and the current-direction rows to skip, sorted
   // ascending, so unpinned entries map to sort rows with a <=10-step walk.
   uint16_t pinnedAscRows[RecentBooksStore::MAX_RECENT_BOOKS] = {};
+  // Store index per pinned entry: hidden (PIN-protected, still locked) books
+  // are left out, they show only as ordinary index rows.
+  uint8_t pinnedStore[RecentBooksStore::MAX_RECENT_BOOKS] = {};
   uint16_t overlapRows[RecentBooksStore::MAX_RECENT_BOOKS] = {};
   uint8_t pinnedTotal = 0;
   uint8_t overlapCount = 0;

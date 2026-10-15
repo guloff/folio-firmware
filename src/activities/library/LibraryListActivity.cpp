@@ -24,6 +24,7 @@
 #include "components/icons/listIcons.h"
 #include "components/icons/search32.h"
 #include "fontIds.h"
+#include "inklink/PrivacyLock.h"
 #include "util/BookCacheUtils.h"
 
 namespace fui = freeink::ui;
@@ -151,14 +152,24 @@ int LibraryListActivity::pinnedCount() const {
   return pinnedTotal;
 }
 
+const RecentBook* LibraryListActivity::pinnedBook(const int entry) const {
+  const auto& books = RECENT_BOOKS.getBooks();
+  if (entry < 0 || entry >= pinnedTotal || pinnedStore[entry] >= books.size()) return nullptr;
+  return &books[pinnedStore[entry]];
+}
+
 void LibraryListActivity::resolvePinned() {
   const auto& books = RECENT_BOOKS.getBooks();
-  pinnedTotal = static_cast<uint8_t>(std::min<size_t>(books.size(), RecentBooksStore::MAX_RECENT_BOOKS));
+  pinnedTotal = 0;
+  for (size_t i = 0; i < books.size() && pinnedTotal < RecentBooksStore::MAX_RECENT_BOOKS; i++) {
+    if (inklink::privacy::isHidden(books[i].path)) continue;
+    pinnedStore[pinnedTotal++] = static_cast<uint8_t>(i);
+  }
   for (int i = 0; i < pinnedTotal; i++) pinnedAscRows[i] = 0xFFFF;
   if (pinnedTotal > 0 && index.isOpen()) {
     library::BookIdentity identities[RecentBooksStore::MAX_RECENT_BOOKS];
     for (int i = 0; i < pinnedTotal; i++) {
-      const std::string& path = books[static_cast<size_t>(i)].path;
+      const std::string& path = books[pinnedStore[i]].path;
       identities[i].pathHash = library::clixPathHash(path.data(), path.size());
       // Size is only a lookup prefilter; 0 (stat failed, e.g. the index handle
       // is the card's one open reader) falls back to hash-only matching.
@@ -193,9 +204,9 @@ void LibraryListActivity::refreshOverlap() {
 void LibraryListActivity::openSelectedBook() {
   std::string path;
   if (selectedEntry() < pinnedCount()) {
-    const auto& books = RECENT_BOOKS.getBooks();
-    if (selectedEntry() >= static_cast<int>(books.size())) return;
-    path = books[static_cast<size_t>(selectedEntry())].path;
+    const RecentBook* book = pinnedBook(selectedEntry());
+    if (!book) return;
+    path = book->path;
   } else {
     if (!index.isOpen()) return;
     const uint16_t ordinal = index.ordinalForRow(sortOrder, static_cast<uint16_t>(rowFor(selectedEntry())));
@@ -256,10 +267,10 @@ void LibraryListActivity::showRecentBookOptions(const int entry) {
   std::string title;
   const bool isStoreRow = entry < pinnedCount();
   if (isStoreRow) {
-    const auto& books = RECENT_BOOKS.getBooks();
-    if (entry >= static_cast<int>(books.size())) return;
-    path = books[static_cast<size_t>(entry)].path;
-    title = books[static_cast<size_t>(entry)].title;
+    const RecentBook* book = pinnedBook(entry);
+    if (!book) return;
+    path = book->path;
+    title = book->title;
   } else {
     if (!index.isOpen()) return;
     const uint16_t ordinal = index.ordinalForRow(sortOrder, static_cast<uint16_t>(rowFor(entry)));
@@ -690,12 +701,11 @@ bool LibraryListActivity::rowTextFor(const int entry, std::string& title, std::s
   author.clear();
   if (fileName) fileName->clear();
   if (entry < pinnedCount()) {
-    const auto& books = RECENT_BOOKS.getBooks();
-    if (entry < 0 || entry >= static_cast<int>(books.size())) return false;
-    const auto& book = books[static_cast<size_t>(entry)];
-    title = book.title;
-    author = book.author;
-    if (fileName) *fileName = book.path;
+    const RecentBook* book = pinnedBook(entry);
+    if (!book) return false;
+    title = book->title;
+    author = book->author;
+    if (fileName) *fileName = book->path;
     return true;
   }
   const uint16_t ordinal = index.ordinalForRow(sortOrder, static_cast<uint16_t>(rowFor(entry)));
@@ -712,6 +722,19 @@ bool LibraryListActivity::rowTextFor(const int entry, std::string& title, std::s
   }
   if (title.empty()) title = tr(STR_LIBRARY_UNKNOWN_TITLE);
   return true;
+}
+
+bool LibraryListActivity::rowIsProtected(const int entry) {
+  if (inklink::privacy::protectedCount() == 0) return false;
+  if (entry < pinnedCount()) {
+    const RecentBook* book = pinnedBook(entry);
+    return book && inklink::privacy::isProtected(book->path);
+  }
+  const uint16_t ordinal = index.ordinalForRow(sortOrder, static_cast<uint16_t>(rowFor(entry)));
+  library::ClixRecord record{};
+  std::string path;
+  return ordinal != 0xFFFF && index.readRecord(ordinal, record) && index.readPath(record, path) &&
+         inklink::privacy::isProtected(path);
 }
 
 bool LibraryListActivity::handleCustomInput() {
@@ -869,8 +892,11 @@ void LibraryListActivity::buildRows(UiScreen& screen) {
     }
 
     item.label = title.c_str();
-    // Group headings stay bare; every book row gets its file-type icon.
-    if (!groupsCollapsed && !rowFile.empty()) item.icon = listIconFor(UITheme::getFileIcon(rowFile), 32);
+    // Group headings stay bare. Book rows get their file-type icon; a PIN-protected book shows a lock.
+    if (!groupsCollapsed && !rowFile.empty()) {
+      item.icon = rowIsProtected(entry) ? freeink::ui::bitmapFromIcon(icon_lock_32)
+                                        : listIconFor(UITheme::getFileIcon(rowFile), 32);
+    }
     item.actionValue = static_cast<int16_t>(entry);
     winItems.push_back(item);
     rows++;
