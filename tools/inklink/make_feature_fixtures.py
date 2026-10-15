@@ -4,7 +4,9 @@
 Writes into <sd_root> (default: fs_):
   books/Footnotes_test.epub   - footnote links of several kinds: an <aside>
                                 note, a <p id> note, an empty <a id> anchor in
-                                a paragraph, and a link to a heading (not a note)
+                                a paragraph, a link to a heading (not a note),
+                                a link that targets itself (note in notes.xhtml)
+                                and a <span> wrapping block-level note content
   dictionaries/ru-test/ru-test.{ifo,idx,dict}
                               - a four-word StarDict dictionary with Russian
                                 lemmas, for inflected-form lookups
@@ -28,6 +30,8 @@ CHAPTER = """<?xml version="1.0" encoding="utf-8"?>
 <p>Третья сноска спрятана в абзаце<a epub:type="noteref" href="notes.xhtml#n3" id="r3">3</a>,
 а эта ссылка ведёт на заголовок<a epub:type="noteref" href="notes.xhtml#notes">4</a>.</p>
 <p>Дети смеялись, а взрослые читают и сегодня.</p>
+<p>Сломанная ссылка ведёт сама на себя<a class="_idFootnoteLink" href="#n5" id="n5">5</a>,
+а шестая сноска завёрнута в span<a epub:type="noteref" href="notes.xhtml#n6">6</a>.</p>
 </body>
 </html>
 """
@@ -42,6 +46,9 @@ NOTES = """<?xml version="1.0" encoding="utf-8"?>
 <p id="n2"><a href="ch1.xhtml#r2">2</a> Вторая сноска: абзац с идентификатором.</p>
 <!-- <p id="n3">это комментарий, его не показываем</p> -->
 <p><a id="n3"></a>3. Третья сноска: пустой якорь внутри абзаца.</p>
+<div class="_idFootnote" id="n5"><p><a href="#n5">5.</a> Пятая сноска: найдена в файле примечаний,
+хотя ссылка указывала сама на себя.</p></div>
+<span id="n6"><div class="title"><p>6</p></div><p>Шестая сноска: блоки внутри span.</p></span>
 </body>
 </html>
 """

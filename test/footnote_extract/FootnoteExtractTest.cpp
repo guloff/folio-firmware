@@ -83,3 +83,46 @@ TEST(FootnoteExtract, MissingAnchorOrUnclosed) {
   EXPECT_FALSE(extract("<body><p id=\"a\">x</p></body>", "b", out));
   EXPECT_FALSE(extract("<body><p id=\"a\">never closed", "a", out));
 }
+
+TEST(FootnoteExtract, SpanWrappingBlocks) {
+  // Liu Cixin / Sagan style: the note is a span around a number div and a paragraph.
+  const std::string html =
+      "<body><span id=\"id6\"><div class=\"t\"><p>27</p></div><p>Note 27.</p></span>"
+      "<span id=\"id5\"><div class=\"t\"><p>28</p></div><p>Note 28.</p></span></body>";
+  std::string out;
+  ASSERT_TRUE(extract(html, "id5", out));
+  EXPECT_EQ(out, "<span id=\"id5\"><div class=\"t\"><p>28</p></div><p>Note 28.</p></span>");
+}
+
+TEST(FootnoteExtract, InlineSpanInsideParagraphWidens) {
+  const std::string html = "<body><p><span id=\"s\">1.</span> Note text.</p></body>";
+  std::string out;
+  ASSERT_TRUE(extract(html, "s", out));
+  EXPECT_EQ(out, "<p><span id=\"s\">1.</span> Note text.</p>");
+}
+
+TEST(FootnoteExtract, SelfLinkIsReported) {
+  // Sapiens style: the noteref carries the id it links to; the note lives in another file.
+  const std::string html = "<body><p>Gold<a class=\"x\" href=\"#note50\" id=\"note50\">50</a>.</p></body>";
+  std::string out;
+  EXPECT_EQ(footnote::extract(html.data(), html.size(), "note50", out), footnote::Result::SelfLink);
+  // The note file itself is fine: the div holds a backlink, not the id.
+  const std::string notes = "<body><div id=\"note50\"><p><a href=\"#note50\">50.</a> Source.</p></div></body>";
+  ASSERT_TRUE(extract(notes, "note50", out));
+  EXPECT_EQ(out, "<div id=\"note50\"><p><a href=\"#note50\">50.</a> Source.</p></div>");
+}
+
+TEST(FootnoteExtract, PageBreakIsNotANote) {
+  const std::string html =
+      "<body><p>Text <span epub:type=\"pagebreak\" id=\"page_9\" role=\"doc-pagebreak\"/>more.</p></body>";
+  std::string out;
+  EXPECT_EQ(footnote::extract(html.data(), html.size(), "page_9", out), footnote::Result::NotANote);
+}
+
+TEST(FootnoteExtract, BacklinkWithSameIdIsANote) {
+  const std::string html =
+      "<body><p class=\"num2\"><a id=\"linka1\" href=\"../Text/content05.html#linka1\">1.</a> Source.</p></body>";
+  std::string out;
+  ASSERT_TRUE(extract(html, "linka1", out));
+  EXPECT_EQ(out, "<p class=\"num2\"><a id=\"linka1\" href=\"../Text/content05.html#linka1\">1.</a> Source.</p>");
+}

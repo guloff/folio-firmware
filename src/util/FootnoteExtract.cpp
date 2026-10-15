@@ -112,53 +112,117 @@ size_t findAnchorAttr(const char* s, size_t n, const std::string& anchor, size_t
   return best;
 }
 
+// Index after the close tag matching `open`, or NPOS (unclosed, or longer
+// than `limit` bytes from its start).
+size_t elementEnd(const char* s, const size_t n, const Tag& open, const size_t limit) {
+  int depth = 1;
+  size_t i = open.end;
+  while (i < n) {
+    const char* lt = static_cast<const char*>(memchr(s + i, '<', n - i));
+    if (!lt) return NPOS;
+    const size_t pos = static_cast<size_t>(lt - s);
+    const size_t skipped = skipSpecial(s, n, pos);
+    if (skipped != pos) {
+      i = skipped;
+      continue;
+    }
+    const size_t end = tagEnd(s, n, pos);
+    if (end == NPOS) return NPOS;
+    const bool closing = s[pos + 1] == '/';
+    const size_t len = nameLength(s, n, pos + (closing ? 2 : 1));
+    if (len == open.nameLen && strncasecmp(s + pos + (closing ? 2 : 1), open.name, len) == 0) {
+      if (closing) {
+        depth--;
+      } else if (s[end - 2] != '/') {
+        depth++;
+      }
+    }
+    i = end;
+    if (depth == 0) return end;
+    if (i - open.start > limit) return NPOS;
+  }
+  return NPOS;
+}
+
+bool tagHas(const char* s, const Tag& t, const char* needle) {
+  return memmem(s + t.start, t.end - t.start, needle, strlen(needle)) != nullptr;
+}
+
+// href="#anchor" on the tag itself. A backlink to the same id in another file
+// (href="text.html#n1" on the note's own anchor) is a normal note, not this.
+bool linksToItself(const char* s, const Tag& t, const std::string& anchor) {
+  for (const char q : {'"', '\''}) {
+    std::string needle = "href=";
+    needle += q;
+    needle += '#';
+    needle += anchor;
+    needle += q;
+    if (memmem(s + t.start, t.end - t.start, needle.data(), needle.size())) return true;
+  }
+  return false;
+}
+
+// Block-level start tag anywhere in s[from, to).
+bool containsBlock(const char* s, size_t from, const size_t to) {
+  while (from < to) {
+    const char* lt = static_cast<const char*>(memchr(s + from, '<', to - from));
+    if (!lt) return false;
+    const size_t pos = static_cast<size_t>(lt - s);
+    const size_t len = nameLength(s, to, pos + 1);
+    if (len > 0) {
+      const Tag t{pos, pos + 1 + len, s + pos + 1, len};
+      if (nameIsAny(t, BLOCK_TAGS)) return true;
+    }
+    from = pos + 1;
+  }
+  return false;
+}
+
 }  // namespace
 
-bool extractById(const char* xhtml, const size_t size, const std::string& anchor, std::string& out,
-                 const size_t maxBytes) {
+Result extract(const char* xhtml, const size_t size, const std::string& anchor, std::string& out,
+               const size_t maxBytes) {
   out.clear();
-  if (!xhtml || size == 0 || anchor.empty()) return false;
+  if (!xhtml || size == 0 || anchor.empty()) return Result::Missing;
   const char* s = xhtml;
   const size_t n = size;
 
-  const size_t attrPos = findAnchorAttr(s, n, anchor);
-  if (attrPos == NPOS) return false;
+  size_t anchorPos = findAnchorAttr(s, n, anchor);
+  if (anchorPos == NPOS) return Result::Missing;
 
   // Walk the tags before the anchor, keeping the open-element stack.
   std::vector<Tag> stack;
   stack.reserve(32);
   Tag target{NPOS, 0, nullptr, 0};
   size_t i = 0;
-  size_t anchorPos = attrPos;
   while (i < n) {
     const char* lt = static_cast<const char*>(memchr(s + i, '<', n - i));
     if (!lt) break;
-    size_t pos = static_cast<size_t>(lt - s);
+    const size_t pos = static_cast<size_t>(lt - s);
     if (pos > anchorPos) break;
     const size_t skipped = skipSpecial(s, n, pos);
     if (skipped != pos) {
       // An id inside a comment or CDATA is not markup: look past it.
       if (anchorPos < skipped) {
         anchorPos = findAnchorAttr(s, n, anchor, skipped);
-        if (anchorPos == NPOS) return false;
+        if (anchorPos == NPOS) return Result::Missing;
       }
       i = skipped;
       continue;
     }
     const size_t end = tagEnd(s, n, pos);
-    if (end == NPOS) return false;
+    if (end == NPOS) return Result::Missing;
     if (s[pos + 1] == '/') {
       const size_t len = nameLength(s, n, pos + 2);
-      Tag closing{pos, end, s + pos + 2, len};
       for (size_t k = stack.size(); k-- > 0;) {
-        if (stack[k].nameLen == closing.nameLen && strncasecmp(stack[k].name, closing.name, len) == 0) {
+        if (stack[k].nameLen == len && strncasecmp(stack[k].name, s + pos + 2, len) == 0) {
           stack.resize(k);
           break;
         }
       }
     } else {
       const size_t len = nameLength(s, n, pos + 1);
-      Tag open{pos, end, s + pos + 1, len};
+      const Tag open{pos, end, s + pos + 1, len};
       if (anchorPos < end) {
         target = open;
         break;
@@ -167,12 +231,23 @@ bool extractById(const char* xhtml, const size_t size, const std::string& anchor
     }
     i = end;
   }
-  if (target.start == NPOS) return false;
+  if (target.start == NPOS) return Result::Missing;
+
+  // Page-list targets and cross-references are places, not notes.
+  if (tagHas(s, target, "pagebreak")) return Result::NotANote;
+  // A noteref whose id is also its own target (broken books): the note is elsewhere.
+  if (nameIs(target, "a") && linksToItself(s, target, anchor)) return Result::SelfLink;
 
   Tag chosen{NPOS, 0, nullptr, 0};
-  if (nameIsAny(target, BLOCK_TAGS) && !selfClosing(s, target)) {
+  const bool closed = !selfClosing(s, target) && !nameIsAny(target, VOID_TAGS);
+  if (closed && nameIsAny(target, BLOCK_TAGS)) {
     chosen = target;
-  } else {
+  } else if (closed) {
+    // <span id="n5"><div>5</div><p>Note…</p></span>: an inline wrapper around blocks is the note.
+    const size_t end = elementEnd(s, n, target, maxBytes);
+    if (end != NPOS && containsBlock(s, target.end, end)) chosen = target;
+  }
+  if (chosen.start == NPOS) {
     for (size_t k = stack.size(); k-- > 0;) {
       if (nameIsAny(stack[k], BLOCK_TAGS)) {
         chosen = stack[k];
@@ -180,41 +255,17 @@ bool extractById(const char* xhtml, const size_t size, const std::string& anchor
       }
     }
   }
-  if (chosen.start == NPOS) return false;
+  if (chosen.start == NPOS) return Result::NotANote;
 
-  // Find the matching close tag of the chosen element.
-  int depth = 1;
-  i = chosen.end;
-  while (i < n && depth > 0) {
-    const char* lt = static_cast<const char*>(memchr(s + i, '<', n - i));
-    if (!lt) return false;
-    const size_t pos = static_cast<size_t>(lt - s);
-    const size_t skipped = skipSpecial(s, n, pos);
-    if (skipped != pos) {
-      i = skipped;
-      continue;
-    }
-    const size_t end = tagEnd(s, n, pos);
-    if (end == NPOS) return false;
-    const bool closing = s[pos + 1] == '/';
-    const size_t len = nameLength(s, n, pos + (closing ? 2 : 1));
-    if (len == chosen.nameLen && strncasecmp(s + pos + (closing ? 2 : 1), chosen.name, len) == 0) {
-      if (closing) {
-        depth--;
-      } else if (s[end - 2] != '/') {
-        depth++;
-      }
-    }
-    i = end;
-    if (depth == 0) {
-      const size_t length = end - chosen.start;
-      if (length > maxBytes) return false;
-      out.assign(s + chosen.start, length);
-      return true;
-    }
-    if (i - chosen.start > maxBytes) return false;
-  }
-  return false;
+  const size_t end = elementEnd(s, n, chosen, maxBytes);
+  if (end == NPOS || end - chosen.start > maxBytes) return Result::NotANote;
+  out.assign(s + chosen.start, end - chosen.start);
+  return Result::Found;
+}
+
+bool extractById(const char* xhtml, const size_t size, const std::string& anchor, std::string& out,
+                 const size_t maxBytes) {
+  return extract(xhtml, size, anchor, out, maxBytes) == Result::Found;
 }
 
 }  // namespace footnote

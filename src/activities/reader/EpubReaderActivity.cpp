@@ -653,6 +653,17 @@ void EpubReaderActivity::loop() {
     }
   }
 
+  // After a link jump, a tap on the bottom band (the "Back to text" status bar) returns.
+  if (footnoteDepth > 0 && !atEndOfBook && mappedInput.hasTouch()) {
+    constexpr int BACK_TO_TEXT_TAP_PX = 56;
+    int touchX = 0;
+    int touchY = 0;
+    if (mappedInput.wasScreenTapped(touchX, touchY) && touchY >= renderer.getScreenHeight() - BACK_TO_TEXT_TAP_PX) {
+      restoreSavedPosition();
+      return;
+    }
+  }
+
   // Link taps take priority over the reader-menu and page-turn zones.
   if (!atEndOfBook && !currentPageLinks.empty() && SETTINGS.touchReaderControls && mappedInput.hasTouch()) {
     int touchX = 0;
@@ -1897,7 +1908,14 @@ void EpubReaderActivity::renderStatusBar() const {
   int textYOffset = 0;
   const auto sb = SETTINGS.statusBarSpec();
 
-  if (automaticPageTurnActive) {
+  if (footnoteDepth > 0) {
+    // After a link jump the status bar becomes the way back (tap it, or Back).
+    title = std::string("\xC2\xAB ") + tr(STR_BACK_TO_TEXT);
+    const uint8_t statusBarHeight = UITheme::getInstance().getStatusBarHeight();
+    if (statusBarHeight == 0 || statusBarHeight == UITheme::getInstance().getProgressBarHeight()) {
+      textYOffset += UITheme::getInstance().getMetrics().statusBarVerticalMargin;
+    }
+  } else if (automaticPageTurnActive) {
     title = tr(STR_AUTO_TURN_ENABLED) + std::to_string(60 * 1000 / pageTurnDuration);
     const uint8_t statusBarHeight = UITheme::getInstance().getStatusBarHeight();
     if (statusBarHeight == 0 || statusBarHeight == UITheme::getInstance().getProgressBarHeight()) {
@@ -2654,33 +2672,69 @@ void EpubReaderActivity::activateMoreRow(int row) {
   if (action != MA::GO_HOME && action != MA::DELETE_CACHE) requestUpdate();
 }
 
+namespace {
+
+// Larger items stay on the jump path: the whole item is read to memory.
+constexpr size_t MAX_NOTES_ITEM_BYTES = 512 * 1024;
+// Files a broken book's notes usually live in (notes.xhtml, prim1.xhtml, ...).
+constexpr const char* NOTES_FILE_HINTS[] = {"note", "prim", "snos", "foot", "comment"};
+constexpr int MAX_NOTES_FILES_SEARCHED = 16;
+
+footnote::Result extractFromItem(const Epub& epub, const std::string& itemHref, const std::string& anchor,
+                                 std::string& note) {
+  size_t itemSize = 0;
+  if (!epub.getItemSize(itemHref, &itemSize) || itemSize == 0 || itemSize > MAX_NOTES_ITEM_BYTES) {
+    LOG_DBG("ERS", "footnote: %s is %u bytes, skipped", itemHref.c_str(), static_cast<unsigned>(itemSize));
+    return footnote::Result::NotANote;
+  }
+  size_t size = 0;
+  // ZipFile::readFileToMemory hands over a malloc'd buffer.
+  uint8_t* bytes = epub.readItemContentsToBytes(itemHref, &size);
+  if (!bytes) {
+    LOG_ERR("ERS", "footnote: cannot read %s", itemHref.c_str());
+    return footnote::Result::NotANote;
+  }
+  const auto result = footnote::extract(reinterpret_cast<const char*>(bytes), size, anchor, note);
+  free(bytes);
+  return result;
+}
+
+bool looksLikeNotesFile(std::string href) {
+  std::transform(href.begin(), href.end(), href.begin(), [](unsigned char c) { return std::tolower(c); });
+  for (const char* hint : NOTES_FILE_HINTS) {
+    if (href.find(hint) != std::string::npos) return true;
+  }
+  return false;
+}
+
+}  // namespace
+
 bool EpubReaderActivity::showFootnotePopup(const std::string& href) {
-  // Larger chapters stay on the jump path: the whole item is read to memory.
-  constexpr size_t MAX_NOTES_ITEM_BYTES = 512 * 1024;
   if (!epub) return false;
   const size_t hashPos = href.find('#');
   if (hashPos == std::string::npos || hashPos + 1 >= href.size()) return false;
+  const std::string anchor = href.substr(hashPos + 1);
   const int spineIndex = hashPos == 0 ? currentSpineIndex : epub->resolveHrefToSpineIndex(href);
   if (spineIndex < 0) return false;
   const std::string itemHref = epub->getSpineItem(spineIndex).href;
-  size_t itemSize = 0;
-  if (!epub->getItemSize(itemHref, &itemSize) || itemSize == 0 || itemSize > MAX_NOTES_ITEM_BYTES) {
-    LOG_DBG("ERS", "footnote: %s is %u bytes, jumping instead", itemHref.c_str(), static_cast<unsigned>(itemSize));
-    return false;
-  }
 
-  size_t size = 0;
-  // ZipFile::readFileToMemory hands over a malloc'd buffer.
-  uint8_t* bytes = epub->readItemContentsToBytes(itemHref, &size);
-  if (!bytes) {
-    LOG_ERR("ERS", "footnote: cannot read %s", itemHref.c_str());
-    return false;
-  }
   std::string note;
-  const bool found = footnote::extractById(reinterpret_cast<const char*>(bytes), size, href.substr(hashPos + 1), note);
-  free(bytes);
-  if (!found) {
-    LOG_DBG("ERS", "footnote: no note element for %s, jumping instead", href.c_str());
+  auto result = extractFromItem(*epub, itemHref, anchor, note);
+  if (result == footnote::Result::SelfLink) {
+    // The link carries its own target id; the note with that id sits in the
+    // book's notes file. Look there instead of "jumping" onto the link itself.
+    int searched = 0;
+    const int count = epub->getSpineItemsCount();
+    for (int i = 0; i < count && searched < MAX_NOTES_FILES_SEARCHED && result != footnote::Result::Found; i++) {
+      const std::string candidate = epub->getSpineItem(i).href;
+      if (i == spineIndex || !looksLikeNotesFile(candidate)) continue;
+      searched++;
+      result = extractFromItem(*epub, candidate, anchor, note);
+    }
+  }
+  if (result != footnote::Result::Found) {
+    LOG_DBG("ERS", "footnote: no note element for %s (result %d), jumping instead", href.c_str(),
+            static_cast<int>(result));
     return false;
   }
 
