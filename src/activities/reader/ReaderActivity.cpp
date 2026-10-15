@@ -15,6 +15,7 @@
 #include "SdCardFontSystem.h"
 #include "TxtReaderActivity.h"
 #include "XtcReaderActivity.h"
+#include "activities/boot_sleep/SleepActivity.h"
 #include "inklink/BookText.h"
 #include "inklink/ReadingStats.h"
 #include "inklink/Shelves.h"
@@ -76,6 +77,7 @@ void ReaderActivity::onEnter() {
 
   APP_STATE.openEpubPath = bookPath;
   APP_STATE.saveToFile();
+  SleepActivity::prepareCover(renderer, bookPath);
   RECENT_BOOKS.addBook(bookPath, getBookTitle(), getBookAuthor(), getBookThumbBmpPath());
   inklink::ReadingStats::get().beginSession(bookPath, getBookTitle());
   requestUpdate();

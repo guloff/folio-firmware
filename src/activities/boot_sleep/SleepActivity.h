@@ -20,11 +20,18 @@ class SleepActivity final : public Activity {
   // INKLINK_ROTATE: moves to the next screen when this sleep should change
   // it. Call once per sleep, before effectiveMode().
   static void advanceRotation();
+  // Builds the sleep-screen cover of `bookPath` ahead of time (book open), so
+  // sleep only reads a cached image instead of decoding a JPEG/PNG on a heap
+  // that hours of reading have fragmented. No-op unless the sleep screen can
+  // show the book cover.
+  static void prepareCover(const GfxRenderer& renderer, const std::string& bookPath);
 
  private:
   void renderDefaultSleepScreen() const;
   void renderCustomSleepScreen() const;
   void renderCoverSleepScreen() const;
+  // Book without a cover image: title and author set as a plain cover.
+  void renderTitleCover(const std::string& title, const std::string& author) const;
   void renderBitmapSleepScreen(const Bitmap& bitmap, bool preserveBackground = false) const;
   bool renderSleepOverlayFile(HalFile& file, const char* pathForLog) const;
   bool renderTransparentOverlayPng(const std::string& path) const;

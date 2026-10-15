@@ -138,4 +138,42 @@ bool renderQuote(const GfxRenderer& renderer) {
   return true;
 }
 
+namespace {
+constexpr const char* SELECTED_PATH = "/.crosspoint/inklink/sleep-selected.txt";
+constexpr size_t MAX_NAME = 128;
+}  // namespace
+
+std::string selectedName() {
+  HalFile f = Storage.open(SELECTED_PATH, O_RDONLY);
+  if (!f) return "";
+  char buf[MAX_NAME + 1];
+  const int n = f.read(reinterpret_cast<uint8_t*>(buf), MAX_NAME);
+  if (n <= 0) return "";
+  std::string name(buf, static_cast<size_t>(n));
+  while (!name.empty() && (name.back() == '\n' || name.back() == '\r' || name.back() == ' ')) name.pop_back();
+  return name;
+}
+
+std::string selectedImage(const char* dir) {
+  const std::string name = selectedName();
+  if (name.empty()) return "";
+  std::string path = dir;
+  if (path.empty() || path.back() != '/') path += '/';
+  path += name;
+  return Storage.exists(path.c_str()) ? path : "";
+}
+
+bool selectImage(const char* name) {
+  const size_t len = name ? strlen(name) : 0;
+  if (len == 0) {
+    if (Storage.exists(SELECTED_PATH)) Storage.remove(SELECTED_PATH);
+    return true;
+  }
+  if (len > MAX_NAME || strchr(name, '/') || strchr(name, '\\') || name[0] == '.') return false;
+  Storage.ensureDirectoryExists("/.crosspoint/inklink");
+  HalFile f = Storage.open(SELECTED_PATH, O_WRONLY | O_CREAT | O_TRUNC);
+  if (!f) return false;
+  return f.write(reinterpret_cast<const uint8_t*>(name), len) == len;
+}
+
 }  // namespace inklink::sleep

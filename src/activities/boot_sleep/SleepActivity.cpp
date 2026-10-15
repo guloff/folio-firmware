@@ -32,6 +32,7 @@
 #include "inklink/InkLinkClock.h"
 #include "inklink/PrivacyLock.h"
 #include "inklink/SleepScreens.h"
+#include "inklink/StatsRender.h"
 
 namespace {
 
@@ -510,6 +511,15 @@ constexpr uint8_t ROTATION[] = {CrossPointSettings::COVER_CUSTOM, CrossPointSett
 constexpr uint8_t ROTATION_COUNT = sizeof(ROTATION) / sizeof(ROTATION[0]);
 }  // namespace
 
+namespace {
+// SSD absolute images use the new thresholds; other panels retain legacy tuning.
+bool coverOriginalThresholds(const GfxRenderer& renderer) {
+  return renderer.grayscaleCapabilities(sleepGrayscaleMode(renderer)).supported() &&
+         display.getController() == HalDisplay::Controller::SSD1677 &&
+         SETTINGS.sleepScreenCoverFilter == CrossPointSettings::SLEEP_SCREEN_COVER_FILTER::NO_FILTER;
+}
+}  // namespace
+
 void SleepActivity::advanceRotation() {
   if (SETTINGS.sleepScreen != CrossPointSettings::INKLINK_ROTATE) return;
   if (SETTINGS.sleepRotation == CrossPointSettings::ROTATE_DAILY) {
@@ -641,15 +651,17 @@ void SleepActivity::renderCustomSleepScreen() const {
     file.close();
   }
 
-  std::string selectedPath;
-  if (!selectRandomSleepFile("/.sleep", SleepRecentKind::Standard, selectedPath)) {
+  // The image picked in FolioLink, when there is one; random otherwise.
+  const char* sleepDir = Storage.exists("/.sleep") ? "/.sleep" : "/sleep";
+  std::string selectedPath = inklink::sleep::selectedImage(sleepDir);
+  if (selectedPath.empty() && !selectRandomSleepFile("/.sleep", SleepRecentKind::Standard, selectedPath)) {
     selectRandomSleepFile("/sleep", SleepRecentKind::Standard, selectedPath);
   }
 
   if (!selectedPath.empty()) {
     HalFile randFile;
     if (Storage.openFileForRead("SLP", selectedPath, randFile)) {
-      LOG_DBG("SLP", "Randomly loading: %s", selectedPath.c_str());
+      LOG_DBG("SLP", "Loading: %s", selectedPath.c_str());
       delay(100);
       Bitmap bitmap(randFile, true,
                     renderer.grayscaleCapabilities(sleepGrayscaleMode(renderer)).supported() &&
@@ -862,11 +874,7 @@ void SleepActivity::renderCoverSleepScreen() const {
     return (this->*renderNoCoverSleepScreen)();
   }
 
-  // SSD absolute images use the new thresholds; other panels retain legacy tuning.
-  const bool originalThresholds =
-      renderer.grayscaleCapabilities(sleepGrayscaleMode(renderer)).supported() &&
-      display.getController() == HalDisplay::Controller::SSD1677 &&
-      SETTINGS.sleepScreenCoverFilter == CrossPointSettings::SLEEP_SCREEN_COVER_FILTER::NO_FILTER;
+  const bool originalThresholds = coverOriginalThresholds(renderer);
   std::string coverBmpPath;
   bool cropped = SETTINGS.sleepScreenCoverMode == CrossPointSettings::SLEEP_SCREEN_COVER_MODE::CROP;
 
@@ -909,8 +917,8 @@ void SleepActivity::renderCoverSleepScreen() const {
     }
 
     if (!lastEpub.generateCoverBmp(cropped, originalThresholds)) {
-      LOG_ERR("SLP", "Failed to generate cover bmp");
-      return (this->*renderNoCoverSleepScreen)();
+      LOG_ERR("SLP", "No cover image for %s: title cover", APP_STATE.openEpubPath.c_str());
+      return renderTitleCover(lastEpub.getTitle(), lastEpub.getAuthor());
     }
 
     coverBmpPath = lastEpub.getCoverBmpPath(cropped, originalThresholds);
@@ -929,6 +937,50 @@ void SleepActivity::renderCoverSleepScreen() const {
   }
 
   return (this->*renderNoCoverSleepScreen)();
+}
+
+void SleepActivity::renderTitleCover(const std::string& title, const std::string& author) const {
+  const int width = renderer.getScreenWidth();
+  const int height = renderer.getScreenHeight();
+  constexpr int MARGIN = 40;
+  const int textWidth = width - 3 * MARGIN;
+  renderer.clearScreen();
+  renderer.drawRect(MARGIN / 2, MARGIN / 2, width - MARGIN, height - MARGIN, 3, true);
+
+  const auto titleLines = inklink::render::wrapText(renderer, UI_12_FONT_ID, title.empty() ? tr(STR_UNNAMED) : title,
+                                                    textWidth, 6, EpdFontFamily::BOLD);
+  const auto authorLines = inklink::render::wrapText(renderer, UI_10_FONT_ID, author, textWidth, 2);
+  const int titleLh = renderer.getLineHeight(UI_12_FONT_ID);
+  const int authorLh = renderer.getLineHeight(UI_10_FONT_ID);
+  const int block = static_cast<int>(titleLines.size()) * titleLh +
+                    (authorLines.empty() ? 0 : titleLh + static_cast<int>(authorLines.size()) * authorLh);
+  int y = (height - block) / 2;
+  for (const auto& line : titleLines) {
+    renderer.drawCenteredText(UI_12_FONT_ID, y, line.c_str(), true, EpdFontFamily::BOLD);
+    y += titleLh;
+  }
+  y += titleLh;
+  for (const auto& line : authorLines) {
+    renderer.drawCenteredText(UI_10_FONT_ID, y, line.c_str());
+    y += authorLh;
+  }
+  renderer.drawCenteredText(SMALL_FONT_ID, height - MARGIN - 24, tr(STR_SLEEPING));
+  renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+}
+
+void SleepActivity::prepareCover(const GfxRenderer& renderer, const std::string& bookPath) {
+  using Mode = CrossPointSettings::SLEEP_SCREEN_MODE;
+  const uint8_t mode = SETTINGS.sleepScreen;
+  if (mode != Mode::COVER && mode != Mode::COVER_CUSTOM && mode != Mode::INKLINK_ROTATE) return;
+  if (!FsHelpers::hasEpubExtension(bookPath)) return;
+  const bool cropped = SETTINGS.sleepScreenCoverMode == CrossPointSettings::SLEEP_SCREEN_COVER_MODE::CROP;
+  const bool originalThresholds = coverOriginalThresholds(renderer);
+  Epub epub(bookPath, "/.crosspoint");
+  if (!epub.load(true, true)) return;
+  if (Storage.exists(epub.getCoverBmpPath(cropped, originalThresholds).c_str())) return;
+  const unsigned long started = millis();
+  const bool ok = epub.generateCoverBmp(cropped, originalThresholds);
+  LOG_DBG("SLP", "Sleep cover prepared on open: %s (%lu ms)", ok ? "yes" : "no cover", millis() - started);
 }
 
 void SleepActivity::renderLastScreenSleepScreen() const {

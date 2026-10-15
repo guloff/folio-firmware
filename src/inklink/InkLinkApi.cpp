@@ -27,6 +27,7 @@
 #include "ReadingStats.h"
 #include "RecentBooksStore.h"
 #include "Shelves.h"
+#include "SleepScreens.h"
 #include "util/BookProgress.h"
 
 #ifndef CROSSPOINT_VERSION
@@ -688,9 +689,25 @@ void handleSleep() {
   // "/.sleep" wins over "/sleep" in SleepActivity; report whichever is live.
   const char* dir = Storage.exists("/.sleep") ? "/.sleep" : "/sleep";
   Storage.ensureDirectoryExists(dir);
-  char trailer[48];
-  snprintf(trailer, sizeof(trailer), ",\"dir\":\"%s\",\"mode\":%u", dir, static_cast<unsigned>(SETTINGS.sleepScreen));
+  // "selected": the image Custom always shows ("" = random); escaped so the
+  // trailer stays valid JSON whatever the file is called.
+  std::string selected;
+  for (const char c : inklink::sleep::selectedImage(dir).empty() ? std::string() : inklink::sleep::selectedName()) {
+    if (c == '"' || c == '\\') selected += '\\';
+    selected += c;
+  }
+  char trailer[64 + 2 * 128];
+  snprintf(trailer, sizeof(trailer), ",\"dir\":\"%s\",\"mode\":%u,\"selected\":\"%s\"", dir,
+           static_cast<unsigned>(SETTINGS.sleepScreen), selected.c_str());
   streamDir(http, "images", dir, ".bmp", 0, trailer);
+}
+
+void handleSleepSelect() {
+  JsonDocument doc;
+  if (!parseBody(doc)) return;
+  const char* name = doc["name"] | "";
+  if (!inklink::sleep::selectImage(name)) return sendError(400, "invalid image name");
+  sendOk(http);
 }
 
 void handleFirmwareApply() {
@@ -783,6 +800,7 @@ void registerRoutes(WebServer& s) {
   s.on("/api/inklink/vocab/delete", HTTP_POST, authorized<handleVocabDelete>);
   s.on("/api/inklink/screenshots", HTTP_GET, handleScreenshots);
   s.on("/api/inklink/sleep", HTTP_GET, handleSleep);
+  s.on("/api/inklink/sleep/select", HTTP_POST, authorized<handleSleepSelect>);
   s.on("/api/inklink/firmware/apply", HTTP_POST, authorized<handleFirmwareApply>);
   LOG_DBG("INKLINK", "companion API routes registered");
 }
