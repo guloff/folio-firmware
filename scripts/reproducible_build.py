@@ -7,8 +7,11 @@ Two things leaked into firmware.bin before:
   on a Mac, /home/runner/.platformio/... on CI. -ffile-prefix-map rewrites the
   project and the PlatformIO package directories to fixed names.
 - the build time through __DATE__/__TIME__. GCC and clang take both from
-  SOURCE_DATE_EPOCH when it is set; we set it to the HEAD commit time unless the
-  caller already did.
+  SOURCE_DATE_EPOCH when it is set; release environments set it to the HEAD
+  commit time unless the caller already did. The same value also goes in as a
+  define: SCons and the build cache key objects by their command line, not by
+  the environment, so without it an incremental build would keep the previous
+  commit's time.
 """
 
 import os
@@ -35,7 +38,11 @@ core_dir = env.subst("$PROJECT_CORE_DIR")  # noqa: F821
 maps = [(packages_dir, "/pio/packages"), (core_dir, "/pio"), (project_dir, ".")]
 env.Append(CCFLAGS=[f"-ffile-prefix-map={src}={dst}" for src, dst in maps if src])  # noqa: F821
 
-epoch = os.environ.get("SOURCE_DATE_EPOCH") or commit_epoch(project_dir)
-if epoch:
-    env["ENV"]["SOURCE_DATE_EPOCH"] = epoch  # noqa: F821
-    print(f"reproducible_build: SOURCE_DATE_EPOCH={epoch}")
+# Development builds keep the real build time and their incremental speed.
+pioenv = env["PIOENV"]  # noqa: F821
+if "gh_release" in pioenv or pioenv.endswith("-nobt"):
+    epoch = os.environ.get("SOURCE_DATE_EPOCH") or commit_epoch(project_dir)
+    if epoch:
+        env["ENV"]["SOURCE_DATE_EPOCH"] = epoch  # noqa: F821
+        env.Append(CPPDEFINES=[("FOLIO_SOURCE_DATE_EPOCH", epoch)])  # noqa: F821
+        print(f"reproducible_build: SOURCE_DATE_EPOCH={epoch}")
