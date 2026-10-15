@@ -50,6 +50,8 @@ class MappedInputManager {
   // expires. The main loop supplies that one-frame event here.
   void setPowerConfirmClickFrame(const bool clicked) { powerConfirmClickFrame = clicked; }
 #endif
+  // One page turn from the Bluetooth remote for this frame: +1 forward, -1 back.
+  void setRemoteTurnFrame(const int8_t turn) { remoteTurnFrame = turn; }
   bool wasPressed(Button button) const;
   bool wasReleased(Button button) const;
   // One-shot threshold event while the button is down; consumes its release.
@@ -162,4 +164,5 @@ class MappedInputManager {
 #if FREEINK_CAP_TOUCH
   bool powerConfirmClickFrame = false;
 #endif
+  int8_t remoteTurnFrame = 0;
 };

@@ -17,6 +17,9 @@ class SleepActivity final : public Activity {
   // out screens that would show a protected book or, with the wake lock on,
   // anything of the session. Call before the session relocks.
   static uint8_t effectiveMode(bool fromTimeout);
+  // INKLINK_ROTATE: moves to the next screen when this sleep should change
+  // it. Call once per sleep, before effectiveMode().
+  static void advanceRotation();
 
  private:
   void renderDefaultSleepScreen() const;

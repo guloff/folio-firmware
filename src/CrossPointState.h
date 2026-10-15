@@ -23,6 +23,9 @@ class CrossPointState : public PersistableStore<CrossPointState> {
   uint8_t readerActivityLoadCount = 0;
   bool lastSleepFromReader = false;
   bool showBootScreen = true;
+  // INKLINK_ROTATE position, and the day (yyyymmdd) it last moved on.
+  uint8_t sleepRotateIndex = 0;
+  uint32_t sleepRotateDay = 0;
 
   static const char* getFilePath() { return "/.crosspoint/state.json"; }
   void toJson(JsonDocument& doc) const;

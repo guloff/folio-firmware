@@ -23,6 +23,7 @@
 #include "BookmarkEntry.h"
 #include "CrossPointSettings.h"
 #include "CrossPointState.h"
+#include "DictionaryDefinitionActivity.h"
 #include "DictionaryWordSelectActivity.h"
 #include "EpubReaderBookmarksActivity.h"
 #include "EpubReaderChapterSelectionActivity.h"
@@ -44,11 +45,13 @@
 #include "activities/util/BookProtection.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/BookText.h"
 #include "inklink/HighlightMarks.h"
 #include "inklink/PrivacyLock.h"
 #include "inklink/ReadingStats.h"
 #include "util/BookmarkUtil.h"
 #include "util/ButtonNavigator.h"
+#include "util/FootnoteExtract.h"
 #include "util/ScreenshotUtil.h"
 
 namespace {
@@ -381,7 +384,7 @@ void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode, cons
 void EpubReaderActivity::openFootnoteSelect(const bool reopenMenuOnCancel) {
   if (!section || currentPageFootnotes.empty()) return;
   if (currentPageFootnotes.size() == 1) {
-    navigateToHref(currentPageFootnotes[0].href, true);
+    if (!showFootnotePopup(currentPageFootnotes[0].href)) navigateToHref(currentPageFootnotes[0].href, true);
     return;
   }
 
@@ -409,7 +412,7 @@ void EpubReaderActivity::openFootnoteSelect(const bool reopenMenuOnCancel) {
       return;
     }
     const auto& footnoteResult = std::get<FootnoteResult>(result.data);
-    navigateToHref(footnoteResult.href, true);
+    if (!showFootnotePopup(footnoteResult.href)) navigateToHref(footnoteResult.href, true);
     requestUpdate();
   });
 }
@@ -658,7 +661,8 @@ void EpubReaderActivity::loop() {
       const auto* link = EpubReaderUtils::linkAtPoint(currentPageLinks, touchX, touchY, currentPageLinkMarginLeft,
                                                       currentPageLinkMarginTop);
       if (link) {
-        navigateToHref(link->href, true);
+        // A note shows over the page; headings and whole chapters are still a jump.
+        if (!showFootnotePopup(link->href)) navigateToHref(link->href, true);
         return;
       }
     }
@@ -981,6 +985,10 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
       }
       onGoHome();
       return;
+    }
+    case EpubReaderMenuActivity::MenuAction::BOOK_TEXT: {
+      toggleBookText();
+      break;
     }
     case EpubReaderMenuActivity::MenuAction::PROTECT_BOOK: {
       toggleBookProtection(*this, renderer, mappedInput, epub->getPath(), epub->getTitle(),
@@ -2489,7 +2497,20 @@ void EpubReaderActivity::paintOverlayPopup() {
   pushOverlayRefresh();
 }
 
+void EpubReaderActivity::toggleBookText() {
+  if (SETTINGS.bookTextActive()) {
+    inklink::booktext::remove(epub->getPath());
+    SETTINGS.endBookText();
+    applyReaderTextSettings();  // back to the global look
+  } else {
+    const CrossPointSettings::ReaderText text = SETTINGS.readerText();
+    if (inklink::booktext::save(epub->getPath(), text)) SETTINGS.beginBookText(text);
+  }
+  requestUpdate();
+}
+
 void EpubReaderActivity::applyReaderTextSettings() {
+  if (SETTINGS.bookTextActive()) inklink::booktext::save(epub->getPath(), SETTINGS.readerText());
   SETTINGS.saveToFile();
   // (Re)load or unload the selected SD-card font for the current family/size.
   // The reader otherwise only loads SD fonts on book open, so without this an
@@ -2540,6 +2561,8 @@ std::string EpubReaderActivity::moreRowValue(int row) const {
       return Frontlight.isOn() ? tr(STR_STATE_ON) : tr(STR_STATE_OFF);
     case MA::PROTECT_BOOK:
       return inklink::privacy::isProtected(epub->getPath()) ? tr(STR_STATE_ON) : tr(STR_STATE_OFF);
+    case MA::BOOK_TEXT:
+      return SETTINGS.bookTextActive() ? tr(STR_STATE_ON) : tr(STR_STATE_OFF);
     default:
       return "";
   }
@@ -2629,6 +2652,46 @@ void EpubReaderActivity::activateMoreRow(int row) {
   // Actions that neither open a screen nor leave the reader (a sync with no
   // credentials, say) would otherwise leave the closed panel on screen.
   if (action != MA::GO_HOME && action != MA::DELETE_CACHE) requestUpdate();
+}
+
+bool EpubReaderActivity::showFootnotePopup(const std::string& href) {
+  // Larger chapters stay on the jump path: the whole item is read to memory.
+  constexpr size_t MAX_NOTES_ITEM_BYTES = 512 * 1024;
+  if (!epub) return false;
+  const size_t hashPos = href.find('#');
+  if (hashPos == std::string::npos || hashPos + 1 >= href.size()) return false;
+  const int spineIndex = hashPos == 0 ? currentSpineIndex : epub->resolveHrefToSpineIndex(href);
+  if (spineIndex < 0) return false;
+  const std::string itemHref = epub->getSpineItem(spineIndex).href;
+  size_t itemSize = 0;
+  if (!epub->getItemSize(itemHref, &itemSize) || itemSize == 0 || itemSize > MAX_NOTES_ITEM_BYTES) {
+    LOG_DBG("ERS", "footnote: %s is %u bytes, jumping instead", itemHref.c_str(), static_cast<unsigned>(itemSize));
+    return false;
+  }
+
+  size_t size = 0;
+  // ZipFile::readFileToMemory hands over a malloc'd buffer.
+  uint8_t* bytes = epub->readItemContentsToBytes(itemHref, &size);
+  if (!bytes) {
+    LOG_ERR("ERS", "footnote: cannot read %s", itemHref.c_str());
+    return false;
+  }
+  std::string note;
+  const bool found = footnote::extractById(reinterpret_cast<const char*>(bytes), size, href.substr(hashPos + 1), note);
+  free(bytes);
+  if (!found) {
+    LOG_DBG("ERS", "footnote: no note element for %s, jumping instead", href.c_str());
+    return false;
+  }
+
+  auto viewer = makeUniqueNoThrow<DictionaryDefinitionActivity>(renderer, mappedInput, tr(STR_FOOTNOTE),
+                                                                std::move(note), /*htmlDefinition=*/true);
+  if (!viewer) {
+    LOG_ERR("ERS", "OOM: footnote viewer");
+    return false;
+  }
+  startActivityForResult(std::move(viewer), [this](const ActivityResult&) { requestUpdate(); });
+  return true;
 }
 
 void EpubReaderActivity::navigateToHref(const std::string& hrefStr, const bool savePosition) {

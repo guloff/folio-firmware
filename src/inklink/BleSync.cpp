@@ -3,6 +3,7 @@
 #include <Logging.h>
 
 #include "BleProtocol.h"
+#include "BleRemote.h"
 #include "CrossPointSettings.h"
 
 #if defined(FOLIO_BLE_SYNC) && !defined(SIMULATOR)
@@ -100,7 +101,12 @@ bool suspended = false;  // off until reboot (Wi-Fi screen, deep sleep)
 bool failed = false;     // init failed; retried only when the setting changes
 bool stalled = false;    // host task never stopped: the stack stays up until reboot
 bool memWarned = false;
+// Bit 0: Bluetooth sync, bit 1: Bluetooth remote; 0xFF before the first look.
+constexpr uint8_t WANT_SYNC = 1;
+constexpr uint8_t WANT_REMOTE = 2;
 uint8_t lastSetting = 0xFF;
+uint8_t runningWant = 0;
+bool forgetRemotes = false;
 uint32_t sessionGen = 0;
 uint32_t sessionStartMs = 0;
 bool authTimeoutSent = false;
@@ -109,12 +115,12 @@ uint16_t requestHandle = 0;
 uint16_t responseHandle = 0;
 
 // F0110001-7B3A-4C8E-9F1D-6A2B5C4D3E01 and siblings, little-endian.
-const ble_uuid128_t SERVICE = BLE_UUID128_INIT(0x01, 0x3E, 0x4D, 0x5C, 0x2B, 0x6A, 0x1D, 0x9F, 0x8E, 0x4C, 0x3A, 0x7B,
-                                               0x01, 0x00, 0x11, 0xF0);
-const ble_uuid128_t REQUEST = BLE_UUID128_INIT(0x01, 0x3E, 0x4D, 0x5C, 0x2B, 0x6A, 0x1D, 0x9F, 0x8E, 0x4C, 0x3A, 0x7B,
-                                               0x02, 0x00, 0x11, 0xF0);
-const ble_uuid128_t RESPONSE = BLE_UUID128_INIT(0x01, 0x3E, 0x4D, 0x5C, 0x2B, 0x6A, 0x1D, 0x9F, 0x8E, 0x4C, 0x3A, 0x7B,
-                                                0x03, 0x00, 0x11, 0xF0);
+const ble_uuid128_t SERVICE =
+    BLE_UUID128_INIT(0x01, 0x3E, 0x4D, 0x5C, 0x2B, 0x6A, 0x1D, 0x9F, 0x8E, 0x4C, 0x3A, 0x7B, 0x01, 0x00, 0x11, 0xF0);
+const ble_uuid128_t REQUEST =
+    BLE_UUID128_INIT(0x01, 0x3E, 0x4D, 0x5C, 0x2B, 0x6A, 0x1D, 0x9F, 0x8E, 0x4C, 0x3A, 0x7B, 0x02, 0x00, 0x11, 0xF0);
+const ble_uuid128_t RESPONSE =
+    BLE_UUID128_INIT(0x01, 0x3E, 0x4D, 0x5C, 0x2B, 0x6A, 0x1D, 0x9F, 0x8E, 0x4C, 0x3A, 0x7B, 0x03, 0x00, 0x11, 0xF0);
 
 ble_gatt_chr_def characteristics[3] = {};
 ble_gatt_svc_def services[2] = {};
@@ -208,8 +214,10 @@ void onSync() {
     return;
   }
   startAdvertising();
-  LOG_INF("BLE", "advertising as Folio; internal heap free %u, largest %u", static_cast<unsigned>(internalFree()),
-          static_cast<unsigned>(internalLargest()));
+  bleremote::host::onSync(ownAddrType);
+  LOG_INF("BLE", "host ready (sync %s, remote %s); internal heap free %u, largest %u",
+          (runningWant & WANT_SYNC) ? "on" : "off", (runningWant & WANT_REMOTE) ? "on" : "off",
+          static_cast<unsigned>(internalFree()), static_cast<unsigned>(internalLargest()));
 }
 
 void onReset(int reason) { LOG_ERR("BLE", "host reset, reason %d", reason); }
@@ -233,6 +241,7 @@ void onHostStopped(int status, void*) {
 }
 
 void onStopEvent(ble_npl_event*) {
+  bleremote::host::onStop();
   // Preempts advertising, drops the link and calls onHostStopped once it is
   // gone; a non-zero rc means there was nothing to stop or wait for.
   const int rc = ble_hs_stop(&stopListener, onHostStopped, nullptr);
@@ -275,7 +284,7 @@ void buildGatt() {
   services[0].characteristics = characteristics;
 }
 
-bool start() {
+bool start(const uint8_t want) {
   if (running || suspended || failed || stalled) return running;
   if (btMemReleased(BT_MODE_BLE)) {
     if (!memWarned) LOG_INF("BLE", "controller RAM was released at boot; BLE starts after the next restart");
@@ -302,6 +311,9 @@ bool start() {
   }
   ble_hs_cfg.sync_cb = onSync;
   ble_hs_cfg.reset_cb = onReset;
+  runningWant = want;
+  bleremote::host::prepare((want & WANT_REMOTE) != 0, forgetRemotes);
+  forgetRemotes = false;
   ble_svc_gap_init();
   ble_svc_gatt_init();
   buildGatt();
@@ -322,13 +334,12 @@ bool start() {
   ble_npl_event_init(&stopEvent, onStopEvent, nullptr);  // from the NimBLE pool: after nimble_port_init()
   hostExit = false;
   link.phase.store(IDLE);
-  link.advertise.store(true);
+  link.advertise.store((want & WANT_SYNC) != 0);
   running = true;
   nimble_port_freertos_init(hostTask);
-  LOG_INF("BLE", "init: internal heap free %u -> %u (-%d), largest block %u -> %u",
-          static_cast<unsigned>(freeBefore), static_cast<unsigned>(internalFree()),
-          static_cast<int>(freeBefore) - static_cast<int>(internalFree()), static_cast<unsigned>(largestBefore),
-          static_cast<unsigned>(internalLargest()));
+  LOG_INF("BLE", "init: internal heap free %u -> %u (-%d), largest block %u -> %u", static_cast<unsigned>(freeBefore),
+          static_cast<unsigned>(internalFree()), static_cast<int>(freeBefore) - static_cast<int>(internalFree()),
+          static_cast<unsigned>(largestBefore), static_cast<unsigned>(internalLargest()));
   return true;
 }
 
@@ -358,16 +369,17 @@ void stop() {
 }
 
 void followSetting() {
-  const uint8_t want = SETTINGS.bluetoothSync ? 1 : 0;
+  const uint8_t want = (SETTINGS.bluetoothSync ? WANT_SYNC : 0) | (SETTINGS.bluetoothRemote ? WANT_REMOTE : 0);
   if (want == lastSetting) return;
+  // Switched on while running (not restored at boot): pair a remote afresh.
+  if (lastSetting != 0xFF && (want & WANT_REMOTE) && !(lastSetting & WANT_REMOTE)) forgetRemotes = true;
   lastSetting = want;
-  if (readBootFlag() != want) writeBootFlag(want);
+  const uint8_t bootFlag = want ? 1 : 0;
+  if (readBootFlag() != bootFlag) writeBootFlag(bootFlag);
   failed = false;
-  if (want) {
-    start();
-  } else {
-    stop();
-  }
+  // Roles are fixed when the host starts: restart it for the new set.
+  stop();
+  if (want) start(want);
 }
 
 }  // namespace

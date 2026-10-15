@@ -15,6 +15,7 @@
 #include "SdCardFontSystem.h"
 #include "TxtReaderActivity.h"
 #include "XtcReaderActivity.h"
+#include "inklink/BookText.h"
 #include "inklink/ReadingStats.h"
 #include "inklink/Shelves.h"
 #include "util/BookProgress.h"
@@ -63,6 +64,8 @@ void ReaderActivity::onEnter() {
     return;
   }
 
+  CrossPointSettings::ReaderText bookText;
+  if (inklink::booktext::load(bookPath, bookText)) SETTINGS.beginBookText(bookText);
   sdFontSystem.ensureLoaded(renderer);
   applyInitialOrientation();
 
@@ -94,6 +97,7 @@ void ReaderActivity::onExit() {
 
   LOG_INF("MEM", "reader exit: free=%u max_block=%u", (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getMaxAllocHeap());
 
+  SETTINGS.endBookText();
   renderer.setOrientation(GfxRenderer::Orientation::Portrait);
   APP_STATE.readerActivityLoadCount = 0;
   APP_STATE.saveToFile();

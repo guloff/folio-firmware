@@ -40,6 +40,7 @@
 #include "activities/util/PinEntryActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/BleRemote.h"
 #include "inklink/BleSync.h"
 #include "inklink/BootHealth.h"
 #include "inklink/PrivacyLock.h"
@@ -273,6 +274,7 @@ void enterDeepSleep(bool fromTimeout = false) {
   // Reaching sleep means setup finished and the UI ran: keep this image.
   inklink::boot::confirmBeforeSleep();
 
+  SleepActivity::advanceRotation();
   const bool isQuickResumeSleep =
       SleepActivity::effectiveMode(fromTimeout) == CrossPointSettings::SLEEP_SCREEN_MODE::QUICK_RESUME;
   // Every sleep mode leaves a complete retained frame on the e-ink panel. Keep
@@ -625,6 +627,8 @@ void loop() {
 
   gpio.setSharedConfirmPowerShortPressEmitsPower(SETTINGS.shortPwrBtn == CrossPointSettings::SHORT_PWRBTN::SLEEP);
   mappedInputManager.update();
+  const int8_t remoteTurn = inklink::bleremote::takePageTurn();
+  mappedInputManager.setRemoteTurnFrame(remoteTurn);
 
   if (activityManager.requiresExclusiveStorageLoop()) {
     // USB Drive handed the raw SD card to the host. Do not run screenshots,
@@ -687,7 +691,7 @@ void loop() {
   // Check for any user activity (button press or release) or active background work
   static unsigned long lastActivityTime = millis();
   if (gpio.wasAnyPressed() || gpio.wasAnyReleased() || gpio.wasTouchActivity() || halTiltSensor.hadActivity() ||
-      activityManager.preventAutoSleep() || inklink::blesync::busy()) {
+      activityManager.preventAutoSleep() || inklink::blesync::busy() || remoteTurn != 0) {
     lastActivityTime = millis();         // Reset inactivity timer
     powerManager.setPowerSaving(false);  // Restore normal CPU frequency on user activity
   }

@@ -220,6 +220,7 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
     sleepScreenValues[CrossPointSettings::TRANSPARENT_CUSTOM] = StrId::STR_TRANSPARENT;
     sleepScreenValues[CrossPointSettings::INKLINK_DASHBOARD] = StrId::STR_INKLINK_DASHBOARD;
     sleepScreenValues[CrossPointSettings::INKLINK_QUOTE] = StrId::STR_INKLINK_QUOTE;
+    sleepScreenValues[CrossPointSettings::INKLINK_ROTATE] = StrId::STR_INKLINK_ROTATE;
 
     std::vector<StrId> statusBarClockValues(CrossPointSettings::STATUS_BAR_CLOCK_MODE_COUNT);
     statusBarClockValues[CrossPointSettings::STATUS_BAR_CLOCK_HIDE] = StrId::STR_HIDE;
@@ -230,6 +231,9 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
         // --- Display ---
         SettingInfo::Enum(StrId::STR_SLEEP_SCREEN, &CrossPointSettings::sleepScreen, std::move(sleepScreenValues),
                           "sleepScreen", StrId::STR_CAT_DISPLAY),
+        SettingInfo::Enum(StrId::STR_SLEEP_ROTATION, &CrossPointSettings::sleepRotation,
+                          {StrId::STR_SLEEP_ROTATION_EVERY, StrId::STR_SLEEP_ROTATION_DAILY}, "sleepRotation",
+                          StrId::STR_CAT_DISPLAY),
         SettingInfo::Enum(StrId::STR_SLEEP_COVER_MODE, &CrossPointSettings::sleepScreenCoverMode,
                           {StrId::STR_FIT, StrId::STR_CROP}, "sleepScreenCoverMode", StrId::STR_CAT_DISPLAY),
         SettingInfo::Enum(StrId::STR_SLEEP_COVER_FILTER, &CrossPointSettings::sleepScreenCoverFilter,
@@ -247,8 +251,7 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
                           "refreshFrequency", StrId::STR_CAT_DISPLAY),
         SettingInfo::Enum(StrId::STR_UI_THEME, &CrossPointSettings::uiTheme, homeThemeValues(), "uiTheme",
                           StrId::STR_CAT_DISPLAY),
-        SettingInfo::Toggle(StrId::STR_FOLIO_HOME, &CrossPointSettings::folioHome, "folioHome",
-                            StrId::STR_CAT_DISPLAY),
+        SettingInfo::Toggle(StrId::STR_FOLIO_HOME, &CrossPointSettings::folioHome, "folioHome", StrId::STR_CAT_DISPLAY),
         SettingInfo::Toggle(StrId::STR_SUNLIGHT_FADING_FIX, &CrossPointSettings::fadingFix, "fadingFix",
                             StrId::STR_CAT_DISPLAY),
 #if FREEINK_CAP_FRONTLIGHT
@@ -384,6 +387,8 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
         SettingInfo::Toggle(StrId::STR_MOVE_FINISHED_TO_READ, &CrossPointSettings::moveFinishedToReadFolder,
                             "moveFinishedToReadFolder", StrId::STR_CAT_SYSTEM),
         SettingInfo::Toggle(StrId::STR_BLUETOOTH_SYNC, &CrossPointSettings::bluetoothSync, "bluetoothSync",
+                            StrId::STR_CAT_SYSTEM),
+        SettingInfo::Toggle(StrId::STR_BLUETOOTH_REMOTE, &CrossPointSettings::bluetoothRemote, "bluetoothRemote",
                             StrId::STR_CAT_SYSTEM),
         SettingInfo::Toggle(StrId::STR_SHOW_HIGHLIGHTS, &CrossPointSettings::showHighlights, "showHighlights",
                             StrId::STR_CAT_READER),

@@ -161,6 +161,11 @@ class EpubReaderActivity final : public ReaderActivity {
   // Persist the reader text settings, (re)load the selected SD font, and
   // re-paginate the current chapter so changes apply without re-opening the book.
   void applyReaderTextSettings();
+  // "Text for this book": keep the current text settings for this book only, or drop them.
+  // Shows the note a footnote link points at over the page; false when it
+  // cannot be extracted (the caller then jumps to it).
+  bool showFootnotePopup(const std::string& href);
+  void toggleBookText();
   // More panel rows.
   void buildMoreActions();
   std::string moreRowName(int row) const;

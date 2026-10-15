@@ -29,6 +29,7 @@
 #include "fontIds.h"
 #include "images/Logo120.h"
 #include "images/MoonIcon.h"
+#include "inklink/InkLinkClock.h"
 #include "inklink/PrivacyLock.h"
 #include "inklink/SleepScreens.h"
 
@@ -503,10 +504,28 @@ void releaseSdFontCachesForDecode(const GfxRenderer& renderer) {
 
 }  // namespace
 
+namespace {
+constexpr uint8_t ROTATION[] = {CrossPointSettings::COVER_CUSTOM, CrossPointSettings::INKLINK_DASHBOARD,
+                                CrossPointSettings::INKLINK_QUOTE};
+constexpr uint8_t ROTATION_COUNT = sizeof(ROTATION) / sizeof(ROTATION[0]);
+}  // namespace
+
+void SleepActivity::advanceRotation() {
+  if (SETTINGS.sleepScreen != CrossPointSettings::INKLINK_ROTATE) return;
+  if (SETTINGS.sleepRotation == CrossPointSettings::ROTATE_DAILY) {
+    // Without a set clock there are no days: fall back to every sleep.
+    const uint32_t today = inklink::clock::today();
+    if (today != 0 && today == APP_STATE.sleepRotateDay) return;
+    APP_STATE.sleepRotateDay = today;
+  }
+  APP_STATE.sleepRotateIndex = static_cast<uint8_t>((APP_STATE.sleepRotateIndex + 1) % ROTATION_COUNT);
+}
+
 uint8_t SleepActivity::effectiveMode(const bool fromTimeout) {
   using Mode = CrossPointSettings::SLEEP_SCREEN_MODE;
   namespace privacy = inklink::privacy;
   uint8_t mode = SETTINGS.sleepScreen;
+  if (mode == Mode::INKLINK_ROTATE) mode = ROTATION[APP_STATE.sleepRotateIndex % ROTATION_COUNT];
   if (fromTimeout &&
       SETTINGS.quickResumeSleepScreen == CrossPointSettings::QUICK_RESUME_SLEEP_SCREEN::QUICK_RESUME_AFTER_TIMEOUT) {
     mode = Mode::QUICK_RESUME;
@@ -831,6 +850,7 @@ void SleepActivity::renderCoverSleepScreen() const {
   void (SleepActivity::*renderNoCoverSleepScreen)() const;
   switch (SETTINGS.sleepScreen) {
     case (CrossPointSettings::SLEEP_SCREEN_MODE::COVER_CUSTOM):
+    case (CrossPointSettings::SLEEP_SCREEN_MODE::INKLINK_ROTATE):
       renderNoCoverSleepScreen = &SleepActivity::renderCustomSleepScreen;
       break;
     default:

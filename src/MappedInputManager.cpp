@@ -340,6 +340,8 @@ bool MappedInputManager::wasPowerConfirmClick() const {
 
 bool MappedInputManager::wasPressed(const Button button) const {
   if (button == Button::Confirm && homeAction == HomeButtonAction::Confirm) return true;
+  if (remoteTurnFrame > 0 && button == Button::PageForward) return true;
+  if (remoteTurnFrame < 0 && button == Button::PageBack) return true;
   if (button == Button::Back && wasBackGesture()) return true;
 #if FREEINK_CAP_TOUCH
   if (button == Button::Confirm && wasPowerConfirmClick()) return true;
@@ -349,6 +351,8 @@ bool MappedInputManager::wasPressed(const Button button) const {
 
 bool MappedInputManager::wasReleased(const Button button) const {
   if (button == Button::Confirm && homeAction == HomeButtonAction::Confirm) return true;
+  if (remoteTurnFrame > 0 && button == Button::PageForward) return true;
+  if (remoteTurnFrame < 0 && button == Button::PageBack) return true;
   if (button == Button::Back && wasBackGesture()) return true;
 #if FREEINK_CAP_TOUCH
   if (button == Button::Confirm && wasPowerConfirmClick()) return true;

@@ -29,7 +29,8 @@ class EpubReaderMenuActivity final : public UiListActivity {
     DELETE_CACHE,
     DICTIONARY,
     HIGHLIGHT,
-    PROTECT_BOOK
+    PROTECT_BOOK,
+    BOOK_TEXT
   };
 
   struct MenuItem {

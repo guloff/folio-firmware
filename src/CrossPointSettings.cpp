@@ -110,6 +110,59 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
   if (keyboardLayouts != 0) {
     doc["keyboardLayouts"] = keyboardLayouts;
   }
+
+  // A book's own text settings never become the global ones.
+  if (bookTextOn) {
+    const ReaderText& g = globalText;
+    doc["fontFamily"] = g.fontFamily;
+    doc["fontSize"] = g.fontPointSize;
+    doc["lineSpacing"] = g.lineSpacing;
+    doc["wordSpacing"] = g.wordSpacing;
+    doc["characterSpacing"] = g.characterSpacing;
+    doc["screenMargin"] = g.screenMargin;
+    doc["paragraphAlignment"] = g.paragraphAlignment;
+    if (g.sdFontFamilyName[0] != '\0') {
+      doc["sdFontFamilyName"] = g.sdFontFamilyName;
+    } else {
+      doc.remove("sdFontFamilyName");
+    }
+  }
+}
+
+CrossPointSettings::ReaderText CrossPointSettings::readerText() const {
+  ReaderText t;
+  t.fontFamily = fontFamily;
+  t.fontPointSize = fontPointSize;
+  t.lineSpacing = lineSpacing;
+  t.wordSpacing = wordSpacing;
+  t.characterSpacing = characterSpacing;
+  t.screenMargin = screenMargin;
+  t.paragraphAlignment = paragraphAlignment;
+  strlcpy(t.sdFontFamilyName, sdFontFamilyName, sizeof(t.sdFontFamilyName));
+  return t;
+}
+
+void CrossPointSettings::setReaderText(const ReaderText& t) {
+  fontFamily = t.fontFamily < FONT_FAMILY_COUNT ? t.fontFamily : NOTOSERIF;
+  fontPointSize = t.fontPointSize;
+  lineSpacing = t.lineSpacing < LINE_COMPRESSION_COUNT ? t.lineSpacing : NORMAL;
+  wordSpacing = t.wordSpacing;
+  characterSpacing = t.characterSpacing;
+  screenMargin = t.screenMargin;
+  paragraphAlignment = t.paragraphAlignment;
+  strlcpy(sdFontFamilyName, t.sdFontFamilyName, sizeof(sdFontFamilyName));
+}
+
+void CrossPointSettings::beginBookText(const ReaderText& book) {
+  if (!bookTextOn) globalText = readerText();
+  bookTextOn = true;
+  setReaderText(book);
+}
+
+void CrossPointSettings::endBookText() {
+  if (!bookTextOn) return;
+  bookTextOn = false;
+  setReaderText(globalText);
 }
 
 bool CrossPointSettings::fromJson(JsonVariantConst doc) {

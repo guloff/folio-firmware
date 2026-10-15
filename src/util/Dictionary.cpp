@@ -11,6 +11,7 @@
 
 #include "DictZip.h"
 #include "DictionaryRegistry.h"
+#include "RussianMorphology.h"
 #include "StringUtils.h"
 
 namespace {
@@ -594,6 +595,7 @@ std::string Dictionary::cleanWord(const char* word) {
   std::string result(word + start, end - start);
   std::transform(result.begin(), result.end(), result.begin(),
                  [](unsigned char c) { return c >= 0x80 ? c : static_cast<unsigned char>(std::tolower(c)); });
+  russian::lowercaseCyrillic(result);
   return result;
 }
 
@@ -665,6 +667,17 @@ bool Dictionary::lookup(const char* word, std::string& definitionOut, std::strin
       stemVariants(cleaned, variants);
       for (const auto& variant : variants) {
         location = locate(session, variant.c_str(), &matchedHeadwordOut);
+        searchFailed = searchFailed || location.readError;
+        if (location.found) break;
+      }
+    }
+
+    // Inflected Russian: try lemma candidates ("книгами" -> "книга").
+    if (!location.found && russian::hasCyrillic(cleaned)) {
+      std::vector<std::string> lemmas;
+      russian::lemmaCandidates(cleaned, lemmas);
+      for (const auto& lemma : lemmas) {
+        location = locate(session, lemma.c_str(), &matchedHeadwordOut);
         searchFailed = searchFailed || location.readError;
         if (location.found) break;
       }

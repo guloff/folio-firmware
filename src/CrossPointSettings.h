@@ -27,8 +27,11 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
     TRANSPARENT_CUSTOM = 7,
     INKLINK_DASHBOARD = 8,
     INKLINK_QUOTE = 9,
+    // Cycles cover-or-image, dashboard and quote (see sleepRotation).
+    INKLINK_ROTATE = 10,
     SLEEP_SCREEN_MODE_COUNT
   };
+  enum SLEEP_ROTATION { ROTATE_EVERY_SLEEP = 0, ROTATE_DAILY = 1, SLEEP_ROTATION_COUNT };
   enum SLEEP_SCREEN_COVER_MODE { FIT = 0, CROP = 1, SLEEP_SCREEN_COVER_MODE_COUNT };
   enum SLEEP_SCREEN_COVER_FILTER {
     NO_FILTER = 0,
@@ -222,6 +225,8 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
 
   // Sleep screen settings
   uint8_t sleepScreen = DARK;
+  // INKLINK_ROTATE: next screen on every sleep, or once per calendar day.
+  uint8_t sleepRotation = ROTATE_EVERY_SLEEP;
   // Night mode: inverted output polarity, applied to every activity per
   // render by ActivityManager. The sleep screen opts out itself.
   uint8_t screenInverted = 0;
@@ -341,6 +346,8 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t folioHome = 1;
   // Folio: BLE sync channel for the InkLink app (X4 Pro builds with FOLIO_BLE_SYNC).
   uint8_t bluetoothSync = 0;
+  // Folio: page turns from a paired BLE HID remote (same stack as bluetoothSync).
+  uint8_t bluetoothRemote = 0;
   // Folio: draw saved highlights with a light-gray background on reader pages.
   uint8_t showHighlights = 1;
   // Show the title and author read from inside each book rather than its
@@ -444,6 +451,31 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   // Unlocked for the same reason as statusBarSpec(); see the note above.
   ReaderRenderSpec readerRenderSpec(uint16_t viewportWidth, uint16_t viewportHeight) const;
 
+  // Text settings a book can keep for itself (reader menu "Text for this book").
+  struct ReaderText {
+    uint8_t fontFamily = NOTOSERIF;
+    uint8_t fontPointSize = DEFAULT_FONT_POINT_SIZE;
+    uint8_t lineSpacing = NORMAL;
+    uint8_t wordSpacing = 100;
+    uint8_t characterSpacing = CHARACTER_SPACING_OFFSET;
+    uint8_t screenMargin = SCREEN_MARGIN_MIN;
+    uint8_t paragraphAlignment = JUSTIFIED;
+    char sdFontFamilyName[32] = "";
+  };
+  ReaderText readerText() const;
+  void setReaderText(const ReaderText& text);
+  // While a book with its own text settings is open its values sit in the
+  // fields above, and toJson() keeps writing the global ones.
+  void beginBookText(const ReaderText& book);
+  void endBookText();
+  bool bookTextActive() const { return bookTextOn; }
+
+ private:
+  // The global values while a book's own are applied.
+  ReaderText globalText{};
+  bool bookTextOn = false;
+
+ public:
   static const char* getFilePath() { return "/.crosspoint/settings.json"; }
   void toJson(JsonDocument& doc) const;
   bool fromJson(JsonVariantConst doc);
