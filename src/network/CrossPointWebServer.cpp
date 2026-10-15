@@ -232,8 +232,8 @@ void CrossPointWebServer::begin() {
   // Collect WebDAV headers and register handler
   // If-None-Match is collected so the static-page handlers can answer conditional GETs with 304
   // X-InkLink-Token authorizes mutating requests (Authorization is always collected).
-  const char* collectedHeaders[] = {"Depth",   "Destination",   "Overwrite", "If", "Lock-Token",
-                                    "Timeout", "If-None-Match", inklink::pairing::TOKEN_HEADER};
+  const char* collectedHeaders[] = {"Depth",      "Destination", "Overwrite",     "If",
+                                    "Lock-Token", "Timeout",     "If-None-Match", inklink::pairing::TOKEN_HEADER};
   server->collectHeaders(collectedHeaders, 8);
   server->addHandler(new WebDAVHandler());  // Note: WebDAVHandler will be deleted by WebServer when server is stopped
   LOG_DBG("WEB", "WebDAV handler initialized");

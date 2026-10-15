@@ -217,13 +217,20 @@ bool requestToken(WebServer& s, bool allowBasic, char (&out)[TOKEN_HEX + 1]) {
     for (size_t i = 6; i < auth.length() && n < sizeof(decoded) - 1; i++) {
       const char c = auth[i];
       int v;
-      if (c >= 'A' && c <= 'Z') v = c - 'A';
-      else if (c >= 'a' && c <= 'z') v = c - 'a' + 26;
-      else if (c >= '0' && c <= '9') v = c - '0' + 52;
-      else if (c == '+') v = 62;
-      else if (c == '/') v = 63;
-      else if (c == '=' || c == ' ') continue;
-      else return false;
+      if (c >= 'A' && c <= 'Z')
+        v = c - 'A';
+      else if (c >= 'a' && c <= 'z')
+        v = c - 'a' + 26;
+      else if (c >= '0' && c <= '9')
+        v = c - '0' + 52;
+      else if (c == '+')
+        v = 62;
+      else if (c == '/')
+        v = 63;
+      else if (c == '=' || c == ' ')
+        continue;
+      else
+        return false;
       acc = (acc << 6) | static_cast<uint32_t>(v);
       bits += 6;
       if (bits >= 8) {

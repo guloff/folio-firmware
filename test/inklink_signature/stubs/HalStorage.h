@@ -20,7 +20,7 @@ class HalFile {
     return f != nullptr;
   }
   size_t fileSize() {
-    struct stat st {};
+    struct stat st{};
     return f && fstat(fileno(f), &st) == 0 ? static_cast<size_t>(st.st_size) : 0;
   }
   bool seek(size_t pos) { return f && fseek(f, static_cast<long>(pos), SEEK_SET) == 0; }
@@ -38,7 +38,7 @@ class HalStorage {
     return s;
   }
   bool exists(const char* path) {
-    struct stat st {};
+    struct stat st{};
     return stat(path, &st) == 0;
   }
   bool openFileForRead(const char*, const char* path, HalFile& file) { return file.open(path); }

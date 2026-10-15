@@ -1,12 +1,12 @@
 #pragma once
 
+#include <EpdFontFamily.h>
+
 #include <cstdint>
 #include <string>
 #include <vector>
 
 #include "ReadingStats.h"
-
-#include <EpdFontFamily.h>
 
 class GfxRenderer;
 

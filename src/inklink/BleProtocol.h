@@ -20,15 +20,15 @@ constexpr const char* SERVICE_UUID = "F0110001-7B3A-4C8E-9F1D-6A2B5C4D3E01";
 constexpr const char* REQUEST_UUID = "F0110002-7B3A-4C8E-9F1D-6A2B5C4D3E01";
 constexpr const char* RESPONSE_UUID = "F0110003-7B3A-4C8E-9F1D-6A2B5C4D3E01";
 
-constexpr size_t MAX_REQUEST = 512;            // ATT attribute value limit
-constexpr size_t RESPONSE_CAP = 64 * 1024;     // JSON body bytes per response
-constexpr size_t FRAME_HEADER = 3;             // seq u16 LE + flags u8
+constexpr size_t MAX_REQUEST = 512;         // ATT attribute value limit
+constexpr size_t RESPONSE_CAP = 64 * 1024;  // JSON body bytes per response
+constexpr size_t FRAME_HEADER = 3;          // seq u16 LE + flags u8
 constexpr uint16_t MIN_MTU = 23;
 constexpr uint16_t MAX_MTU = 517;
-constexpr size_t MAX_FRAME = MAX_MTU - 3;      // notification value = ATT_MTU - 3
+constexpr size_t MAX_FRAME = MAX_MTU - 3;  // notification value = ATT_MTU - 3
 constexpr uint8_t FLAG_LAST = 0x01;
 constexpr uint8_t FLAG_ERROR = 0x02;
-constexpr uint8_t MAX_AUTH_FAILURES = 5;       // then the connection is dropped
+constexpr uint8_t MAX_AUTH_FAILURES = 5;  // then the connection is dropped
 
 // One response body in a PSRAM buffer of fixed capacity. Error replies carry
 // "status" (the HTTP code the same failure would have) next to "error".

@@ -1,6 +1,7 @@
 #include "HighlightMarks.h"
 
 #include <ArduinoJson.h>
+#include <Epub/Page.h>
 #include <GfxRenderer.h>
 #include <Logging.h>
 
@@ -10,7 +11,6 @@
 
 #include "Annotations.h"
 #include "CrossPointSettings.h"
-#include <Epub/Page.h>
 #include "JsonLines.h"
 
 namespace inklink::marks {

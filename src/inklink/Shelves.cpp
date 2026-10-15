@@ -33,8 +33,8 @@ Load loadDoc(JsonDocument& doc) {
     return Load::Corrupt;
   }
   std::string text(size, '\0');
-  if (f.read(text.data(), size) != static_cast<int>(size) ||
-      deserializeJson(doc, text) != DeserializationError::Ok || !doc.is<JsonObject>()) {
+  if (f.read(text.data(), size) != static_cast<int>(size) || deserializeJson(doc, text) != DeserializationError::Ok ||
+      !doc.is<JsonObject>()) {
     LOG_ERR("INKLINK", "library.json corrupt");
     return Load::Corrupt;
   }

@@ -39,7 +39,7 @@ class FolioHomeActivity final : public Activity {
   uint32_t goalMinutes = 0;
   int currentPercent = -1;
   std::vector<int> recentPercents;  // parallel to `recent`
-  uint32_t secsLeftEstimate = 0;  // 0 = not enough history for an estimate
+  uint32_t secsLeftEstimate = 0;    // 0 = not enough history for an estimate
   std::vector<Target> targets;
   int focus = 0;
   // Touch boards hide the focus ring until a physical button moves it.

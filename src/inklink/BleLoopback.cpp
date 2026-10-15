@@ -67,8 +67,8 @@ std::string exchange(Channel& ch, Loop& l, const std::string& request, bool prin
   for (int guard = 0; guard < 100000 && !ch.pump(loopSend, &l, 8); guard++) {
   }
   const BufferResponder& r = ch.responder();
-  const bool same = l.assembler.payload().size() == r.size() &&
-                    memcmp(l.assembler.payload().data(), r.data(), r.size()) == 0;
+  const bool same =
+      l.assembler.payload().size() == r.size() && memcmp(l.assembler.payload().data(), r.data(), r.size()) == 0;
   const bool ok = l.done && !l.bad && same && l.assembler.error() == r.isError();
   if (print) {
     *l.out << ">>> " << request << "\n";
@@ -183,8 +183,8 @@ void selftest(std::ostream& out) {
           ok = false;
         }
         if (!ok) failures++;
-        out << "    mtu=" << mtu << " payload=" << n << " error=" << err << " frames=" << frames
-            << " (expected " << expectFrames << ") " << (ok ? "OK" : "FAIL") << "\n";
+        out << "    mtu=" << mtu << " payload=" << n << " error=" << err << " frames=" << frames << " (expected "
+            << expectFrames << ") " << (ok ? "OK" : "FAIL") << "\n";
       }
     }
   }

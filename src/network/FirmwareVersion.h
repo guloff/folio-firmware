@@ -15,9 +15,7 @@ struct Semver {
 };
 
 // "v0.2.0" -> "0.2.0": release assets carry the version without the tag's v.
-inline const char* withoutTagPrefix(const char* tag) {
-  return (tag && (*tag == 'v' || *tag == 'V')) ? tag + 1 : tag;
-}
+inline const char* withoutTagPrefix(const char* tag) { return (tag && (*tag == 'v' || *tag == 'V')) ? tag + 1 : tag; }
 
 inline bool parse(const char* text, Semver& out) {
   if (!text) return false;

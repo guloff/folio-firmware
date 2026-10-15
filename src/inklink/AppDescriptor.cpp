@@ -38,8 +38,8 @@ __attribute__((section(".rodata_desc"), used)) const esp_app_desc_t esp_app_desc
     .project_name = "Folio",
     .time = __TIME__,
     .date = __DATE__,
-    .idf_ver = "v" FOLIO_STR(ESP_IDF_VERSION_MAJOR) "." FOLIO_STR(ESP_IDF_VERSION_MINOR) "." FOLIO_STR(
-        ESP_IDF_VERSION_PATCH),
+    .idf_ver =
+        "v" FOLIO_STR(ESP_IDF_VERSION_MAJOR) "." FOLIO_STR(ESP_IDF_VERSION_MINOR) "." FOLIO_STR(ESP_IDF_VERSION_PATCH),
     .app_elf_sha256 = {0},  // patched in by esptool elf2image
 #ifdef CONFIG_ESP_EFUSE_BLOCK_REV_MIN_FULL
     .min_efuse_blk_rev_full = CONFIG_ESP_EFUSE_BLOCK_REV_MIN_FULL,

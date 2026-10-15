@@ -5,8 +5,8 @@
 #include <FsHelpers.h>
 #include <GfxRenderer.h>
 #include <HalStorage.h>
-#include <Memory.h>
 #include <I18n.h>
+#include <Memory.h>
 
 #include <algorithm>
 #include <cstdio>
@@ -143,8 +143,7 @@ void popCodePoint(std::string& s) {
   }
 }
 
-std::string fitWithEllipsis(const GfxRenderer& r, int fontId, std::string s, int maxWidth,
-                            EpdFontFamily::Style style) {
+std::string fitWithEllipsis(const GfxRenderer& r, int fontId, std::string s, int maxWidth, EpdFontFamily::Style style) {
   while (!s.empty() && r.getTextWidth(fontId, (s + "…").c_str(), style) > maxWidth) popCodePoint(s);
   return s + "…";
 }
@@ -165,7 +164,8 @@ std::vector<std::string> wrapText(const GfxRenderer& r, const int fontId, const 
     std::string word = text.substr(pos, next - pos);
     pos = next + 1;
     if (word.empty()) continue;
-    if (r.getTextWidth(fontId, word.c_str(), style) > maxWidth) word = fitWithEllipsis(r, fontId, word, maxWidth, style);
+    if (r.getTextWidth(fontId, word.c_str(), style) > maxWidth)
+      word = fitWithEllipsis(r, fontId, word, maxWidth, style);
     const std::string candidate = line.empty() ? word : line + " " + word;
     if (line.empty() || r.getTextWidth(fontId, candidate.c_str(), style) <= maxWidth) {
       line = candidate;
