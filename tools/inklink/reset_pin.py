@@ -10,7 +10,7 @@ ask for a new PIN before they open.
     ../.venv/bin/python tools/inklink/reset_pin.py            # auto-detects the port
     ../.venv/bin/python tools/inklink/reset_pin.py --port /dev/cu.usbmodem1101
 
-Key: $FOLIO_SIGNING_KEY_FILE, else ~/Documents/Projects/Crosspoint/secrets/
+Key: $FOLIO_SIGNING_KEY_FILE, else ~/Documents/Projects/Folio/secrets/
 folio-signing-ed25519.pem. OpenSSL 3 is required (pkeyutl -rawin).
 
 Simulator: --sim-in <fifo> --sim-log <log> talk to a simulator started with
@@ -27,7 +27,7 @@ import tempfile
 import time
 
 PREFIX = b"FOLIO-PINRESET-v1\n"
-DEFAULT_KEY = os.path.expanduser("~/Documents/Projects/Crosspoint/secrets/folio-signing-ed25519.pem")
+DEFAULT_KEY = os.path.expanduser("~/Documents/Projects/Folio/secrets/folio-signing-ed25519.pem")
 
 
 def die(msg):

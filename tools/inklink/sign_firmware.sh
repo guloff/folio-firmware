@@ -6,7 +6,7 @@
 #
 #   tools/inklink/sign_firmware.sh .pio/build/x4pro/firmware.bin
 #
-# Key: $FOLIO_SIGNING_KEY_FILE, else ~/Documents/Projects/Crosspoint/secrets/
+# Key: $FOLIO_SIGNING_KEY_FILE, else ~/Documents/Projects/Folio/secrets/
 # folio-signing-ed25519.pem (PEM, never committed). OpenSSL 3 is required
 # (pkeyutl -rawin); Homebrew's is preferred on macOS, PATH otherwise (CI).
 set -euo pipefail
@@ -17,7 +17,7 @@ die() { echo "sign_firmware: $*" >&2; exit 1; }
 BIN="$1"
 [[ -f "$BIN" ]] || die "no such file: $BIN"
 
-KEY="${FOLIO_SIGNING_KEY_FILE:-/Users/rustamguloff/Documents/Projects/Crosspoint/secrets/folio-signing-ed25519.pem}"
+KEY="${FOLIO_SIGNING_KEY_FILE:-$HOME/Documents/Projects/Folio/secrets/folio-signing-ed25519.pem}"
 [[ -r "$KEY" ]] || die "signing key not readable: $KEY (set FOLIO_SIGNING_KEY_FILE)"
 
 if [[ -x /opt/homebrew/bin/openssl ]]; then
