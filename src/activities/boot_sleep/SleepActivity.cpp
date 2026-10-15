@@ -534,27 +534,33 @@ void SleepActivity::advanceRotation() {
 uint8_t SleepActivity::effectiveMode(const bool fromTimeout) {
   using Mode = CrossPointSettings::SLEEP_SCREEN_MODE;
   namespace privacy = inklink::privacy;
-  uint8_t mode = SETTINGS.sleepScreen;
-  if (mode == Mode::INKLINK_ROTATE) mode = ROTATION[APP_STATE.sleepRotateIndex % ROTATION_COUNT];
+  uint8_t chosen = SETTINGS.sleepScreen;
+  if (chosen == Mode::INKLINK_ROTATE) chosen = ROTATION[APP_STATE.sleepRotateIndex % ROTATION_COUNT];
+  uint8_t mode = chosen;
   if (fromTimeout &&
       SETTINGS.quickResumeSleepScreen == CrossPointSettings::QUICK_RESUME_SLEEP_SCREEN::QUICK_RESUME_AFTER_TIMEOUT) {
     mode = Mode::QUICK_RESUME;
   }
-  // Keeps the current frame: a page, or a home screen listing books.
-  const bool showsFrame = mode == Mode::QUICK_RESUME || mode == Mode::TRANSPARENT_CUSTOM;
-  const bool showsCurrentBook = mode == Mode::COVER || (mode == Mode::COVER_CUSTOM && APP_STATE.lastSleepFromReader);
-  if (privacy::deviceLockEnabled()) {
-    // This screen stays on the panel under the next wake's PIN pad.
-    if (showsFrame || showsCurrentBook || mode == Mode::INKLINK_DASHBOARD) return Mode::DARK;
-    if (mode == Mode::COVER_CUSTOM || mode == Mode::INKLINK_QUOTE) return Mode::CUSTOM;
-    return mode;
+  const bool lock = privacy::deviceLockEnabled();
+  // The book a cover screen draws: the last one opened, from the reader or not.
+  const bool bookProtected = privacy::isProtected(APP_STATE.openEpubPath);
+
+  // Keeps the current frame: a page, or a home screen listing books. It stays
+  // on the panel under the wake PIN pad, so with the wake lock on, or with a
+  // protected book in reach, the chosen sleep screen is drawn instead.
+  const auto isFrame = [](const uint8_t m) { return m == Mode::QUICK_RESUME || m == Mode::TRANSPARENT_CUSTOM; };
+  if (isFrame(mode)) {
+    const bool hide = lock || (APP_STATE.lastSleepFromReader && bookProtected) ||
+                      (privacy::booksUnlocked() && privacy::protectedCount() > 0);
+    if (!hide) return mode;
+    mode = isFrame(chosen) ? static_cast<uint8_t>(Mode::DARK) : chosen;
   }
-  const bool currentProtected = APP_STATE.lastSleepFromReader && privacy::isProtected(APP_STATE.openEpubPath);
-  // An unlocked session may have protected books on any screen.
-  if (showsFrame && (currentProtected || (privacy::booksUnlocked() && privacy::protectedCount() > 0))) {
-    return Mode::DARK;
-  }
-  if (showsCurrentBook && currentProtected) return mode == Mode::COVER_CUSTOM ? Mode::CUSTOM : Mode::DARK;
+  // A quote is highlight text from any book: not under the wake PIN.
+  if (lock && mode == Mode::INKLINK_QUOTE) return Mode::CUSTOM;
+  // A cover only says which book; it is hidden for protected books alone.
+  // (The dashboard skips a protected current book itself.)
+  const bool showsCover = mode == Mode::COVER || (mode == Mode::COVER_CUSTOM && APP_STATE.lastSleepFromReader);
+  if (showsCover && bookProtected) return mode == Mode::COVER_CUSTOM ? Mode::CUSTOM : Mode::DARK;
   return mode;
 }
 

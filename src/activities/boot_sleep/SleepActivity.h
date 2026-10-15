@@ -14,8 +14,9 @@ class SleepActivity final : public Activity {
 
   // The sleep screen this sleep draws (SLEEP_SCREEN_MODE; QUICK_RESUME also
   // for a timeout under "Quick Resume after timeout"). PIN protection swaps
-  // out screens that would show a protected book or, with the wake lock on,
-  // anything of the session. Call before the session relocks.
+  // out what would reveal reading content: a protected book's cover, and with
+  // the wake lock on the page left on screen (the chosen screen is drawn
+  // instead) and highlight quotes. Call before the session relocks.
   static uint8_t effectiveMode(bool fromTimeout);
   // INKLINK_ROTATE: moves to the next screen when this sleep should change
   // it. Call once per sleep, before effectiveMode().
