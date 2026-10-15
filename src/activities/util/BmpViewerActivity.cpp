@@ -14,6 +14,7 @@
 #include "CrossPointSettings.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "inklink/SleepScreens.h"
 
 namespace {
 constexpr char CUSTOM_SLEEP_ROOT_BMP[] = "/sleep.bmp";
@@ -239,6 +240,20 @@ void BmpViewerActivity::doSetSleepCover() {
   const bool transparentMode = SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::TRANSPARENT_CUSTOM;
   if (!canSetSleepCover()) return;
 
+  // A picture already in the sleep folder is chosen in place, no copy.
+  const std::string folder = FsHelpers::extractFolderPath(filePath);
+  if (!transparentMode && (folder == "/sleep" || folder == "/.sleep")) {
+    const bool picked = inklink::sleep::selectImage(filePath.substr(filePath.rfind('/') + 1).c_str());
+    if (picked) {
+      SETTINGS.sleepScreen = CrossPointSettings::SLEEP_SCREEN_MODE::CUSTOM;
+      SETTINGS.saveToFile();
+    }
+    GUI.drawPopup(renderer, picked ? tr(STR_DONE) : tr(STR_FAILED_LOWER));
+    delay(1000);
+    onEnter();
+    return;
+  }
+
   const char* destination =
       transparentMode ? (FsHelpers::hasPngExtension(filePath) ? TRANSPARENT_SLEEP_ROOT_PNG : TRANSPARENT_SLEEP_ROOT_BMP)
                       : CUSTOM_SLEEP_ROOT_BMP;
@@ -266,7 +281,11 @@ void BmpViewerActivity::doSetSleepCover() {
   }
 
   if (success) {
-    if (!transparentMode) SETTINGS.sleepScreen = CrossPointSettings::SLEEP_SCREEN_MODE::CUSTOM;
+    // sleep.bmp is shown only while no folder picture is chosen.
+    if (!transparentMode) {
+      inklink::sleep::selectImage("");
+      SETTINGS.sleepScreen = CrossPointSettings::SLEEP_SCREEN_MODE::CUSTOM;
+    }
     SETTINGS.saveToFile();
     GUI.drawPopup(renderer, tr(STR_DONE));
   } else {

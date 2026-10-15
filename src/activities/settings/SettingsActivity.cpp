@@ -31,6 +31,7 @@
 #include "SdFirmwareUpdateActivity.h"
 #include "SettingsList.h"
 #include "SilentRestart.h"
+#include "SleepImageSelectActivity.h"
 #include "StatusBarSettingsActivity.h"
 #include "TextSettingsActivity.h"
 #include "activities/network/WifiSelectionActivity.h"
@@ -95,6 +96,14 @@ void SettingsActivity::rebuildSettingsLists() {
   if (BoardConfig::hasHomeKey()) {
     controlsSettings.insert(controlsSettings.begin(),
                             SettingInfo::Action(StrId::STR_HOME_BUTTON, SettingAction::HomeButton));
+  }
+  // Right under "Sleep Screen": which picture Custom shows.
+  {
+    const auto sleepRow = std::find_if(displaySettings.begin(), displaySettings.end(), [](const SettingInfo& s) {
+      return s.valuePtr == &CrossPointSettings::sleepScreen;
+    });
+    displaySettings.insert(sleepRow == displaySettings.end() ? displaySettings.end() : sleepRow + 1,
+                           SettingInfo::Action(StrId::STR_SLEEP_IMAGE, SettingAction::SleepImage));
   }
   systemSettings.push_back(SettingInfo::Action(StrId::STR_PRIVACY, SettingAction::Privacy));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_WIFI_NETWORKS, SettingAction::Network));
@@ -419,6 +428,13 @@ void SettingsActivity::toggleCurrentSetting() {
                                  // TextSettingsActivity saves on each change; no save needed here.
                                  rebuildSettingsLists();
                                });
+        break;
+      case SettingAction::SleepImage:
+        if (auto activity = makeUniqueNoThrow<SleepImageSelectActivity>(renderer, mappedInput)) {
+          startActivityForResult(std::move(activity), [this](const ActivityResult&) { requestUpdate(); });
+        } else {
+          LOG_ERR("SETTINGS", "OOM: SleepImageSelectActivity");
+        }
         break;
       case SettingAction::Language:
         // Row labels are translated once in rebuildRowItems() and don't

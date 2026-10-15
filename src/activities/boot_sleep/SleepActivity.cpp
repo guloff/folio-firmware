@@ -639,11 +639,13 @@ void SleepActivity::onEnter() {
 }
 
 void SleepActivity::renderCustomSleepScreen() const {
-  // Look for sleep.bmp on the root of the sd card to determine if we should
-  // render a custom sleep screen instead of the default.
-  // This takes priority over the /sleep folder.
+  // The picture chosen in FolioLink or Settings → Sleep Image comes first.
+  const char* sleepDir = Storage.exists("/.sleep") ? "/.sleep" : "/sleep";
+  std::string selectedPath = inklink::sleep::selectedImage(sleepDir);
+
+  // Then sleep.bmp on the card root, then a random one from the sleep folder.
   HalFile file;
-  if (Storage.openFileForRead("SLP", "/sleep.bmp", file)) {
+  if (selectedPath.empty() && Storage.openFileForRead("SLP", "/sleep.bmp", file)) {
     Bitmap bitmap(file, true,
                   renderer.grayscaleCapabilities(sleepGrayscaleMode(renderer)).supported() &&
                       display.getController() == HalDisplay::Controller::SSD1677 &&
@@ -657,9 +659,6 @@ void SleepActivity::renderCustomSleepScreen() const {
     file.close();
   }
 
-  // The image picked in FolioLink, when there is one; random otherwise.
-  const char* sleepDir = Storage.exists("/.sleep") ? "/.sleep" : "/sleep";
-  std::string selectedPath = inklink::sleep::selectedImage(sleepDir);
   if (selectedPath.empty() && !selectRandomSleepFile("/.sleep", SleepRecentKind::Standard, selectedPath)) {
     selectRandomSleepFile("/sleep", SleepRecentKind::Standard, selectedPath);
   }

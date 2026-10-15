@@ -30,6 +30,7 @@ enum class SettingAction {
   HomeButton,
   Privacy,
   About,
+  SleepImage,
 };
 
 struct SettingInfo {
