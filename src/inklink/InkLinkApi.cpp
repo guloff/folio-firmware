@@ -307,7 +307,8 @@ bool isBookFile(const char* name) {
     const size_t e = strlen(ext);
     return len > e && strcasecmp(name + len - e, ext) == 0;
   };
-  return ends(".epub") || ends(".txt") || ends(".md") || ends(".xtc") || ends(".xtch");
+  return ends(".epub") || ends(".txt") || ends(".md") || ends(".xtc") || ends(".xtch") || ends(".fb2") ||
+         ends(".fb2.zip");
 }
 
 // Fallback when the library index hasn't been built yet: walk the card

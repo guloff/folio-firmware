@@ -912,7 +912,7 @@ void SleepActivity::renderCoverSleepScreen() const {
     }
 
     coverBmpPath = lastTxt.getCoverBmpPath();
-  } else if (FsHelpers::hasEpubExtension(APP_STATE.openEpubPath)) {
+  } else if (FsHelpers::opensAsEpub(APP_STATE.openEpubPath)) {
     // Handle EPUB file
     Epub lastEpub(APP_STATE.openEpubPath, "/.crosspoint");
     // Skip loading css since we only need metadata here
@@ -977,7 +977,7 @@ void SleepActivity::prepareCover(const GfxRenderer& renderer, const std::string&
   using Mode = CrossPointSettings::SLEEP_SCREEN_MODE;
   const uint8_t mode = SETTINGS.sleepScreen;
   if (mode != Mode::COVER && mode != Mode::COVER_CUSTOM && mode != Mode::INKLINK_ROTATE) return;
-  if (!FsHelpers::hasEpubExtension(bookPath)) return;
+  if (!FsHelpers::opensAsEpub(bookPath)) return;
   const bool cropped = SETTINGS.sleepScreenCoverMode == CrossPointSettings::SLEEP_SCREEN_COVER_MODE::CROP;
   const bool originalThresholds = coverOriginalThresholds(renderer);
   Epub epub(bookPath, "/.crosspoint");

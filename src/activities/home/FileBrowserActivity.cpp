@@ -32,7 +32,7 @@ constexpr size_t NAME_BUFFER_SIZE = 500;
 
 std::string getBookCachePath(const std::string& path) {
   const char* prefix = nullptr;
-  if (FsHelpers::hasEpubExtension(path)) {
+  if (FsHelpers::opensAsEpub(path)) {
     prefix = "epub_";
   } else if (FsHelpers::hasXtcExtension(path)) {
     prefix = "xtc_";
@@ -134,7 +134,7 @@ void FileBrowserActivity::loadFiles() {
         if (FsHelpers::checkFileExtension(filename, ".bin")) {
           files.emplace_back(filename);
         }
-      } else if (FsHelpers::hasEpubExtension(filename) || FsHelpers::hasXtcExtension(filename) ||
+      } else if (FsHelpers::opensAsEpub(filename) || FsHelpers::hasXtcExtension(filename) ||
                  FsHelpers::hasTxtExtension(filename) || FsHelpers::hasMarkdownExtension(filename) ||
                  FsHelpers::hasBmpExtension(filename) || FsHelpers::hasPngExtension(filename)) {
         files.emplace_back(filename);
@@ -516,7 +516,7 @@ void FileBrowserActivity::renameSelectedFile(const std::string& oldPath, const s
 
   const std::string oldCachePath = getBookCachePath(oldPath);
   const std::string newCachePath = getBookCachePath(newPath);
-  const bool isEpub = FsHelpers::hasEpubExtension(oldPath);
+  const bool isEpub = FsHelpers::opensAsEpub(oldPath);
   const std::string oldBookmarkPath = isEpub ? BookmarkUtil::getBookmarkPath(oldPath) : "";
   const std::string newBookmarkPath = isEpub ? BookmarkUtil::getBookmarkPath(newPath) : "";
   bool cacheMoved = false;

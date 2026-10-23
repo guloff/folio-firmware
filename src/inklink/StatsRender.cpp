@@ -108,7 +108,7 @@ void drawProgressBar(const GfxRenderer& renderer, const int x, const int y, cons
 bool drawBookCover(const GfxRenderer& renderer, const std::string& bookPath, const int x, const int y, const int w,
                    const int h) {
   bool drawn = false;
-  if (FsHelpers::hasEpubExtension(bookPath)) {
+  if (FsHelpers::opensAsEpub(bookPath)) {
     // Large parser object: heap, one at a time.
     auto epub = makeUniqueNoThrow<Epub>(bookPath, "/.crosspoint");
     if (epub) {

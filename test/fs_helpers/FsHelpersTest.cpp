@@ -31,6 +31,21 @@ TEST(NormalisePath, CollapsesParentReferenceWithinPath) {
   EXPECT_EQ(FsHelpers::normalisePath("/Books/../.crosspoint/x"), ".crosspoint/x");
 }
 
+TEST(Fb2Extension, MatchesPlainAndZippedFb2) {
+  EXPECT_TRUE(FsHelpers::hasFb2Extension("Book.fb2"sv));
+  EXPECT_TRUE(FsHelpers::hasFb2Extension("Book.FB2.ZIP"sv));
+  EXPECT_FALSE(FsHelpers::hasFb2Extension("Book.zip"sv));
+  EXPECT_FALSE(FsHelpers::hasFb2Extension("Book.epub"sv));
+}
+
+TEST(OpensAsEpub, CoversEpubAndFb2Only) {
+  EXPECT_TRUE(FsHelpers::opensAsEpub("a.epub"sv));
+  EXPECT_TRUE(FsHelpers::opensAsEpub("a.fb2"sv));
+  EXPECT_TRUE(FsHelpers::opensAsEpub("a.fb2.zip"sv));
+  EXPECT_FALSE(FsHelpers::opensAsEpub("a.txt"sv));
+  EXPECT_FALSE(FsHelpers::opensAsEpub("a.xtc"sv));
+}
+
 TEST(NormalisePath, DropsLeadingParentReferencesPastRoot) { EXPECT_EQ(FsHelpers::normalisePath("/../../etc"), "etc"); }
 
 }  // namespace

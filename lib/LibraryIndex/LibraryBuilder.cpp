@@ -187,7 +187,8 @@ void clearLibraryIndexDirty() {
 
 bool isBookName(const std::string& name) {
   return FsHelpers::checkFileExtension(name, ".epub") || FsHelpers::checkFileExtension(name, ".txt") ||
-         FsHelpers::checkFileExtension(name, ".md") || FsHelpers::checkFileExtension(name, ".xtc");
+         FsHelpers::checkFileExtension(name, ".md") || FsHelpers::checkFileExtension(name, ".xtc") ||
+         FsHelpers::hasFb2Extension(name);
 }
 
 // macOS AppleDouble sidecars and hidden entries. The file browser already hides
@@ -196,6 +197,8 @@ bool isBookName(const std::string& name) {
 bool isHiddenOrSidecar(const char* name) { return name[0] == '.'; }
 
 std::string stemOf(const std::string& name) {
+  // "Book.fb2.zip" is "Book", not "Book.fb2".
+  if (FsHelpers::checkFileExtension(name, ".fb2.zip") && name.size() > 8) return name.substr(0, name.size() - 8);
   const size_t dot = name.find_last_of('.');
   return (dot == std::string::npos || dot == 0) ? name : name.substr(0, dot);
 }
@@ -305,7 +308,7 @@ int findPrior(WalkState& st, const uint64_t pathHash) {
   entry.pathHash = clixPathHash(fullPath.data(), fullPath.size());
   const int priorIndex = findPrior(st, entry.pathHash);
 
-  const bool extractionExpected = st.readMetadata && FsHelpers::hasEpubExtension(name);
+  const bool extractionExpected = st.readMetadata && FsHelpers::opensAsEpub(name);
   const uint8_t expectedStatus = extractionExpected ? CLIX_METADATA_EXTRACTED : CLIX_METADATA_NOT_ATTEMPTED;
   bool reuseMetadata = false;
   ClixRecord priorRecord{};

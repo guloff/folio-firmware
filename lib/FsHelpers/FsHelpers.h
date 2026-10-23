@@ -52,6 +52,18 @@ inline bool hasEpubExtension(const String& fileName) {
   return hasEpubExtension(std::string_view{fileName.c_str(), fileName.length()});
 }
 
+// Check for .fb2 or .fb2.zip extension (case-insensitive)
+bool hasFb2Extension(std::string_view fileName);
+inline bool hasFb2Extension(const String& fileName) {
+  return hasFb2Extension(std::string_view{fileName.c_str(), fileName.length()});
+}
+
+// Books the EPUB reader opens: EPUB, and FB2 (transcoded to EPUB in its cache)
+bool opensAsEpub(std::string_view fileName);
+inline bool opensAsEpub(const String& fileName) {
+  return opensAsEpub(std::string_view{fileName.c_str(), fileName.length()});
+}
+
 // Check for either .xtc or .xtch extension (case-insensitive)
 bool hasXtcExtension(std::string_view fileName);
 

@@ -18,7 +18,7 @@ uint32_t readLe32(const uint8_t* p) {
 
 int loadBookProgress(const std::string& path) {
   uint8_t data[10]{};
-  if (FsHelpers::hasEpubExtension(path)) {
+  if (FsHelpers::opensAsEpub(path)) {
     // Metadata objects exceed the stack budget; only the featured book is loaded, once per entry.
     auto epub = makeUniqueNoThrow<Epub>(path, "/.crosspoint");
     if (!epub) {
