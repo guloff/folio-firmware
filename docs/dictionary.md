@@ -17,11 +17,25 @@ Not supported: dictionaries with 64-bit index offsets (`idxoffsetbits=64` in the
 
 ## Setting Up a Dictionary
 
-1. Copy your dictionary folder(s) to `/dictionaries/` on the SD card — one dictionary per folder, e.g. `/dictionaries/webster/webster.idx` + `webster.dict.dz`. A hidden `/.dictionaries/` folder (dot-prefixed) works the same way, for keeping it out of the file browser.
-2. Open **Settings → Reader → Dictionary** on the device.
-3. Select a dictionary from the list, or **None** to disable lookups.
+The easiest way is the FolioLink app: **Dictionaries** lists ready-made dictionaries, installs them on the reader over Wi-Fi, and lets you pick or remove them.
 
-The Dictionary setting only appears when at least one usable dictionary folder exists. Folders containing more than one dictionary (multiple `.idx` stems) are skipped as ambiguous.
+By hand:
+
+1. Copy your dictionary folder(s) to `/dictionaries/` on the SD card — one dictionary per folder, e.g. `/dictionaries/webster/webster.idx` + `webster.dict.dz`. A hidden `/.dictionaries/` folder (dot-prefixed) works the same way, for keeping it out of the file browser.
+2. That's it: by default the reader searches **all** installed dictionaries.
+3. To change that, open **Settings → Reader → Dictionary**: **All dictionaries** (default), **Off**, or one dictionary folder.
+
+Folders containing more than one dictionary (multiple `.idx` stems) are skipped as ambiguous. With no dictionary installed, **Look Up** explains where to get one.
+
+### Several dictionaries
+
+With **All dictionaries**, a word is looked up in every installed dictionary until one has it. Dictionaries whose headwords use the same alphabet as the word go first — a Cyrillic word tries Russian-headword dictionaries before English ones, and the other way round — so an English word in a Russian book still reaches the English dictionary. Among those, dictionaries that explain in the reader's interface language win: with a Russian interface an English word goes to English→Russian before English→English. The definition screen names the dictionary that answered.
+
+The alphabet and the definition language come from `lang=` in the `.ifo` (`lang=en-ru`); without it the alphabet is sampled from the headwords and the definition language is unknown (such dictionaries go after the ones that match).
+
+### Moving from CrossPoint
+
+Folio reads dictionaries exactly where CrossPoint does (`/dictionaries/`, `/.dictionaries/`), in the same format, and reuses the `.qidx`/`.sidx` index files CrossPoint already built. A dictionary chosen in CrossPoint stays chosen; "None" becomes "All dictionaries". Folio keeps its own All/Off choice in a separate settings key, so the card still works if it goes back to CrossPoint.
 
 ## Looking Up a Word
 

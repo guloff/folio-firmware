@@ -43,6 +43,7 @@
 #include "SdCardFontSystem.h"
 #include "activities/settings/TextSettingsActivity.h"
 #include "activities/util/BookProtection.h"
+#include "activities/util/ConfirmationActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
 #include "inklink/BookText.h"
@@ -51,6 +52,8 @@
 #include "inklink/ReadingStats.h"
 #include "util/BookmarkUtil.h"
 #include "util/ButtonNavigator.h"
+#include "util/DictionaryMeta.h"
+#include "util/DictionaryRegistry.h"
 #include "util/FootnoteExtract.h"
 #include "util/ScreenshotUtil.h"
 
@@ -352,11 +355,23 @@ void EpubReaderActivity::showBuildPopup(GfxRenderer& renderer, int& pagesUntilFu
 }
 
 void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode, const int startX, const int startY) {
-  if (!highlightMode && SETTINGS.dictionaryName[0] == '\0') {
+  if (!highlightMode && DictionaryMeta::selectionOf(SETTINGS.dictionaryName) == DictionaryMeta::Selection::Off) {
     showDictionaryMessage = true;
     dictionaryMessageTime = millis();
     requestUpdate();
     return;
+  }
+  if (!highlightMode) {
+    std::vector<DictionaryEntry> installed;
+    DictionaryRegistry::discover(installed);
+    if (installed.empty()) {
+      // Nothing to look words up in yet: say where dictionaries come from
+      // instead of opening a word picker that can only fail.
+      startActivityForResult(std::make_unique<ConfirmationActivity>(renderer, mappedInput, tr(STR_DICT_NONE_TITLE),
+                                                                    tr(STR_DICT_NONE_BODY), tr(STR_DICT_GOT_IT), true),
+                             [this](const ActivityResult&) { requestUpdate(); });
+      return;
+    }
   }
   if (!section) return;
   auto page = section->loadPage(section->currentPage);
@@ -1562,7 +1577,7 @@ void EpubReaderActivity::renderBook() {
   }
 
   if (showDictionaryMessage) {
-    GUI.drawPopup(renderer, tr(STR_DICT_NO_DICT_SET));
+    GUI.drawPopup(renderer, tr(STR_DICT_OFF_HINT));
   }
 
   // Toolbar menu: overlay the toolbar / panel on top of the freshly rendered page.

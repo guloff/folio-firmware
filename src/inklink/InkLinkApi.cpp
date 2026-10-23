@@ -29,6 +29,8 @@
 #include "Shelves.h"
 #include "SleepScreens.h"
 #include "util/BookProgress.h"
+#include "util/DictionaryMeta.h"
+#include "util/DictionaryRegistry.h"
 
 #ifndef CROSSPOINT_VERSION
 #define CROSSPOINT_VERSION "dev"
@@ -196,7 +198,8 @@ void info(Responder& out, bool authorized) {
   pair["paired"] = pairing::isPaired();
   pair["authorized"] = authorized;
   JsonArray features = doc["features"].to<JsonArray>();
-  for (const char* f : {"stats", "library", "highlights", "vocab", "screenshots", "sleep", "ota", "pairing"}) {
+  for (const char* f :
+       {"stats", "library", "highlights", "vocab", "screenshots", "sleep", "ota", "pairing", "dictionaries"}) {
     features.add(f);
   }
   sendDoc(out, 200, doc);
@@ -710,6 +713,70 @@ void handleSleepSelect() {
   sendOk(http);
 }
 
+// ---- dictionaries -----------------------------------------------------------
+
+void handleDictionaries() {
+  std::vector<DictionaryEntry> entries;
+  DictionaryRegistry::discover(entries);
+  JsonDocument doc;
+  // A chosen folder that is gone searches all dictionaries; say so.
+  std::string base;
+  const bool chosenGone = DictionaryMeta::selectionOf(SETTINGS.dictionaryName) == DictionaryMeta::Selection::One &&
+                          !DictionaryRegistry::resolveBasePath(SETTINGS.dictionaryName, base);
+  doc["selected"] = SETTINGS.dictionaryName[0] && !chosenGone ? SETTINGS.dictionaryName : DictionaryMeta::SELECT_ALL;
+  doc["root"] = "/dictionaries";
+  JsonArray list = doc["dictionaries"].to<JsonArray>();
+  for (const auto& entry : entries) {
+    DictionaryInfo info;
+    DictionaryRegistry::describe(entry, info);
+    JsonObject item = list.add<JsonObject>();
+    item["name"] = entry.name;
+    item["path"] = std::string(entry.root) + "/" + entry.name;
+    item["stem"] = entry.stem;
+    item["title"] = info.title;
+    item["words"] = info.words;
+    item["script"] = DictionaryMeta::scriptName(info.script);
+    item["sizeKB"] = info.sizeKB;
+    item["html"] = info.html;
+    item["synonyms"] = info.synonyms;
+    item["indexed"] = info.indexed;
+  }
+  sendDoc(http, 200, doc);
+}
+
+void handleDictionarySelect() {
+  JsonDocument doc;
+  if (!parseBody(doc)) return;
+  const char* name = doc["name"] | "";
+  if (strcmp(name, DictionaryMeta::SELECT_ALL) != 0 && strcmp(name, DictionaryMeta::SELECT_OFF) != 0) {
+    if (!DictionaryMeta::isSafeFolderName(name, sizeof(SETTINGS.dictionaryName) - 1)) {
+      return sendError(400, "invalid dictionary name");
+    }
+    std::string base;
+    if (!DictionaryRegistry::resolveBasePath(name, base)) return sendError(404, "no such dictionary");
+  }
+  strncpy(SETTINGS.dictionaryName, name, sizeof(SETTINGS.dictionaryName) - 1);
+  SETTINGS.dictionaryName[sizeof(SETTINGS.dictionaryName) - 1] = '\0';
+  SETTINGS.saveToFile();
+  JsonDocument resp;
+  resp["ok"] = true;
+  resp["selected"] = SETTINGS.dictionaryName;
+  sendDoc(http, 200, resp);
+}
+
+void handleDictionaryDelete() {
+  JsonDocument doc;
+  if (!parseBody(doc)) return;
+  const char* name = doc["name"] | "";
+  if (!DictionaryMeta::isSafeFolderName(name, 127)) return sendError(400, "invalid dictionary name");
+  if (!DictionaryRegistry::remove(name)) return sendError(404, "no such dictionary");
+  if (strncmp(SETTINGS.dictionaryName, name, sizeof(SETTINGS.dictionaryName) - 1) == 0) {
+    strncpy(SETTINGS.dictionaryName, DictionaryMeta::SELECT_ALL, sizeof(SETTINGS.dictionaryName) - 1);
+    SETTINGS.saveToFile();
+  }
+  sendOk(http);
+}
+
 void handleFirmwareApply() {
   JsonDocument doc;
   if (!parseBody(doc)) return;
@@ -802,6 +869,9 @@ void registerRoutes(WebServer& s) {
   s.on("/api/inklink/sleep", HTTP_GET, handleSleep);
   s.on("/api/inklink/sleep/select", HTTP_POST, authorized<handleSleepSelect>);
   s.on("/api/inklink/firmware/apply", HTTP_POST, authorized<handleFirmwareApply>);
+  s.on("/api/inklink/dictionaries", HTTP_GET, handleDictionaries);
+  s.on("/api/inklink/dictionaries/select", HTTP_POST, authorized<handleDictionarySelect>);
+  s.on("/api/inklink/dictionaries/delete", HTTP_POST, authorized<handleDictionaryDelete>);
   LOG_DBG("INKLINK", "companion API routes registered");
 }
 

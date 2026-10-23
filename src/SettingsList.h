@@ -139,11 +139,14 @@ inline SettingInfo buildFontSizeSetting(const SdCardFontRegistry* registry) {
   return s;
 }
 
-// Build the dictionary selection setting dynamically from the folders discovered
-// under /dictionaries. "None" plus one option per dictionary; the selected folder
-// name persists in SETTINGS.dictionaryName (saved/loaded manually in
-// CrossPointSettings::toJson/fromJson — the generic loop skips dynamic entries).
+// Build the dictionary selection setting from the folders discovered under
+// /dictionaries: "All dictionaries", "Off", then one option per folder. Shown
+// even with nothing installed, so the feature can be found. The choice
+// persists in SETTINGS.dictionaryName as "*", "-" or the folder name
+// (saved/loaded manually in CrossPointSettings::toJson/fromJson — the generic
+// loop skips dynamic entries).
 inline SettingInfo buildDictionarySetting(const std::vector<DictionaryEntry>& dictionaries) {
+  constexpr uint8_t FIRST_FOLDER = 2;
   std::vector<std::string> folderNames;
   folderNames.reserve(dictionaries.size());
   std::transform(dictionaries.begin(), dictionaries.end(), std::back_inserter(folderNames),
@@ -152,28 +155,39 @@ inline SettingInfo buildDictionarySetting(const std::vector<DictionaryEntry>& di
   SettingInfo s;
   s.nameId = StrId::STR_DICTIONARY;
   s.type = SettingType::ENUM;
-  s.enumStringValues.reserve(folderNames.size() + 1);
-  s.enumStringValues.push_back(I18N.get(StrId::STR_NONE_OPT));
+  s.enumStringValues.reserve(folderNames.size() + FIRST_FOLDER);
+  s.enumStringValues.push_back(I18N.get(StrId::STR_DICT_ALL));
+  s.enumStringValues.push_back(I18N.get(StrId::STR_STATE_OFF));
   s.enumStringValues.insert(s.enumStringValues.end(), folderNames.begin(), folderNames.end());
   s.category = StrId::STR_CAT_READER;
 
   s.valueGetter = [folderNames]() -> uint8_t {
-    for (size_t i = 0; i < folderNames.size(); i++) {
-      // Compare within the settings field capacity: an over-long folder name is
-      // stored truncated, and must still match its list entry.
-      if (strncmp(folderNames[i].c_str(), SETTINGS.dictionaryName, sizeof(SETTINGS.dictionaryName) - 1) == 0) {
-        return static_cast<uint8_t>(i + 1);
-      }
+    switch (DictionaryMeta::selectionOf(SETTINGS.dictionaryName)) {
+      case DictionaryMeta::Selection::Off:
+        return 1;
+      case DictionaryMeta::Selection::One:
+        for (size_t i = 0; i < folderNames.size(); i++) {
+          // Compare within the settings field capacity: an over-long folder
+          // name is stored truncated, and must still match its list entry.
+          if (strncmp(folderNames[i].c_str(), SETTINGS.dictionaryName, sizeof(SETTINGS.dictionaryName) - 1) == 0) {
+            return static_cast<uint8_t>(i + FIRST_FOLDER);
+          }
+        }
+        return 0;  // the stored folder is gone: lookups search all dictionaries
+      case DictionaryMeta::Selection::All:
+      default:
+        return 0;
     }
-    return 0;  // "None", also when the stored folder no longer exists
   };
 
   s.valueSetter = [folderNames](uint8_t v) {
-    if (v == 0 || v > folderNames.size()) {
-      SETTINGS.dictionaryName[0] = '\0';
-      return;
+    const char* value = DictionaryMeta::SELECT_ALL;
+    if (v == 1) {
+      value = DictionaryMeta::SELECT_OFF;
+    } else if (v >= FIRST_FOLDER && v - FIRST_FOLDER < folderNames.size()) {
+      value = folderNames[v - FIRST_FOLDER].c_str();
     }
-    strncpy(SETTINGS.dictionaryName, folderNames[v - 1].c_str(), sizeof(SETTINGS.dictionaryName) - 1);
+    strncpy(SETTINGS.dictionaryName, value, sizeof(SETTINGS.dictionaryName) - 1);
     SETTINGS.dictionaryName[sizeof(SETTINGS.dictionaryName) - 1] = '\0';
   };
 
@@ -564,7 +578,7 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
       *it = buildFontSizeSetting(registry);
     }
   }
-  if (dictionaries && !dictionaries->empty()) {
+  if (dictionaries) {
     // Insert at the end of the Reader category (just before the first Controls entry).
     auto it =
         std::find_if(v.begin(), v.end(), [](const SettingInfo& s) { return s.category == StrId::STR_CAT_CONTROLS; });

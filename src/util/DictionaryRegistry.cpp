@@ -2,6 +2,7 @@
 
 #include <HalStorage.h>
 #include <Logging.h>
+#include <Memory.h>
 
 #include <algorithm>
 #include <cstring>
@@ -83,6 +84,7 @@ void discover(std::vector<DictionaryEntry>& out) {
       DictionaryEntry e;
       e.name = name;
       e.stem = std::move(stem);
+      e.root = dictRoot;
       out.push_back(std::move(e));
       LOG_DBG("DREG", "Found dictionary: %s", name);
     }
@@ -95,10 +97,10 @@ void discover(std::vector<DictionaryEntry>& out) {
 }
 
 bool resolveBasePath(const char* folderName, std::string& basePathOut) {
-  if (!folderName || folderName[0] == '\0') return false;
-  // folderName is persisted in the settings JSON: reject separators and dot
-  // prefixes so a crafted value cannot escape the dictionary roots.
-  if (folderName[0] == '.' || strpbrk(folderName, "/\\") != nullptr) return false;
+  // folderName is persisted in the settings JSON and arrives from the
+  // companion API: reject separators and dot prefixes so a crafted value
+  // cannot escape the dictionary roots.
+  if (!DictionaryMeta::isSafeFolderName(folderName, 127)) return false;
 
   for (const char* dictRoot : DICT_ROOTS) {
     std::string folderPath = std::string(dictRoot) + "/" + folderName;
@@ -108,6 +110,89 @@ bool resolveBasePath(const char* folderName, std::string& basePathOut) {
     return true;
   }
   return false;
+}
+
+namespace {
+
+constexpr size_t SAMPLE_BYTES = 2048;
+
+}  // namespace
+
+DictionaryMeta::IfoInfo readIfo(const std::string& basePath) {
+  // Heap, not stack: 2KB is past the 256-byte stack-local guideline, and this
+  // also runs on the web server task. Freed on return.
+  auto buf = makeUniqueNoThrow<char[]>(SAMPLE_BYTES);
+  if (!buf) {
+    LOG_ERR("DREG", "OOM: %u bytes for .ifo", static_cast<unsigned>(SAMPLE_BYTES));
+    return {};
+  }
+  // A missing .ifo leaves the buffer untouched on some HALs: start empty.
+  buf[0] = '\0';
+  Storage.readFileToBuffer((basePath + ".ifo").c_str(), buf.get(), SAMPLE_BYTES);
+  return DictionaryMeta::parseIfo(buf.get());
+}
+
+DictionaryMeta::Script headwordScript(const std::string& basePath) {
+  const DictionaryMeta::IfoInfo ifo = readIfo(basePath);
+  if (ifo.source != DictionaryMeta::Script::Other) return ifo.source;
+
+  HalFile idx;
+  if (!Storage.openFileForRead("DREG", basePath + ".idx", idx)) return DictionaryMeta::Script::Other;
+  // Heap, not stack: 2KB is past the 256-byte stack-local guideline. Freed on return.
+  auto buf = makeUniqueNoThrow<uint8_t[]>(SAMPLE_BYTES);
+  if (!buf) {
+    LOG_ERR("DREG", "OOM: %u bytes for idx sample", static_cast<unsigned>(SAMPLE_BYTES));
+    return DictionaryMeta::Script::Other;
+  }
+  DictionaryMeta::ScriptTally tally;
+  const size_t size = idx.fileSize();
+  int n = idx.read(buf.get(), SAMPLE_BYTES);
+  if (n > 0) DictionaryMeta::tallyIdxChunk(buf.get(), static_cast<size_t>(n), false, tally);
+  if (size > SAMPLE_BYTES * 2 && idx.seek(size / 2)) {
+    n = idx.read(buf.get(), SAMPLE_BYTES);
+    if (n > 0) DictionaryMeta::tallyIdxChunk(buf.get(), static_cast<size_t>(n), true, tally);
+  }
+  return DictionaryMeta::majority(tally);
+}
+
+void describe(const DictionaryEntry& entry, DictionaryInfo& out) {
+  const std::string base = entry.basePath();
+  const DictionaryMeta::IfoInfo ifo = readIfo(base);
+  out.title = ifo.bookname.empty() ? entry.name : ifo.bookname;
+  out.words = ifo.wordcount;
+  out.html = ifo.html;
+  out.synonyms = Storage.exists((base + ".syn").c_str());
+  out.indexed = Storage.exists((base + ".qidx").c_str());
+  out.script = headwordScript(base);
+
+  uint64_t bytes = 0;
+  const std::string folder = std::string(entry.root) + "/" + entry.name;
+  auto dir = Storage.open(folder.c_str());
+  if (dir && dir.isDirectory()) {
+    dir.rewindDirectory();
+    for (auto file = dir.openNextFile(); file; file = dir.openNextFile()) {
+      if (!file.isDirectory()) bytes += file.fileSize64();
+    }
+  }
+  out.sizeKB = static_cast<uint32_t>((bytes + 1023) / 1024);
+}
+
+bool remove(const char* folderName) {
+  if (!DictionaryMeta::isSafeFolderName(folderName, 127)) return false;
+  bool removed = false;
+  for (const char* dictRoot : DICT_ROOTS) {
+    const std::string folder = std::string(dictRoot) + "/" + folderName;
+    auto dir = Storage.open(folder.c_str());
+    if (!dir || !dir.isDirectory()) continue;
+    dir.close();
+    if (Storage.removeDir(folder.c_str())) {
+      LOG_INF("DREG", "Removed dictionary %s", folder.c_str());
+      removed = true;
+    } else {
+      LOG_ERR("DREG", "Failed to remove %s", folder.c_str());
+    }
+  }
+  return removed;
 }
 
 }  // namespace DictionaryRegistry

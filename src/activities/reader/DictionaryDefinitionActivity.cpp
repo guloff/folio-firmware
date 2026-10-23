@@ -273,11 +273,25 @@ void DictionaryDefinitionActivity::render(RenderLock&&) {
   // Header: matched headword left, page counter right.
   const int headerY = contentY + metrics.topPadding + 10;
   renderer.drawText(UI_12_FONT_ID, contentX + SIDE_PADDING, headerY, headword.c_str(), true, EpdFontFamily::BOLD);
+  int counterWidth = 0;
   if (totalPages > 1) {
     char counter[16];
     snprintf(counter, sizeof(counter), "%d/%d", currentPage + 1, totalPages);
-    const int counterWidth = renderer.getTextWidth(UI_10_FONT_ID, counter);
+    counterWidth = renderer.getTextWidth(UI_10_FONT_ID, counter);
     renderer.drawText(UI_10_FONT_ID, contentX + contentWidth - SIDE_PADDING - counterWidth, headerY, counter);
+  }
+  if (!source.empty()) {
+    constexpr int GAP = 12;
+    const int sourceX =
+        contentX + SIDE_PADDING + renderer.getTextWidth(UI_12_FONT_ID, headword.c_str(), EpdFontFamily::BOLD) + GAP;
+    const int maxWidth = contentX + contentWidth - SIDE_PADDING - (counterWidth ? counterWidth + GAP : 0) - sourceX;
+    if (maxWidth > 0) {
+      const std::string label = renderer.truncatedText(UI_10_FONT_ID, source.c_str(), maxWidth);
+      // Same baseline as the headword: drawText positions by the top of the line.
+      const int baselineShift =
+          renderer.getFontAscenderSize(UI_12_FONT_ID) - renderer.getFontAscenderSize(UI_10_FONT_ID);
+      renderer.drawText(UI_10_FONT_ID, sourceX, headerY + baselineShift, label.c_str());
+    }
   }
 
   // Body: two-pass draw inside a prewarm scope (same pattern as the reader's

@@ -10,6 +10,7 @@
 #include <cstring>
 
 #include "DictZip.h"
+#include "DictionaryMeta.h"
 #include "DictionaryRegistry.h"
 #include "RussianMorphology.h"
 #include "StringUtils.h"
@@ -66,31 +67,15 @@ uint32_t readBe32(const uint8_t* p) {
 bool isWordByte(unsigned char c) { return c >= 0x80 || std::isalnum(c) != 0; }
 
 // Facts read from the .ifo at open time. Only the first 2KB is scanned — .ifo
-// headers are tiny and both keys always appear early when present.
-struct IfoFacts {
-  bool offsets64 = false;        // idxoffsetbits=64 (unsupported)
-  bool htmlDefinitions = false;  // sametypesequence=h (definitions are HTML)
-};
-
-IfoFacts readIfoFacts(const std::string& ifoPath) {
-  IfoFacts facts;
+// headers are tiny and the keys always appear early when present.
+DictionaryMeta::IfoInfo readIfoFacts(const std::string& ifoPath) {
   HalFile ifo;
-  if (!Storage.openFileForRead("DICT", ifoPath, ifo)) return facts;
+  if (!Storage.openFileForRead("DICT", ifoPath, ifo)) return {};
   char buf[2048];
   const int n = ifo.read(buf, sizeof(buf) - 1);
-  if (n <= 0) return facts;
+  if (n <= 0) return {};
   buf[n] = '\0';
-  const char* line = strstr(buf, "idxoffsetbits");
-  const char* eq = line ? strchr(line, '=') : nullptr;
-  facts.offsets64 = eq && strtol(eq + 1, nullptr, 10) == 64;
-  line = strstr(buf, "sametypesequence");
-  eq = line ? strchr(line, '=') : nullptr;
-  if (eq) {
-    // Only the single-field sequence "h" is treated as HTML; multi-type
-    // entries keep the plain-text viewing path.
-    facts.htmlDefinitions = eq[1] == 'h' && (eq[2] == '\0' || eq[2] == '\r' || eq[2] == '\n');
-  }
-  return facts;
+  return DictionaryMeta::parseIfo(buf);
 }
 
 }  // namespace
@@ -114,7 +99,7 @@ bool Dictionary::open(const char* folderName) {
     LOG_ERR("DICT", "%s has no .dict or .dict.dz", resolved.c_str());
     return false;
   }
-  const IfoFacts ifo = readIfoFacts(resolved + ".ifo");
+  const DictionaryMeta::IfoInfo ifo = readIfoFacts(resolved + ".ifo");
   if (ifo.offsets64) {
     LOG_ERR("DICT", "%s uses 64-bit index offsets (unsupported)", resolved.c_str());
     return false;
@@ -126,7 +111,7 @@ bool Dictionary::open(const char* folderName) {
     return false;
   }
   hasSyn = Storage.exists((resolved + ".syn").c_str());
-  htmlDefinitions = ifo.htmlDefinitions;
+  htmlDefinitions = ifo.html;
 
   basePath = std::move(resolved);
   return true;

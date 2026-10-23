@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "activities/Activity.h"
-#include "util/Dictionary.h"
+#include "util/DictionarySet.h"
 
 // InkLink: where the page comes from. In highlight mode the first Confirm /
 // tap anchors the range, the second saves words[anchor..selected] as a
@@ -108,10 +108,8 @@ class DictionaryWordSelectActivity final : public Activity {
   uint16_t rowCount = 0;
   unsigned long lastHorizontalMoveTime = 0;
 
-  Dictionary dict;
-  bool dictOpenAttempted = false;
-  bool dictOpenOk = false;
-  bool dictNeedsIndex = false;
+  DictionarySet dictionaries;
+  bool dictionariesLoaded = false;
 
   Popup popup = Popup::None;
   StrId popupMsg = StrId::STR_DICT_NOT_FOUND;

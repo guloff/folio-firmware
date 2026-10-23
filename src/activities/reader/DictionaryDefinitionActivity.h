@@ -17,9 +17,10 @@
 class DictionaryDefinitionActivity final : public Activity {
  public:
   explicit DictionaryDefinitionActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, std::string headword,
-                                        std::string definition, bool htmlDefinition = false)
+                                        std::string definition, bool htmlDefinition = false, std::string source = {})
       : Activity("DictionaryDefinition", renderer, mappedInput),
         headword(std::move(headword)),
+        source(std::move(source)),
         definition(std::move(definition)),
         htmlDefinition(htmlDefinition) {}
 
@@ -49,6 +50,9 @@ class DictionaryDefinitionActivity final : public Activity {
   void drawBody(int fontId, int x, int startY) const;
 
   const std::string headword;
+  // Dictionary the definition came from; shown beside the headword when
+  // several dictionaries are searched.
+  const std::string source;
   // Not const: onEnter() normalizes embedded NULs (StarDict multi-type
   // separators) to newlines so C-string APIs see the whole text.
   std::string definition;

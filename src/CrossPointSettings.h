@@ -338,8 +338,9 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t readerMenuStyle = READER_MENU_LIST;
   // SD card font family name (empty = use built-in fontFamily)
   char sdFontFamilyName[32] = "";
-  // Dictionary folder name under /dictionaries (empty = no dictionary)
-  char dictionaryName[32] = "";
+  // Dictionary folder under /dictionaries, or "*" = all dictionaries, "-" = off
+  // (DictionaryMeta::SELECT_ALL / SELECT_OFF)
+  char dictionaryName[32] = "*";
   // Show hidden files/directories (starting with '.') in the file browser (0 = hidden, 1 = show)
   uint8_t showHiddenFiles = 0;
   // Folio: pocket-library home screen instead of the classic list home.

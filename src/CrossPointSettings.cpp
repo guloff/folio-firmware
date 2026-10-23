@@ -14,6 +14,7 @@
 #include "ReaderFontSizes.h"
 #include "SettingsList.h"
 #include "fontIds.h"
+#include "util/DictionaryMeta.h"
 
 namespace {
 
@@ -96,8 +97,12 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
   if (sdFontFamilyName[0] != '\0') {
     doc["sdFontFamilyName"] = sdFontFamilyName;
   }
-  // Dictionary folder name — uses dynamic getter/setter in SettingsList, save manually
-  if (dictionaryName[0] != '\0') {
+  // Dictionary selection — uses dynamic getter/setter in SettingsList, save
+  // manually. "dictionaryName" keeps CrossPoint's meaning (a folder, absent =
+  // none) so an SD card moves between the firmwares both ways; Folio's
+  // "all"/"off" modes live in their own key, which CrossPoint ignores.
+  doc["folioDictionary"] = dictionaryName;
+  if (DictionaryMeta::selectionOf(dictionaryName) == DictionaryMeta::Selection::One) {
     doc["dictionaryName"] = dictionaryName;
   }
 
@@ -300,7 +305,10 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
     needsResave = true;
   }
   // Dictionary folder name — uses dynamic getter/setter in SettingsList, load manually
-  copyToField(dictionaryName, doc["dictionaryName"] | "", sizeof(dictionaryName));
+  // Folio's own key wins; a card coming from CrossPoint (or Folio 1.0) only has
+  // "dictionaryName", whose folder is kept and whose "none" reads as "all".
+  copyToField(dictionaryName, doc["folioDictionary"] | (doc["dictionaryName"] | ""), sizeof(dictionaryName));
+  if (dictionaryName[0] == '\0') copyToField(dictionaryName, DictionaryMeta::SELECT_ALL, sizeof(dictionaryName));
 
   // Language -- stored as code string for stability across enum reorders.
   if (doc["language"].is<const char*>()) {

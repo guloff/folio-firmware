@@ -179,36 +179,35 @@ void DictionaryWordSelectActivity::moveVertical(const int direction) {
 
 void DictionaryWordSelectActivity::performLookup() {
   popup = Popup::Busy;
-  if (!dictOpenAttempted) {
-    dictOpenAttempted = true;
-    dictOpenOk = dict.open(SETTINGS.dictionaryName);
-    // needsIndex() opens and validates the .qidx sidecar, so ask it once per
-    // open rather than once per word: the answer only changes when we build
-    // the sidecar ourselves, which is handled below.
-    dictNeedsIndex = dictOpenOk && dict.needsIndex();
-  }
-  popupMsg = dictNeedsIndex ? StrId::STR_DICT_INDEXING : StrId::STR_DICT_LOOKING_UP;
+  popupMsg = StrId::STR_DICT_LOOKING_UP;
   requestUpdateAndWait();  // paint the page + busy popup before blocking on SD
-
-  bool ok = dictOpenOk;
-  Dictionary::IndexResult indexResult = Dictionary::IndexResult::Ok;
-  if (ok && dictNeedsIndex) {
-    ok = dict.buildIndex(&indexBuildYield, nullptr, &indexResult);
-    dictNeedsIndex = !ok;  // a successful build leaves the sidecar fresh; a failed one retries
+  if (!dictionariesLoaded) {
+    dictionariesLoaded = true;
+    dictionaries.load();
   }
 
+  DictionarySet::Hooks hooks;
+  hooks.ctx = this;
+  hooks.yield = &indexBuildYield;
+  hooks.onIndexing = [](void* ctx) {
+    auto* self = static_cast<DictionaryWordSelectActivity*>(ctx);
+    self->popupMsg = StrId::STR_DICT_INDEXING;
+    self->requestUpdateAndWait();
+  };
   std::string definition;
   std::string headword;
-  Dictionary::LookupResult result = Dictionary::LookupResult::NotFound;
-  const bool found = ok && dict.lookup(words[selected].text, definition, headword, &result);
+  const DictionarySet::Outcome outcome = dictionaries.lookup(words[selected].text, definition, headword, hooks);
+  const bool ok = outcome.anyUsable;
+  const Dictionary::IndexResult indexResult = outcome.indexResult;
+  const Dictionary::LookupResult result = outcome.lookupResult;
 
-  if (found) {
+  if (outcome.found) {
     popup = Popup::None;
     inklink::Annotations::addVocabWord(headword.empty() ? words[selected].text : headword.c_str(),
                                        contextAround(selected).c_str(), context.bookPath.c_str());
     startActivityForResult(
         std::make_unique<DictionaryDefinitionActivity>(renderer, mappedInput, std::move(headword),
-                                                       std::move(definition), dict.definitionsAreHtml()),
+                                                       std::move(definition), outcome.html, outcome.source),
         [this](const ActivityResult&) { requestUpdate(); });
     return;
   }
@@ -228,7 +227,7 @@ void DictionaryWordSelectActivity::performLookup() {
         break;
       case Dictionary::IndexResult::Ok:
       default:
-        popupMsg = StrId::STR_DICT_ERROR;  // dict.open() failed, not the index
+        popupMsg = StrId::STR_DICT_ERROR;  // no dictionary opened, not the index
         break;
     }
   } else {
