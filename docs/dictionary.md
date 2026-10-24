@@ -39,8 +39,9 @@ Folio reads dictionaries exactly where CrossPoint does (`/dictionaries/`, `/.dic
 
 ## Looking Up a Word
 
-Two ways to start a lookup while reading:
+Ways to start a lookup while reading:
 
+- On a touch screen, press and hold a word, then choose **Translate** (or **Highlight** to start a highlight there). Closing the definition returns to the book.
 - Open the reader menu (**Confirm**) and choose **Look Up**.
 - Or set **Settings → Controls → Long-press Menu** to "Dictionary", then hold **Confirm** (~0.4s) on the reading page.
 
