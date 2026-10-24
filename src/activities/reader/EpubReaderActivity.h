@@ -174,7 +174,10 @@ class EpubReaderActivity final : public ReaderActivity {
   void openFootnoteSelect(bool reopenMenuOnCancel);
   // startX/startY: a long-pressed point on the page; that word starts the
   // highlight range.
-  void openDictionaryWordSelect(bool highlightMode = false, int startX = -1, int startY = -1);
+  // chooseAction: entered from a long-press on a word — ask "Translate or
+  // Highlight?" there instead of starting either mode.
+  void openDictionaryWordSelect(bool highlightMode = false, int startX = -1, int startY = -1,
+                                bool chooseAction = false);
   bool launchKOReaderSync();
   unsigned long confirmLongPressThreshold() const;
   void toggleAutoPageTurn(uint8_t selectedPageTurnOption);

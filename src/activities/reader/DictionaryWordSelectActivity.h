@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "activities/Activity.h"
+#include "components/OptionPopup.h"
 #include "util/DictionarySet.h"
 
 // InkLink: where the page comes from. In highlight mode the first Confirm /
@@ -38,7 +39,7 @@ class DictionaryWordSelectActivity final : public Activity {
   explicit DictionaryWordSelectActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
                                         std::unique_ptr<Page> page, int marginLeft, int marginTop,
                                         BookContext context = {}, bool highlightMode = false, int startX = -1,
-                                        int startY = -1)
+                                        int startY = -1, bool chooseAction = false)
       : Activity("DictionaryWordSelect", renderer, mappedInput),
         page(std::move(page)),
         marginLeft(marginLeft),
@@ -46,7 +47,8 @@ class DictionaryWordSelectActivity final : public Activity {
         context(std::move(context)),
         highlightMode(highlightMode),
         startX(startX),
-        startY(startY) {}
+        startY(startY),
+        chooseAction(chooseAction) {}
 
   void onEnter() override;
   void loop() override;
@@ -83,6 +85,7 @@ class DictionaryWordSelectActivity final : public Activity {
   void setRangeEnd(int index);
   void moveVertical(int direction);
   void performLookup();
+  void showActionChoice();
   bool drawHighlightWithSnapshot();
   void drawRangeHighlight();
   void saveHighlight();
@@ -96,6 +99,13 @@ class DictionaryWordSelectActivity final : public Activity {
   bool highlightMode = false;
   const int startX;
   const int startY;
+  // Long-press entry: the pressed word gets a "Translate / Highlight" choice
+  // first. Translate looks it up and returns to the book when the definition
+  // closes; Highlight starts the range there; a tap outside cancels.
+  const bool chooseAction;
+  OptionPopup actionPopup;
+  bool actionChosen = false;
+  bool returnAfterLookup = false;
   // Drag selection (highlight mode): contact start and whether it has moved
   // past DRAG_SLOP. A drag's release is swallowed so it cannot also tap-save.
   bool touchTracking = false;
@@ -113,6 +123,7 @@ class DictionaryWordSelectActivity final : public Activity {
 
   DictionarySet dictionaries;
   bool dictionariesLoaded = false;
+  DictionarySet::State dictionariesState = DictionarySet::State::Ready;
 
   Popup popup = Popup::None;
   StrId popupMsg = StrId::STR_DICT_NOT_FOUND;

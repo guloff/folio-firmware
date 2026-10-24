@@ -354,7 +354,8 @@ void EpubReaderActivity::showBuildPopup(GfxRenderer& renderer, int& pagesUntilFu
   buildPopupPending = false;
 }
 
-void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode, const int startX, const int startY) {
+void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode, const int startX, const int startY,
+                                                  const bool chooseAction) {
   if (!highlightMode && DictionaryMeta::selectionOf(SETTINGS.dictionaryName) == DictionaryMeta::Selection::Off) {
     showDictionaryMessage = true;
     dictionaryMessageTime = millis();
@@ -392,7 +393,7 @@ void EpubReaderActivity::openDictionaryWordSelect(const bool highlightMode, cons
   context.page = section->currentPage;
   startActivityForResult(std::make_unique<DictionaryWordSelectActivity>(
                              renderer, mappedInput, std::move(page), orientedMarginLeft, orientedMarginTop,
-                             std::move(context), highlightMode, startX, startY),
+                             std::move(context), highlightMode, startX, startY, chooseAction),
                          [this](const ActivityResult&) { requestUpdate(); });
 }
 
@@ -663,7 +664,7 @@ void EpubReaderActivity::loop() {
     int pressX = 0;
     int pressY = 0;
     if (mappedInput.wasScreenLongPress(pressX, pressY)) {
-      openDictionaryWordSelect(true, pressX, pressY);
+      openDictionaryWordSelect(/*highlightMode=*/true, pressX, pressY, /*chooseAction=*/true);
       return;
     }
   }

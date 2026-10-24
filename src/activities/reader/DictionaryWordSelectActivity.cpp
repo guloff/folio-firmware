@@ -50,7 +50,8 @@ void DictionaryWordSelectActivity::onEnter() {
     const int initial = closestInRow(rowCount / 2, renderer.getScreenWidth() / 2);
     if (initial >= 0) selected = initial;
   }
-  // Entered from a long-press on the reader page: that word starts the range.
+  // Entered from a long-press on the reader page: that word starts the range,
+  // or — asking first — is the word the choice is about.
   if (highlightMode && startX >= 0 && startY >= 0) {
     const int hit = nearestWord(startX, startY);
     if (hit >= 0) {
@@ -58,7 +59,28 @@ void DictionaryWordSelectActivity::onEnter() {
       anchor = hit;
     }
   }
+  if (chooseAction && !words.empty()) {
+    highlightMode = false;
+    anchor = -1;
+    showActionChoice();
+  }
   requestUpdate();
+}
+
+void DictionaryWordSelectActivity::showActionChoice() {
+  static constexpr StrId OPTIONS[] = {StrId::STR_DICT_TRANSLATE, StrId::STR_INKLINK_HIGHLIGHT};
+  actionChosen = false;
+  actionPopup.show(StrId::STR_DICT_WORD_ACTION, OPTIONS, 2, 0, [this](const int choice) {
+    actionChosen = true;
+    if (choice == 0) {
+      returnAfterLookup = true;
+      performLookup();
+    } else {
+      highlightMode = true;
+      anchor = selected;
+      snapshotIdx = -1;  // range drawing needs full repaints
+    }
+  });
 }
 
 void DictionaryWordSelectActivity::extractWords() {
@@ -183,7 +205,14 @@ void DictionaryWordSelectActivity::performLookup() {
   requestUpdateAndWait();  // paint the page + busy popup before blocking on SD
   if (!dictionariesLoaded) {
     dictionariesLoaded = true;
-    dictionaries.load();
+    dictionariesState = dictionaries.load();
+  }
+  if (dictionariesState != DictionarySet::State::Ready) {
+    popup = Popup::Error;
+    popupMsg = dictionariesState == DictionarySet::State::Off ? StrId::STR_DICT_OFF_HINT : StrId::STR_DICT_NONE_TITLE;
+    popupTime = millis();
+    requestUpdate();
+    return;
   }
 
   DictionarySet::Hooks hooks;
@@ -208,7 +237,13 @@ void DictionaryWordSelectActivity::performLookup() {
     startActivityForResult(
         std::make_unique<DictionaryDefinitionActivity>(renderer, mappedInput, std::move(headword),
                                                        std::move(definition), outcome.html, outcome.source),
-        [this](const ActivityResult&) { requestUpdate(); });
+        [this](const ActivityResult&) {
+          if (returnAfterLookup) {
+            finish();
+            return;
+          }
+          requestUpdate();
+        });
     return;
   }
   // Name the failure: a genuine miss is "Not found"; a word that WAS found but
@@ -256,9 +291,16 @@ void DictionaryWordSelectActivity::performLookup() {
 }
 
 void DictionaryWordSelectActivity::loop() {
+  if (actionPopup.isActive()) {
+    actionPopup.handleInput(mappedInput, [this] { requestUpdate(); });
+    // Dismissed without a choice (tap outside, Back): the long-press was a slip.
+    if (!actionPopup.isActive() && !actionChosen) finish();
+    return;
+  }
   if (popup == Popup::NotFound || popup == Popup::Error || popup == Popup::Saved) {
     if (millis() - popupTime >= POPUP_DURATION_MS) {
-      if (popup == Popup::Saved) {
+      // A lookup started from the long-press choice ends back in the book.
+      if (popup == Popup::Saved || returnAfterLookup) {
         finish();
         return;
       }
@@ -540,7 +582,7 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
       drawHighlightWithSnapshot();
     }
   }
-  if (showsHintBand() && popup == Popup::None && (anchor < 0 || mappedInput.hasTouch())) {
+  if (showsHintBand() && popup == Popup::None && !actionPopup.isActive() && (anchor < 0 || mappedInput.hasTouch())) {
     // Two-step selection hint on a white band. A range only grows forward
     // (the end word is at or after the anchor), so the band goes to the top
     // edge, over text that can no longer be chosen; it moves to the bottom
@@ -578,6 +620,13 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
   }
 
   drawHints();
+
+  if (actionPopup.isActive()) {
+    // The choice overdraws the page like a popup: next render is a full one.
+    snapshotIdx = -1;
+    actionPopup.processRender(renderer, mappedInput);
+    return;
+  }
 
   if (popup != Popup::None) {
     // The popup overdraws the page, so the snapshot no longer matches the
