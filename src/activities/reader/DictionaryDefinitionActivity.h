@@ -14,15 +14,22 @@
 // through the EPUB chapter parser into styled Pages; anything else (plain
 // text, or HTML too damaged to parse) is word-wrapped once on entry and each
 // page renders spans of the original string, so no per-line copies are held.
+//
+// Also shows a book's footnote over the page (footnote = true). On touch
+// boards, where no button hints are drawn, a band at the bottom leads back
+// ("« Back to text" / "« Back"); in a footnote a tap on any link — books end
+// notes with their own "Back" link — or on a one-page note returns too.
 class DictionaryDefinitionActivity final : public Activity {
  public:
   explicit DictionaryDefinitionActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, std::string headword,
-                                        std::string definition, bool htmlDefinition = false, std::string source = {})
+                                        std::string definition, bool htmlDefinition = false, std::string source = {},
+                                        bool footnote = false)
       : Activity("DictionaryDefinition", renderer, mappedInput),
         headword(std::move(headword)),
         source(std::move(source)),
         definition(std::move(definition)),
-        htmlDefinition(htmlDefinition) {}
+        htmlDefinition(htmlDefinition),
+        footnote(footnote) {}
 
   void onEnter() override;
   void onExit() override;
@@ -44,6 +51,11 @@ class DictionaryDefinitionActivity final : public Activity {
   };
 
   BodyArea bodyArea() const;
+  // Top-left corner of the body text, as render() draws it.
+  void bodyOrigin(int& x, int& y) const;
+  bool tapClosesFootnote(int x, int y) const;
+  int backBandHeight() const;
+  void drawBackBand() const;
   bool layoutHtmlPages();
   void wrapText();
   int measureSpan(int fontId, const char* text, size_t len) const;
@@ -57,6 +69,7 @@ class DictionaryDefinitionActivity final : public Activity {
   // separators) to newlines so C-string APIs see the whole text.
   std::string definition;
   const bool htmlDefinition;
+  const bool footnote;
   // Styled path: reader-identical Pages laid out from the HTML definition.
   // Empty means the plain-text span path below is active.
   std::vector<std::unique_ptr<Page>> pages;

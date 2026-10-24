@@ -2754,7 +2754,8 @@ bool EpubReaderActivity::showFootnotePopup(const std::string& href) {
   }
 
   auto viewer = makeUniqueNoThrow<DictionaryDefinitionActivity>(renderer, mappedInput, tr(STR_FOOTNOTE),
-                                                                std::move(note), /*htmlDefinition=*/true);
+                                                                std::move(note), /*htmlDefinition=*/true,
+                                                                /*source=*/std::string(), /*footnote=*/true);
   if (!viewer) {
     LOG_ERR("ERS", "OOM: footnote viewer");
     return false;

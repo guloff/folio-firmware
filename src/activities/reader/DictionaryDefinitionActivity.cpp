@@ -9,6 +9,7 @@
 #include <cstdio>
 
 #include "CrossPointSettings.h"
+#include "EpubReaderUtils.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
 #include "util/DictHtmlPages.h"
@@ -59,7 +60,7 @@ DictionaryDefinitionActivity::BodyArea DictionaryDefinitionActivity::bodyArea() 
   const bool isInverted = orientation == GfxRenderer::Orientation::PortraitInverted;
   const int hintGutterWidth = isLandscape ? metrics.sideButtonHintsWidth : 0;
   const int topArea = (isInverted ? metrics.buttonHintsHeight : 0) + metrics.topPadding + metrics.headerHeight;
-  const int bottomArea = metrics.buttonHintsHeight + metrics.verticalSpacing;
+  const int bottomArea = metrics.buttonHintsHeight + metrics.verticalSpacing + backBandHeight();
   return {renderer.getScreenWidth() - hintGutterWidth - 2 * SIDE_PADDING,
           renderer.getScreenHeight() - topArea - bottomArea};
 }
@@ -197,6 +198,28 @@ void DictionaryDefinitionActivity::wrapText() {
   currentPage = 0;
 }
 
+void DictionaryDefinitionActivity::bodyOrigin(int& x, int& y) const {
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  const auto orientation = renderer.getOrientation();
+  const bool isLandscapeCw = orientation == GfxRenderer::Orientation::LandscapeClockwise;
+  const bool isInverted = orientation == GfxRenderer::Orientation::PortraitInverted;
+  x = (isLandscapeCw ? metrics.sideButtonHintsWidth : 0) + SIDE_PADDING;
+  y = (isInverted ? metrics.buttonHintsHeight : 0) + metrics.topPadding + metrics.headerHeight;
+}
+
+// A tap that leaves a footnote: on a link inside it (a book's own "Back" or
+// note-number link points at the place we came from), or anywhere on a note
+// that fits one page, where a tap has nothing to page through.
+bool DictionaryDefinitionActivity::tapClosesFootnote(const int x, const int y) const {
+  if (!footnote) return false;
+  if (totalPages <= 1) return true;
+  if (pages.empty() || currentPage >= static_cast<int>(pages.size())) return false;
+  int originX = 0;
+  int originY = 0;
+  bodyOrigin(originX, originY);
+  return EpubReaderUtils::linkAtPoint(pages[currentPage]->links, x, y, originX, originY) != nullptr;
+}
+
 void DictionaryDefinitionActivity::loop() {
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     finish();
@@ -204,10 +227,15 @@ void DictionaryDefinitionActivity::loop() {
   }
 
   // Same tap zones as the reader page turns: left third = previous page,
-  // the rest = next. Back is the usual left-edge swipe.
+  // the rest = next. Back is the usual left-edge swipe, or the bottom band.
   int tx = 0;
   int ty = 0;
   if (mappedInput.wasScreenTapped(tx, ty)) {
+    const int bandTop = renderer.getScreenHeight() - backBandHeight();
+    if (ty >= bandTop || tapClosesFootnote(tx, ty)) {
+      finish();
+      return;
+    }
     if (tx < renderer.getScreenWidth() / 3) {
       if (currentPage > 0) {
         currentPage--;
@@ -308,5 +336,23 @@ void DictionaryDefinitionActivity::render(RenderLock&&) {
   const auto labels =
       mappedInput.mapLabels(tr(STR_BACK), "", (currentPage > 0 ? "<" : ""), (currentPage + 1 < totalPages ? ">" : ""));
   GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
+  if (mappedInput.hasTouch()) drawBackBand();
   renderer.displayBuffer();
+}
+
+// Touch boards draw no button hints (the theme zeroes their height), so a
+// band of our own at the bottom is the visible way back, like the reader's
+// status bar after a link jump. Zero on button boards: their hints say Back.
+int DictionaryDefinitionActivity::backBandHeight() const {
+  return mappedInput.hasTouch() ? renderer.getLineHeight(UI_12_FONT_ID) + 16 : 0;
+}
+
+void DictionaryDefinitionActivity::drawBackBand() const {
+  const int bandHeight = backBandHeight();
+  const int bandTop = renderer.getScreenHeight() - bandHeight;
+  renderer.drawLine(SIDE_PADDING, bandTop, renderer.getScreenWidth() - SIDE_PADDING, bandTop, true);
+  const std::string label = footnote ? std::string("\xC2\xAB ") + tr(STR_BACK_TO_TEXT) : std::string(tr(STR_BACK));
+  const int textWidth = renderer.getTextWidth(UI_12_FONT_ID, label.c_str());
+  const int textY = bandTop + (bandHeight - renderer.getLineHeight(UI_12_FONT_ID)) / 2;
+  renderer.drawText(UI_12_FONT_ID, (renderer.getScreenWidth() - textWidth) / 2, textY, label.c_str());
 }

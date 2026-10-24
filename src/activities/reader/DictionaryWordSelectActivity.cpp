@@ -540,7 +540,7 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
       drawHighlightWithSnapshot();
     }
   }
-  if (highlightMode && popup == Popup::None && (anchor < 0 || mappedInput.hasTouch())) {
+  if (showsHintBand() && popup == Popup::None && (anchor < 0 || mappedInput.hasTouch())) {
     // Two-step selection hint on a white band. A range only grows forward
     // (the end word is at or after the anchor), so the band goes to the top
     // edge, over text that can no longer be chosen; it moves to the bottom
@@ -548,13 +548,17 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
     // Once anchored, touch users are told how to finish (buttons keep the
     // Confirm hint below).
     const int bandH = hintBandH;
-    const bool keyUnderTop = underTopBand(anchor >= 0 ? anchor : selected);
-    const int bandY = keyUnderTop ? renderer.getScreenHeight() - bandH : 0;
-    const int ruleY = keyUnderTop ? bandY : bandH - 1;
+    // Lookup mode keeps it at the bottom, over the status bar, so every line
+    // of text stays tappable.
+    const bool atBottom = !highlightMode || underTopBand(anchor >= 0 ? anchor : selected);
+    const int bandY = atBottom ? renderer.getScreenHeight() - bandH : 0;
+    const int ruleY = atBottom ? bandY : bandH - 1;
     const int screenW = renderer.getScreenWidth();
     renderer.fillRect(0, bandY, screenW, bandH, false);
     renderer.drawLine(0, ruleY, screenW - 1, ruleY, true);
-    const char* hint = anchor < 0 ? tr(STR_INKLINK_HIGHLIGHT_HINT) : tr(STR_INKLINK_HIGHLIGHT_HINT_END);
+    const char* hint = !highlightMode ? tr(STR_DICT_TAP_HINT)
+                       : anchor < 0   ? tr(STR_INKLINK_HIGHLIGHT_HINT)
+                                      : tr(STR_INKLINK_HIGHLIGHT_HINT_END);
     int cx = 0;
     int cy = 0;
     int cw = 0;
@@ -588,15 +592,17 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
 }
 
 bool DictionaryWordSelectActivity::cancelRect(int& x, int& y, int& w, int& h) const {
-  if (!highlightMode || !mappedInput.hasTouch() || words.empty() || popup != Popup::None) return false;
-  // Same band placement as render(): bottom edge only while the key word sits under the top band.
+  if (!showsHintBand() || !mappedInput.hasTouch() || words.empty() || popup != Popup::None) return false;
+  // Same band placement as render(): lookup mode at the bottom; highlight mode at the bottom only
+  // while the key word sits under the top band.
   const int bandH = renderer.getLineHeight(UI_10_FONT_ID) + 12;
   const int key = anchor >= 0 ? anchor : selected;
   const bool keyUnderTop = key >= 0 && key < static_cast<int>(words.size()) && words[key].y < bandH;
+  const bool atBottom = !highlightMode || keyUnderTop;
   w = renderer.getTextWidth(UI_10_FONT_ID, tr(STR_CANCEL), EpdFontFamily::BOLD) + 24;
   h = bandH;
   x = renderer.getScreenWidth() - w;
-  y = keyUnderTop ? renderer.getScreenHeight() - bandH : 0;
+  y = atBottom ? renderer.getScreenHeight() - bandH : 0;
   return true;
 }
 

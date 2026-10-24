@@ -42,7 +42,7 @@ NOTES = """<?xml version="1.0" encoding="utf-8"?>
 <body>
 <h2 id="notes">Примечания</h2>
 <aside epub:type="footnote" id="n1"><p><a href="ch1.xhtml#r1">1</a> Первая сноска: блок <i>aside</i>
-с курсивом.</p></aside>
+с курсивом.</p><p><a href="ch1.xhtml#r1">Вернуться</a></p></aside>
 <p id="n2"><a href="ch1.xhtml#r2">2</a> Вторая сноска: абзац с идентификатором.</p>
 <!-- <p id="n3">это комментарий, его не показываем</p> -->
 <p><a id="n3"></a>3. Третья сноска: пустой якорь внутри абзаца.</p>

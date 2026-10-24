@@ -74,9 +74,12 @@ class DictionaryWordSelectActivity final : public Activity {
   int wordAt(int x, int y) const;
   int nearestWord(int x, int y, int maxDx = INT_MAX) const;
   bool handleDrag();
-  // Highlight mode on touch boards: the hint band's Cancel target, which
-  // leaves without saving (an accidental long-press has no other way out).
+  // Touch boards: the hint band's Cancel target, which leaves without saving
+  // or looking anything up (an accidental long-press has no other way out).
   bool cancelRect(int& x, int& y, int& w, int& h) const;
+  // The hint band with Cancel: always in highlight mode, and in lookup mode on
+  // touch boards, where no button hints say what a tap does or how to leave.
+  bool showsHintBand() const { return highlightMode || mappedInput.hasTouch(); }
   void setRangeEnd(int index);
   void moveVertical(int direction);
   void performLookup();
