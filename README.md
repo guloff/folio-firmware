@@ -2,7 +2,7 @@
 
 Personal firmware for the **Xteink X4 Pro** e-reader, a fork of
 [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader) 1.6.5, paired with the
-iOS companion app **FolioLink**. *Документация ниже — на русском.*
+companion app **FolioLink** for iPhone and Android. *Документация ниже — на русском.*
 
 **Folio** — «библиотека в кармане»: главный экран с текущей книгой и календарём чтения, статистика,
 полки, выделения, личный словарь, заставки-дашборды и управление читалкой с телефона.
@@ -14,6 +14,18 @@ iOS companion app **FolioLink**. *Документация ниже — на р�
 > Это личный проект: пользуйтесь на свой риск и сначала сохраните резервную копию флеш-памяти.
 
 **[⬇ Скачать прошивку](https://github.com/guloff/folio-firmware/releases/latest)** — файл `folio-<версия>-x4pro.bin` в разделе Assets.
+
+## Приложение FolioLink
+
+Статистика, полки, выделения, словарь, заставки, шрифты и обновление прошивки — с телефона.
+
+| Телефон | Где взять |
+|---|---|
+| iPhone | **[FolioLink в App Store](https://apps.apple.com/app/id6816375030)** |
+| Android 8+ | **[⬇ FolioLink-1.1.3.apk](https://github.com/guloff/folio-firmware/releases/download/android-1.1.3/FolioLink-1.1.3.apk)** — [релиз](https://github.com/guloff/folio-firmware/releases/tag/android-1.1.3) с описанием и контрольной суммой |
+
+APK ставится напрямую: откройте файл на телефоне и разрешите установку из этого источника.
+Исходный код Android-приложения и инструкция по сборке — в папке [`android/`](android/).
 
 ## Что добавляет Folio
 
@@ -48,9 +60,12 @@ CROSSPOINT_SIM_HTTP_PORT=18080 .pio/build/simulator_x4_pro/program
 
 ## Релизы и подпись
 
-- CI (`.github/workflows/build.yml`) собирает `x4pro` на каждый push в `main`.
+- CI (`.github/workflows/build.yml`) собирает `x4pro` на каждый push в `main` (кроме правок в `android/`).
 - Публикация релиза `vX.Y.Z` (совпадает с `[folio] version` в `platformio.ini`) запускает
   `release.yml`: ассеты `folio-X.Y.Z-x4pro.bin`, `.sha256` и `.sig`.
+- Релизы приложения — теги `android-X.Y.Z`, APK загружается вручную. Они публикуются **без** пометки
+  Latest: приложения берут прошивку из `releases/latest`, и эта пометка всегда должна стоять на
+  прошивке.
 - Подпись: ed25519 над `"FOLIO-FW-v1\n" + SHA-256(образа)`, 64 байта в `.bin.sig`.
   Публичный ключ встроен в прошивку и приложение. Если секрет `FOLIO_SIGNING_KEY` в репозитории
   не задан, релиз подписывается локально: `tools/inklink/sign_release.sh vX.Y.Z`.

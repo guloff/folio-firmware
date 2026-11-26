@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Подпись FolioLink в системном окне «Поделиться». -->
+    <string name="share_target_label">Отправить в FolioLink</string>
+    <string name="share_title">FolioLink</string>
+    <string name="share_preparing">Подготовка…</string>
+    <string name="share_copying">Копирование книги…</string>
+    <string name="share_loading_article">Загрузка статьи…</string>
+    <string name="share_building">Сборка EPUB…</string>
+    <string name="share_added">Добавлено в очередь FolioLink</string>
+    <string name="share_will_send">Книги отправятся на читалку при следующем подключении.</string>
+    <string name="share_sending_now">Читалка подключена — отправляю сейчас.</string>
+    <string name="share_partial">Не всё удалось добавить: %1$s</string>
+    <string name="share_nothing">Нечего отправить: поддерживаются книги EPUB и FB2 и ссылки на статьи.</string>
+    <string name="share_unreadable">Не удалось прочитать файл «%1$s»</string>
+    <string name="share_skipped">Не книга EPUB или FB2: %1$s</string>
+    <string name="share_confirm_title">Добавить в очередь?</string>
+    <string name="share_confirm_add">Добавить</string>
+    <string name="share_rejected_source">Это нельзя принять: поддерживаются файлы из других приложений и веб-ссылки.</string>
+    <string name="share_article_item">Статья: %1$s</string>
+    <string name="share_unknown_size">размер неизвестен</string>
+</resources>

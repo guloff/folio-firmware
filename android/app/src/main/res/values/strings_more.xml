@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="more_title">More</string>
+    <string name="more_screen_header">Screen</string>
+    <string name="more_screensaver">Sleep screen studio</string>
+    <string name="more_sleep_images">Sleep images on reader</string>
+    <string name="more_screenshots">Screenshots</string>
+    <string name="more_fonts">Fonts</string>
+    <string name="more_reader_header">Reader</string>
+    <string name="more_device">Device</string>
+    <string name="more_device_settings">Reader settings</string>
+    <string name="more_firmware">Firmware</string>
+    <string name="more_outbox">Send queue</string>
+    <string name="more_outbox_empty">empty</string>
+    <plurals name="more_outbox_changes">
+        <item quantity="one">%d change</item>
+        <item quantity="other">%d changes</item>
+    </plurals>
+    <string name="more_app">App</string>
+    <string name="more_connected_to">Connected · %1$s</string>
+    <string name="more_demo">Demo mode · virtual reader</string>
+    <string name="more_connecting">Connecting…</string>
+    <string name="more_not_connected">Reader not connected</string>
+    <string name="more_connect_hint">On the reader open Menu → “Phone sync”</string>
+    <string name="more_firmware_version">Firmware %1$s</string>
+    <string name="more_dictionaries">Dictionaries</string>
+    <string name="more_dictionaries_update">Needs Folio 1.1 or newer</string>
+</resources>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dictionaries_title">Dictionaries</string>
+    <string name="dictionaries_add">Add your own dictionary</string>
+    <string name="dictionaries_offline_note">The reader is not connected: showing the list from the last connection. Changes go to the send queue.</string>
+    <string name="dictionaries_connect_note">Connect the reader to see its dictionaries.</string>
+    <string name="dictionaries_update_firmware">Dictionaries need Folio 1.1 or newer on the reader. Update the firmware to install and choose dictionaries here.</string>
+    <string name="dictionaries_open_firmware">Update firmware</string>
+
+    <string name="dictionaries_on_reader">On the reader</string>
+    <string name="dictionaries_on_reader_count">On the reader: %1$d</string>
+    <string name="dictionaries_none">No dictionaries yet. Install one from the catalog or add your own.</string>
+    <string name="dictionaries_size_script">%1$s · %2$s</string>
+    <string name="dictionaries_folder">Folder %1$s</string>
+    <string name="dictionaries_in_use">In use</string>
+    <string name="dictionaries_not_indexed">Indexed on first lookup</string>
+    <string name="dictionaries_script_latin">Latin</string>
+    <string name="dictionaries_script_cyrillic">Cyrillic</string>
+    <string name="dictionaries_script_other">Other script</string>
+    <string name="dictionaries_delete_named">Delete dictionary %1$s</string>
+    <string name="dictionaries_delete_title">Delete the dictionary “%1$s” from the memory card?</string>
+    <string name="dictionaries_delete_text">The folder %1$s and its search indexes are removed. You can install it again later.</string>
+
+    <string name="dictionaries_mode_header">Look up words in</string>
+    <string name="dictionaries_mode_all">All dictionaries</string>
+    <string name="dictionaries_mode_all_note">Dictionaries in the word’s alphabet are searched first</string>
+    <string name="dictionaries_mode_only">Only “%1$s”</string>
+    <string name="dictionaries_mode_off">Off</string>
+    <string name="dictionaries_mode_off_note">Tapping a word shows no translation</string>
+    <string name="dictionaries_mode_footer">The same choice is on the reader: Settings → Reader → Dictionary.</string>
+
+    <string name="dictionaries_catalog">Catalog</string>
+    <string name="dictionaries_catalog_footer">Free dictionaries prepared for Folio. Each file is checked against its SHA-256 checksum before it goes to the reader.</string>
+    <string name="dictionaries_catalog_loading">Loading the catalog…</string>
+    <string name="dictionaries_catalog_empty">The catalog is empty.</string>
+    <string name="dictionaries_catalog_unavailable">The catalog is not available yet. Try again later.</string>
+    <string name="dictionaries_catalog_offline">No internet connection: the catalog can’t be loaded.</string>
+    <string name="dictionaries_catalog_failed">Couldn’t load the catalog: %1$s</string>
+    <string name="dictionaries_retry">Try again</string>
+    <string name="dictionaries_languages">%1$s → %2$s</string>
+    <string name="dictionaries_license">License: %1$s</string>
+    <string name="dictionaries_attribution_more">Show full attribution</string>
+    <string name="dictionaries_source">Source: %1$s</string>
+    <string name="dictionaries_install">Install</string>
+    <string name="dictionaries_install_named">Install %1$s</string>
+    <string name="dictionaries_installed">Installed</string>
+    <string name="dictionaries_downloading">Downloading %1$d of %2$d…</string>
+    <string name="dictionaries_verifying">Checking…</string>
+    <string name="dictionaries_uploading">Sending to the reader…</string>
+    <string name="dictionaries_queued">Waiting in the send queue</string>
+    <string name="dictionaries_install_failed">Not installed: %1$s</string>
+    <string name="dictionaries_install_failed_queue">Not installed: the reader rejected a file (see the send queue)</string>
+
+    <string name="dictionaries_own">Your own dictionary</string>
+    <string name="dictionaries_own_button">Add your own…</string>
+    <string name="dictionaries_own_footer">Pick the StarDict files of one dictionary: .ifo, .idx or .idx.gz, .dict or .dict.dz, and .syn if there is one. Archives (.zip, .tar.gz) are not supported — unpack them first.</string>
+    <string name="dictionaries_import_title">Add a dictionary</string>
+    <string name="dictionaries_import_files">Files</string>
+    <string name="dictionaries_import_folder_header">Folder on the reader</string>
+    <string name="dictionaries_import_folder">Folder name</string>
+    <string name="dictionaries_import_folder_will_be">The files go to /dictionaries/%1$s. Latin letters, digits, “.”, “-” and “_”, up to 31 characters.</string>
+    <string name="dictionaries_import_folder_taken">A dictionary with this folder is already on the reader — a different name will be used: %1$s</string>
+    <string name="dictionaries_import_gunzip">%1$s will be unpacked to .idx</string>
+    <string name="dictionaries_import_upload">Upload to the reader</string>
+    <string name="dictionaries_import_offline">The reader is not connected: the files will wait in the send queue.</string>
+    <string name="dictionaries_unreadable">Files that could not be read: %1$d</string>
+
+    <string name="dictionaries_err_no_files">No files selected.</string>
+    <string name="dictionaries_err_unsupported">“%1$s” is not a StarDict file. Pick .ifo, .idx, .idx.gz, .dict, .dict.dz or .syn.</string>
+    <string name="dictionaries_err_mixed">These files belong to different dictionaries: %1$s. Pick the files of one dictionary.</string>
+    <string name="dictionaries_err_duplicate">Two %1$s files were picked. Keep only one.</string>
+    <string name="dictionaries_err_missing_ifo">The .ifo file is missing.</string>
+    <string name="dictionaries_err_missing_idx">The index file (.idx or .idx.gz) is missing.</string>
+    <string name="dictionaries_err_missing_dict">The articles file (.dict or .dict.dz) is missing.</string>
+    <string name="dictionaries_err_bad_ifo">The .ifo file is not a StarDict description.</string>
+    <string name="dictionaries_err_bad_archive">“%1$s” could not be unpacked.</string>
+    <string name="dictionaries_err_index_size">The index doesn’t match the .ifo (%1$s instead of %2$s bytes): the file is damaged or from another dictionary.</string>
+    <string name="dictionaries_err_empty">“%1$s” is empty.</string>
+    <string name="dictionaries_err_too_large">“%1$s” is too large.</string>
+    <string name="dictionaries_err_checksum">“%1$s” is damaged: its checksum doesn’t match the catalog.</string>
+    <string name="dictionaries_err_size">“%1$s” downloaded incompletely.</string>
+    <string name="dictionaries_err_http">the server answered HTTP %1$d</string>
+    <string name="dictionaries_err_bad_manifest">The catalog file is damaged or needs a newer FolioLink.</string>
+    <string name="dictionaries_err_network">no internet connection</string>
+
+    <string name="dictionaries_hint_header">How to use</string>
+    <string name="dictionaries_hint">On the reader, tap a word in a book to see its translation. Which dictionaries are used is also chosen on the reader: Settings → Reader → Dictionary.</string>
+
+    <plurals name="dictionaries_words">
+        <item quantity="one">%1$s word</item>
+        <item quantity="other">%1$s words</item>
+    </plurals>
+</resources>

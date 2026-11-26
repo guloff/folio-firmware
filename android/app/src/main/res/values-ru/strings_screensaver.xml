@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Студия заставок -->
+    <string name="screensaver_title">Студия заставок</string>
+    <string name="screensaver_preview">Предпросмотр заставки</string>
+    <string name="screensaver_preview_zoom">Увеличить</string>
+    <string name="screensaver_show_original">Показать без дизеринга</string>
+    <string name="screensaver_section_template">Шаблон</string>
+    <string name="screensaver_template_photo">Фото</string>
+    <string name="screensaver_template_card">Визитка</string>
+    <string name="screensaver_template_quote">Цитата</string>
+    <string name="screensaver_template_poster">Текст</string>
+    <string name="screensaver_template_calendar">Календарь</string>
+    <string name="screensaver_choose_photo">Выбрать фото</string>
+    <string name="screensaver_another_photo">Другое фото</string>
+    <string name="screensaver_photo_unreadable">Не удалось прочитать фото</string>
+    <string name="screensaver_scale">Масштаб</string>
+    <string name="screensaver_fill">Заполнить</string>
+    <string name="screensaver_fit">Вписать</string>
+    <string name="screensaver_zoom">Увеличение</string>
+    <string name="screensaver_offset_x">Сдвиг по X</string>
+    <string name="screensaver_offset_y">Сдвиг по Y</string>
+    <string name="screensaver_caption">Подпись (необязательно)</string>
+    <string name="screensaver_field_title">Заголовок</string>
+    <string name="screensaver_card_name">Имя</string>
+    <string name="screensaver_card_phone">Телефон</string>
+    <string name="screensaver_card_email">E-mail</string>
+    <string name="screensaver_card_note">Подпись внизу</string>
+    <string name="screensaver_card_add_photo">Добавить фото</string>
+    <string name="screensaver_card_replace_photo">Заменить фото</string>
+    <string name="screensaver_card_remove_photo">Убрать фото</string>
+    <string name="screensaver_quote_author">Автор / книга</string>
+    <string name="screensaver_quote_pick">Взять из цитат</string>
+    <string name="screensaver_quote_random">Случайная цитата</string>
+    <string name="screensaver_quote_author_format">%1$s, «%2$s»</string>
+    <string name="screensaver_poster_text">Текст</string>
+    <string name="screensaver_poster_subtitle">Подзаголовок</string>
+    <string name="screensaver_font">Шрифт</string>
+    <string name="screensaver_font_serif">С засечками</string>
+    <string name="screensaver_font_sans">Без засечек</string>
+    <string name="screensaver_font_mono">Моноширинный</string>
+    <string name="screensaver_font_rounded">Округлый</string>
+    <string name="screensaver_size">Размер</string>
+    <string name="screensaver_centered">По центру</string>
+    <string name="screensaver_inverted">Белым по чёрному</string>
+    <string name="screensaver_calendar_hint">Последние 26 недель чтения, серия и итоги из статистики.</string>
+    <string name="screensaver_section_screen">Экран читалки</string>
+    <string name="screensaver_dither">Дизеринг</string>
+    <string name="screensaver_dither_floyd">Флойд — Стейнберг</string>
+    <string name="screensaver_dither_atkinson">Аткинсон</string>
+    <string name="screensaver_dither_bayer">Байер 8×8</string>
+    <string name="screensaver_dither_none">Без дизеринга</string>
+    <string name="screensaver_brightness">Яркость</string>
+    <string name="screensaver_contrast">Контраст</string>
+    <string name="screensaver_gamma">Гамма</string>
+    <string name="screensaver_invert">Инвертировать</string>
+    <string name="screensaver_reset_tone">Сбросить тон</string>
+    <string name="screensaver_screen_footer">Предпросмотр показывает ровно 4 оттенка серого, как на экране X4 (480×800).</string>
+    <string name="screensaver_file_name">Имя файла</string>
+    <string name="screensaver_upload">Загрузить на читалку</string>
+    <string name="screensaver_enqueue">Добавить в очередь отправки</string>
+    <string name="screensaver_offline_hint">Читалка не подключена: заставка встанет в очередь и загрузится при подключении.</string>
+    <string name="screensaver_save_bmp">Сохранить BMP…</string>
+    <string name="screensaver_open_sleep">Экран сна на читалке</string>
+    <string name="screensaver_upload_footer_select">Загруженная картинка станет экраном сна: читалка переключится на режим «Свой» и будет показывать её, пока вы не выберете другую.</string>
+    <string name="screensaver_upload_footer_custom">Картинка появится на экране сна, когда выбран режим «Свой».</string>
+
+    <!-- Значения по умолчанию и надписи на самой картинке -->
+    <string name="screensaver_default_card_headline">Если нашли — верните, пожалуйста</string>
+    <string name="screensaver_default_card_note">Вознаграждение гарантировано</string>
+    <string name="screensaver_default_quote">Рукописи не горят.</string>
+    <string name="screensaver_default_quote_author">М. Булгаков, «Мастер и Маргарита»</string>
+    <string name="screensaver_default_poster">Читать —\nзначит жить\nдважды</string>
+    <string name="screensaver_default_calendar_title">Мой год чтения</string>
+    <string name="screensaver_canvas_choose_photo">Выберите фото</string>
+    <string name="screensaver_canvas_name">Имя Фамилия</string>
+    <string name="screensaver_canvas_phone" tools:ignore="TypographyDashes">+7 900 000-00-00</string>
+    <string name="screensaver_canvas_min_per_day">мин/день</string>
+    <string name="screensaver_canvas_streak">дней подряд</string>
+    <string name="screensaver_canvas_record">рекорд</string>
+    <string name="screensaver_canvas_hours">часов</string>
+    <string name="screensaver_canvas_books">книг</string>
+    <string name="screensaver_canvas_today">Сегодня: %1$d / %2$d мин</string>
+
+    <!-- Экран сна на читалке -->
+    <string name="screensaver_sleep_title">Экран сна</string>
+    <string name="screensaver_modes_footer">«Свой» показывает загруженные картинки, «Дашборд» — обложку, прогресс и серию, «Цитата» — случайное выделение.</string>
+    <string name="screensaver_choice">Заставка</string>
+    <string name="screensaver_choice_hint">Выбрать заставку из картинок на читалке</string>
+    <string name="screensaver_choice_random_subtitle">Каждый раз другая картинка</string>
+    <string name="screensaver_choice_mode_warning">В режиме «%1$s» картинки не показываются</string>
+    <string name="screensaver_pictures_on_reader">Картинки на читалке</string>
+    <string name="screensaver_no_pictures">Пока нет картинок</string>
+    <string name="screensaver_picker_empty">На читалке пока нет картинок. Добавьте их на странице «Экран сна».</string>
+    <string name="screensaver_pictures_footer_select">«Свой» показывает выбранную картинку, без выбора — случайную. Нажмите на картинку, чтобы посмотреть её, или удерживайте для других действий.</string>
+    <string name="screensaver_pictures_footer_random">«Свой» показывает случайную картинку. Нажмите на картинку, чтобы посмотреть её, или удерживайте для других действий.</string>
+    <string name="screensaver_show_this">Показывать эту заставку</string>
+    <string name="screensaver_show_random">Показывать случайные</string>
+    <string name="screensaver_currently_chosen">Сейчас выбрана</string>
+    <string name="screensaver_shown_on_sleep">Показывается на экране сна</string>
+    <string name="screensaver_open_picture">Открыть картинку</string>
+    <string name="screensaver_delete_from_reader">Удалить с читалки</string>
+    <string name="screensaver_delete_confirm">Удалить картинку «%1$s» с читалки?</string>
+
+    <!-- Пакетная загрузка и набор Folio -->
+    <string name="screensaver_add_pictures">Добавить картинки</string>
+    <string name="screensaver_from_photos">Из галереи</string>
+    <string name="screensaver_from_files">Из файлов</string>
+    <string name="screensaver_pack_button">Набор заставок Folio (%1$d)</string>
+    <string name="screensaver_show_these">Показывать эти картинки на экране сна</string>
+    <plurals name="screensaver_batch_footer">
+        <item quantity="one">До %d картинки за раз. BMP 480×800 отправляются как есть, остальные подгоняются под экран читалки в 4 оттенках серого.</item>
+        <item quantity="few">До %d картинок за раз. BMP 480×800 отправляются как есть, остальные подгоняются под экран читалки в 4 оттенках серого.</item>
+        <item quantity="many">До %d картинок за раз. BMP 480×800 отправляются как есть, остальные подгоняются под экран читалки в 4 оттенках серого.</item>
+        <item quantity="other">До %d картинки за раз. BMP 480×800 отправляются как есть, остальные подгоняются под экран читалки в 4 оттенках серого.</item>
+    </plurals>
+    <string name="screensaver_batch_preparing">Подготовка %1$d из %2$d…</string>
+    <string name="screensaver_batch_sending">Отправка %1$d из %2$d…</string>
+    <string name="screensaver_batch_cancelled">Добавление картинок отменено</string>
+    <plurals name="screensaver_batch_sent">
+        <item quantity="one">Отправлена %d картинка</item>
+        <item quantity="few">Отправлено %d картинки</item>
+        <item quantity="many">Отправлено %d картинок</item>
+        <item quantity="other">Отправлено %d картинки</item>
+    </plurals>
+    <plurals name="screensaver_batch_queued">
+        <item quantity="one">%d картинка в очереди</item>
+        <item quantity="few">%d картинки в очереди</item>
+        <item quantity="many">%d картинок в очереди</item>
+        <item quantity="other">%d картинки в очереди</item>
+    </plurals>
+    <string name="screensaver_batch_failed">Не отправлено: %1$d</string>
+    <string name="screensaver_batch_skipped">Не удалось прочитать: %1$d</string>
+    <string name="screensaver_pack_title">Заставки Folio</string>
+    <string name="screensaver_pack_footer">Картинки уже подготовлены для экрана читалки. Повторная отправка заменяет их, а не создаёт копии.</string>
+    <string name="screensaver_pack_send">Отправить на читалку (%1$d)</string>
+    <string name="screensaver_pack_enqueue">Добавить в очередь (%1$d)</string>
+    <string name="screensaver_select_all">Выбрать все</string>
+    <string name="screensaver_deselect_all">Снять все</string>
+</resources>

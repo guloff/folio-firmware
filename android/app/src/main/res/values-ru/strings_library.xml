@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_title">Библиотека</string>
+    <string name="library_search_hint">Название или автор</string>
+    <string name="library_search_clear">Очистить поиск</string>
+    <string name="library_filter_status">Статус</string>
+    <string name="library_filter_all">Все</string>
+    <string name="library_filter_shelves">Полки</string>
+    <string name="library_filter_all_shelves">Все полки</string>
+    <string name="library_books_count">Книги: %1$d</string>
+    <string name="library_empty_title">Книг пока нет</string>
+    <string name="library_empty_sync">Синхронизируйтесь с читалкой, чтобы увидеть книги.</string>
+    <string name="library_nothing_found">Ничего не найдено</string>
+    <string name="library_add">Добавить</string>
+    <string name="library_upload_file">Загрузить файл (EPUB, FB2, TXT, MD)</string>
+    <string name="library_add_article">Статья по ссылке</string>
+    <string name="library_shelves">Полки</string>
+    <string name="library_sort">Сортировка</string>
+    <string name="library_sort_recent">Недавние</string>
+    <string name="library_sort_title">По названию</string>
+    <string name="library_sort_author">По автору</string>
+    <string name="library_sort_progress">По прогрессу</string>
+    <string name="library_unreadable">Не удалось прочитать: %1$s</string>
+    <string name="library_unsupported">Не поддерживается: %1$s. Загружать можно EPUB, FB2 (.fb2, .fb2.zip), TXT и MD.</string>
+    <string name="library_books_sent">Отправлено книг: %1$d</string>
+    <string name="library_books_queued">В очереди отправки: %1$d</string>
+    <string name="library_mark_done">Отметить прочитанной</string>
+    <string name="library_status_none">Без статуса</string>
+    <string name="library_open_book">Открыть</string>
+
+    <!-- Карточка книги -->
+    <string name="library_read_pct">Прочитано %1$d%%</string>
+    <string name="library_stats">Статистика</string>
+    <string name="library_reading_time">Время чтения</string>
+    <string name="library_sessions_count">Сессий</string>
+    <string name="library_pages_count">Страниц</string>
+    <string name="library_last_read">Последнее чтение</string>
+    <string name="library_time_left">Осталось примерно</string>
+    <string name="library_file">Файл</string>
+    <string name="library_status_and_shelves">Статус и полки</string>
+    <string name="library_no_shelves_hint">Создайте полки, чтобы группировать книги.</string>
+    <string name="library_manage_shelves">Управлять полками</string>
+    <string name="library_highlights_count">Цитаты (%1$d)</string>
+    <string name="library_sessions">Сессии</string>
+    <string name="library_no_date">без даты</string>
+    <string name="library_session_line">%1$s · %2$d стр.</string>
+    <string name="library_delete_file">Удалить с читалки</string>
+    <string name="library_delete_file_confirm">Удалить «%1$s» с читалки?</string>
+    <string name="library_delete_file_message">Файл книги будет удалён с читалки. Цитаты и статистика чтения в приложении останутся.</string>
+    <string name="library_delete_pending">Удаление ждёт в очереди отправки.</string>
+
+    <!-- Полки -->
+    <string name="library_no_shelves">Полок пока нет</string>
+    <string name="library_new_shelf">Новая полка</string>
+    <string name="library_shelf_name">Название</string>
+    <string name="library_create">Создать</string>
+    <string name="library_rename">Переименовать</string>
+    <string name="library_rename_shelf">Переименовать полку</string>
+    <string name="library_delete_shelf">Удалить полку</string>
+    <string name="library_delete_shelf_confirm">Удалить полку «%1$s»?</string>
+    <string name="library_delete_shelf_message">Книги останутся на читалке.</string>
+    <string name="library_shelf_books_hint">Отметьте книги, которые стоят на этой полке.</string>
+
+    <!-- Статья по ссылке -->
+    <string name="library_article_url_label">Ссылка</string>
+    <string name="library_article_url_hint">https://…</string>
+    <string name="library_article_paste">Вставить</string>
+    <string name="library_article_load">Загрузить статью</string>
+    <string name="library_article_footer">Страница будет превращена в EPUB и отправлена в папку /Books на читалке.</string>
+    <string name="library_article_preview">Предпросмотр</string>
+    <string name="library_article_paragraphs">Абзацев: %1$d</string>
+    <string name="library_article_send">Отправить на читалку</string>
+    <string name="library_article_queue">Добавить в очередь</string>
+    <string name="library_article_queued">Статья в очереди — отправится при подключении</string>
+    <string name="library_article_bad_url">Введите ссылку, начинающуюся с http:// или https://</string>
+    <string name="library_article_no_content">Не удалось найти текст статьи на странице</string>
+    <string name="library_article_bad_response">Страница не загрузилась</string>
+    <string name="library_article_offline">Не удалось открыть сайт. Проверьте подключение к интернету.</string>
+</resources>

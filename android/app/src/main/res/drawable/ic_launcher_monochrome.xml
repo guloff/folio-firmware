@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Силуэт иконки для тематических значков Android 13+: веер страниц с закладкой. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- задние листы -->
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.55"
+        android:pathData="M62,33 L74,31 Q78,31 77,35 L70,73 Q69,77 65,77 L50,78 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.75"
+        android:pathData="M58,29 L66,27 Q70,27 70,31 L68,70 Q68,74 64,75 L48,78 Z" />
+    <!-- передний лист с вырезом-закладкой -->
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M36,38 Q36,34 40,32 L59,24 Q63,23 63,27 L63,66 Q63,70 59,71 L40,77 Q36,78 36,74 Z M47,30 L47,42 L49.5,39.5 L52,42 L52,28 Z" />
+</vector>

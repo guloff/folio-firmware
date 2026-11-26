@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shell_tab_home">Главная</string>
+    <string name="shell_tab_stats">Статистика</string>
+    <string name="shell_tab_library">Библиотека</string>
+    <string name="shell_tab_notes">Заметки</string>
+    <string name="shell_tab_more">Ещё</string>
+    <string name="shell_connect_reader">Подключить читалку</string>
+    <string name="shell_transfer_index">%1$d из %2$d</string>
+    <string name="shell_transfer_bytes">%1$s из %2$s</string>
+    <string name="shell_not_connected_title">Читалка не подключена</string>
+    <string name="shell_not_connected_message">На читалке: Меню → «Связь с телефоном». Телефон и читалка должны быть в одной Wi‑Fi сети.</string>
+    <string name="shell_offline">Офлайн · данные на %1$s</string>
+</resources>

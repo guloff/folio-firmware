@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_name">Цель на сегодня</string>
+    <string name="widget_medium_name">Чтение</string>
+    <string name="widget_description">Серия, минуты сегодня и текущая книга.</string>
+
+    <string name="widget_days_short">дн.</string>
+    <string name="widget_of_goal">из %1$d</string>
+    <string name="widget_min_today">мин сегодня</string>
+    <string name="widget_goal_met">Цель выполнена</string>
+    <string name="widget_currently_reading">Сейчас читаю</string>
+    <string name="widget_no_book">Нет активной книги</string>
+    <string name="widget_minutes_of_goal">%1$d/%2$d мин</string>
+    <string name="widget_small_a11y">Серия %1$d дн. Сегодня %2$d из %3$d мин</string>
+    <string name="widget_medium_a11y">Сейчас читаю: %1$s. Серия %2$d дн. Сегодня %3$d из %4$d мин</string>
+</resources>

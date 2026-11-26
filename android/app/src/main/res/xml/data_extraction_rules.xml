@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SEC-036, Android 12+: те же исключения, что в backup_rules.xml, для облачной копии и переноса. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="Outbox/" />
+        <exclude domain="file" path="Store/snapshot.json" />
+        <exclude domain="file" path="Store/widget.json" />
+        <exclude domain="sharedpref" path="ble_sync.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="Outbox/" />
+        <exclude domain="file" path="Store/snapshot.json" />
+        <exclude domain="file" path="Store/widget.json" />
+        <exclude domain="sharedpref" path="ble_sync.xml" />
+    </device-transfer>
+</data-extraction-rules>

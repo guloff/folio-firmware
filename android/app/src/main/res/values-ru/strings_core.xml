@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ошибки обмена с читалкой -->
+    <string name="core_error_invalid_address">Неверный адрес устройства</string>
+    <string name="core_error_unreachable">Читалка недоступна. Проверьте, что она в той же Wi‑Fi сети и открыт экран «Связь с телефоном».</string>
+    <string name="core_error_timeout">Читалка не ответила вовремя. Попробуйте ещё раз.</string>
+    <string name="core_error_server">Ошибка устройства (%1$d): %2$s</string>
+    <string name="core_error_already_exists">Файл «%1$s» уже есть на читалке</string>
+    <string name="core_error_decoding">Не удалось разобрать ответ устройства: %1$s</string>
+    <string name="core_error_not_supported">Прошивка читалки не поддерживает эту функцию</string>
+    <string name="core_error_pairing_required">Читалка ждёт сопряжения: введите PIN с её экрана.</string>
+    <string name="core_error_bad_pin">Неверный PIN</string>
+    <string name="core_error_bad_pin_left">Неверный PIN. Осталось попыток: %1$d</string>
+    <string name="core_error_pin_expired">PIN больше не действует. Запросите новый.</string>
+    <string name="core_error_no_active_pin">Читалка сейчас не показывает PIN. Запросите новый.</string>
+    <string name="core_error_rate_limited">Слишком много попыток. Новый PIN можно запросить через %1$d с.</string>
+    <string name="core_error_gallery_denied">Нет доступа к галерее. Разрешите доступ к хранилищу в настройках.</string>
+    <string name="core_error_image_decode">Не удалось прочитать картинку «%1$s»</string>
+
+    <!-- Ошибки Bluetooth (BleError) -->
+    <string name="core_ble_no_token">Сначала подключите читалку по Wi‑Fi и введите PIN</string>
+    <string name="core_ble_timeout">Читалка перестала отвечать по Bluetooth</string>
+    <string name="core_ble_disconnected">Связь по Bluetooth прервалась</string>
+    <string name="core_ble_busy">Читалка ещё отвечает на прошлую команду</string>
+    <string name="core_ble_pairing_rejected">Читалка не приняла ключ сопряжения. Подключитесь по Wi‑Fi и сопрягите её заново.</string>
+    <string name="core_ble_gatt">Ошибка Bluetooth (ATT %1$d)</string>
+
+    <!-- Подключение и сопряжение -->
+    <string name="core_clock_warning">Не удалось установить время на читалке — новые сессии могут остаться без даты.</string>
+    <string name="core_paired">Читалка сопряжена</string>
+    <string name="core_reader_forgotten">Читалка забыта. Чтобы снова менять данные на ней, подключитесь и введите PIN.</string>
+    <string name="core_connection_lost">Связь с читалкой потеряна</string>
+
+    <!-- Синхронизация -->
+    <string name="core_step_device">Устройство</string>
+    <string name="core_step_status">Состояние</string>
+    <string name="core_step_sessions">Сессии</string>
+    <string name="core_step_stats">Статистика</string>
+    <string name="core_step_books">Книги</string>
+    <string name="core_step_shelves">Полки</string>
+    <string name="core_step_highlights">Выделения</string>
+    <string name="core_step_vocab">Словарь</string>
+    <string name="core_step_screenshots">Скриншоты</string>
+    <string name="core_step_sleep">Заставки</string>
+    <string name="core_sync_queue_error">Очередь: %1$s</string>
+    <string name="core_sync_queue_rejected">Очередь: не принято %1$d</string>
+    <string name="core_synced">Синхронизировано</string>
+    <string name="core_synced_sent">Синхронизировано · из очереди отправлено: %1$d</string>
+    <string name="core_synced_with_errors">Синхронизировано с ошибками: %1$d</string>
+
+    <!-- Очередь отправки -->
+    <string name="core_saved_in_queue">Сохранено в очереди отправки — уйдёт на читалку при подключении.</string>
+    <string name="core_sending">Отправка: %1$s</string>
+    <string name="core_books_sent">Отправлено книг: %1$d</string>
+    <string name="core_changes_sent">Изменений отправлено: %1$d</string>
+    <string name="core_already_on_reader">Уже были на читалке: %1$d</string>
+    <string name="core_rejected_item">Читалка не приняла «%1$s»: %2$s</string>
+    <string name="core_rest_waits">Остальное ждёт в очереди: %1$s</string>
+    <string name="core_connect_to_send">Подключите читалку, чтобы отправить очередь.</string>
+    <string name="core_item_needs_newer_app">Это изменение сделала более новая версия FolioLink. Обновите приложение, чтобы его отправить, или удалите его из очереди.</string>
+    <string name="core_item_for_other_reader">Это изменение сделано для другой читалки. Оно уйдёт, когда подключится она, — или удалите его из очереди.</string>
+    <string name="core_outbox_file_unreadable">Файл из очереди не читается</string>
+    <string name="core_settings_partially">Читалка приняла %1$d из %2$d изменений</string>
+    <string name="core_needs_newer_app">Нужна более новая версия FolioLink</string>
+
+    <!-- Заголовки элементов очереди -->
+    <string name="core_title_status">Статус: %1$s</string>
+    <string name="core_title_to_shelf">На полку «%1$s»</string>
+    <string name="core_title_from_shelf">С полки «%1$s»</string>
+    <string name="core_title_new_shelf">Новая полка «%1$s»</string>
+    <string name="core_title_rename_shelf">Переименовать полку в «%1$s»</string>
+    <string name="core_title_delete_shelf">Удалить полку «%1$s»</string>
+    <string name="core_title_goal">Цель: %1$d мин в день</string>
+    <string name="core_title_note">Заметка к выделению</string>
+    <string name="core_title_delete_highlight">Удалить выделение</string>
+    <string name="core_title_delete_word">Удалить слово «%1$s»</string>
+    <string name="core_title_delete_file">Удалить «%1$s»</string>
+    <string name="core_title_sleep_image">Заставка %1$s</string>
+    <string name="core_title_sleep_mode">Экран сна: %1$s</string>
+    <string name="core_title_sleep_random">Показывать случайные заставки</string>
+    <string name="core_title_sleep_show">Показывать заставку «%1$s»</string>
+    <string name="core_title_font">Шрифт %1$s</string>
+    <string name="core_title_delete_font">Удалить шрифт «%1$s»</string>
+    <string name="core_title_profile">Профиль «%1$s»</string>
+
+    <!-- Статусы книг -->
+    <string name="core_status_want">Хочу прочитать</string>
+    <string name="core_status_reading">Читаю</string>
+    <string name="core_status_done">Прочитано</string>
+    <string name="core_status_dropped">Брошено</string>
+    <string name="core_status_none">без статуса</string>
+
+    <!-- Файлы, заставки, шрифты -->
+    <string name="core_book_uploaded">Книга загружена: %1$s</string>
+    <string name="core_sleep_uploaded">Заставка загружена: %1$s</string>
+    <string name="core_sleep_mode_changed">Экран сна изменён</string>
+    <string name="core_sleep_random">Случайная</string>
+    <string name="core_sleep_chosen">Заставка: %1$s</string>
+    <string name="core_sleep_update_firmware">Обновите прошивку до Folio 1.0, чтобы выбирать заставку</string>
+    <string name="core_font_uploaded">Шрифт загружен: %1$s</string>
+    <string name="core_font_deleted">Шрифт удалён: %1$s</string>
+    <string name="core_sleep_mode_0">Тёмный</string>
+    <string name="core_sleep_mode_1">Светлый</string>
+    <string name="core_sleep_mode_2">Свой</string>
+    <string name="core_sleep_mode_3">Обложка</string>
+    <string name="core_sleep_mode_4">Обложка + Свой</string>
+    <string name="core_sleep_mode_5">Нет</string>
+    <string name="core_sleep_mode_6">Быстрое возобновление</string>
+    <string name="core_sleep_mode_7">Прозрачный</string>
+    <string name="core_sleep_mode_8">Дашборд</string>
+    <string name="core_sleep_mode_9">Цитата</string>
+    <string name="core_sleep_mode_10">Чередовать</string>
+
+    <!-- Скриншоты в галерею -->
+    <string name="core_saved_to_gallery">Сохранено в галерею (Pictures/FolioLink): %1$d</string>
+    <string name="core_autosave_denied">Скриншоты не сохранены: нет доступа к галерее. Автосохранение выключено — разрешите доступ в настройках Android и включите его снова.</string>
+    <string name="core_autosave_partial">Сохранено скриншотов: %1$d, остальные — нет</string>
+    <string name="core_autosave_failed">Скриншоты не сохранены в галерею</string>
+    <string name="core_autosave_done">Новые скриншоты в галерее: %1$d</string>
+
+    <!-- Профили настроек -->
+    <string name="core_profile_default_name">Профиль %1$d</string>
+    <string name="core_profile_saved">Профиль «%1$s» сохранён: настроек — %2$d</string>
+    <string name="core_profile_same">Профиль «%1$s» уже совпадает с настройками читалки</string>
+    <string name="core_profile_skipped">Пропущено настроек, которых нет на этой читалке: %1$d</string>
+    <string name="core_profile_applied">Профиль «%1$s» применён: изменено %2$d</string>
+
+    <!-- Прошивка -->
+    <string name="core_firmware_rejected">Отклонено: %1$s</string>
+    <string name="core_firmware_confirm">Подтвердите установку на экране читалки. После перезагрузки подключитесь снова.</string>
+    <string name="core_firmware_accepted">Принято. Читалка перезагрузится с новой прошивкой.</string>
+    <string name="core_firmware_sig_missing">Читалка не нашла файл подписи рядом с образом. Установка отменена.</string>
+    <string name="core_firmware_sig_rejected">Читалка отклонила подпись прошивки (%1$s). Установка отменена.</string>
+
+    <!-- Напоминание -->
+    <string name="core_reminder_channel">Напоминание о чтении</string>
+    <string name="core_reminder_title">Время почитать</string>
+    <string name="core_reminder_left">До дневной цели осталось %1$d мин.</string>
+    <string name="core_reminder_goal">Цель на сегодня — %1$d мин. Не прерывайте серию!</string>
+
+    <string name="core_title_dictionary_mode">Словарь: %1$s</string>
+    <string name="core_dictionary_mode_changed">Словарь на читалке: %1$s</string>
+    <string name="core_title_delete_dictionary">Удалить словарь «%1$s»</string>
+    <string name="core_dictionary_deleted">Словарь удалён: %1$s</string>
+    <string name="core_title_dictionary_file">Словарь %1$s: %2$s</string>
+    <string name="core_dictionary_installed">Словарь установлен: %1$s</string>
+    <!-- Аудит 2026-11-10 -->
+    <string name="core_error_too_large">Файл или ответ слишком большой (больше %1$d МБ)</string>
+    <string name="core_book_renamed">«%1$s»: на читалке уже есть другой файл с таким именем — книга сохранена как «%2$s»</string>
+    <string name="core_pairing_save_failed">Читалка сопряжена, но телефон не смог сохранить ключ. В следующий раз изменения снова попросят PIN.</string>
+    <string name="core_profile_save_failed">Не удалось сохранить профиль на телефоне</string>
+    <string name="core_profiles_unreadable">Файл профилей не прочитался; он отложен в сторону и не перезаписан</string>
+    <string name="core_ble_server_proof_failed">Устройство Bluetooth не подтвердило, что это ваша читалка. Данные не применены.</string>
+    <string name="core_ble_server_proof_missing">Читалка перестала подтверждать себя по Bluetooth. Данные не применены.</string>
+    <string name="core_ble_wrong_reader">По Bluetooth ответила другая читалка. Данные не применены.</string>
+    <string name="core_loading">Загружаются сохранённые данные…</string>
+    <string name="core_reader_unidentified">Читалка не сообщает ни серийный номер, ни идентификатор устройства, поэтому телефон не отправит ей ключ сопряжения. Файлы и настройки работают; для изменений, требующих сопряжения, обновите прошивку читалки.</string>
+</resources>

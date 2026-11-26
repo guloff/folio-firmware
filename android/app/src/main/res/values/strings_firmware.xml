@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="firmware_title">Firmware</string>
+    <string name="firmware_current_header">Current version</string>
+    <string name="firmware_version">Firmware</string>
+    <string name="firmware_board">Board</string>
+    <string name="firmware_image_header">Firmware image</string>
+    <string name="firmware_image_footer">FolioLink installs only firmware signed with the Folio key: the image needs its .bin.sig signature file next to it.</string>
+    <string name="firmware_download_latest">Download the latest Folio</string>
+    <string name="firmware_choose_files">Choose .bin and .bin.sig files</string>
+    <string name="firmware_release">Version %1$s: %2$s</string>
+    <string name="firmware_in_image">In the image</string>
+    <string name="firmware_sig_ok">Folio signature verified</string>
+    <string name="firmware_install">Upload and install</string>
+    <string name="firmware_install_footer">The firmware is uploaded to the reader, which checks it and asks you to confirm on its screen. Don’t turn the reader off during installation.</string>
+    <string name="firmware_looking">Looking for release…</string>
+    <string name="firmware_downloading">Downloading %1$s…</string>
+    <string name="firmware_downloading_sig">Downloading the signature…</string>
+    <string name="firmware_uploading">Uploading to the reader…</string>
+    <string name="firmware_unreadable">Could not read: %1$s</string>
+    <string name="firmware_confirm_title">Install firmware %1$s?</string>
+    <string name="firmware_confirm_current">Current version: %1$s. You’ll confirm the installation on the reader; it takes 1–2 minutes.</string>
+    <string name="firmware_confirm_new">New: %1$s %2$s.</string>
+    <string name="firmware_confirm_battery">Battery %1$d%%. Connect the charger before updating.</string>
+    <string name="firmware_send">Send to reader</string>
+
+    <string name="firmware_sig_missing">No signature file (.bin.sig). FolioLink does not install unsigned firmware.</string>
+    <string name="firmware_sig_malformed">The signature file is damaged: its size is %1$d B instead of 64 B.</string>
+    <string name="firmware_sig_invalid">Signature mismatch: the image was modified or signed with another key. Installation cancelled.</string>
+    <string name="firmware_err_bad_repo">Invalid repository: use owner/repo</string>
+    <string name="firmware_err_no_asset">The latest release has no firmware for this reader</string>
+    <string name="firmware_err_ambiguous">The release has several matching files — pick one manually</string>
+    <string name="firmware_err_http">The update server returned error %1$d</string>
+    <string name="firmware_err_not_firmware">The downloaded file doesn’t look like firmware</string>
+    <string name="firmware_err_no_signature">The release has no signature file (.bin.sig) — FolioLink does not install such firmware</string>
+    <string name="firmware_err_network">No connection to GitHub. Check the internet connection and try again.</string>
+    <string name="firmware_risk_title">Install anyway?</string>
+    <string name="firmware_risk_older">The image (%1$s) is older than the reader’s firmware (%2$s). Rolling back can lose features and fixes.</string>
+    <string name="firmware_risk_same">The image (%1$s) is the same version as the reader’s firmware.</string>
+    <string name="firmware_risk_board">The image is built for “%1$s”, the reader is “%2$s”. A firmware for another board may not start.</string>
+    <string name="firmware_risk_unknown">The image doesn’t state its version; it can’t be compared with the reader’s firmware (%1$s).</string>
+    <string name="firmware_install_anyway">Install anyway</string>
+</resources>

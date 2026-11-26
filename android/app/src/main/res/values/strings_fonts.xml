@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fonts_title">Fonts</string>
+    <string name="fonts_import">Import font</string>
+    <string name="fonts_import_button">Import TTF, OTF or .cpfont</string>
+    <string name="fonts_offline_note">The reader is not connected: the font list appears after connecting. An imported font goes to the send queue.</string>
+    <string name="fonts_installed">Installed</string>
+    <string name="fonts_installed_of">Installed: %1$d of %2$d</string>
+    <string name="fonts_footer">The uploaded font appears on the reader under “Settings → Font”. TTF/OTF files go to /fonts/&lt;Family&gt;/&lt;Family&gt;-Regular.ttf (plus -Bold, -Italic, -BoldItalic).</string>
+    <string name="fonts_none">No fonts on the SD card</string>
+    <string name="fonts_folder">/fonts folder</string>
+    <string name="fonts_sizes">Sizes: %1$s</string>
+    <string name="fonts_delete_named">Delete font %1$s</string>
+    <string name="fonts_delete_title">Delete the font “%1$s” from the memory card?</string>
+    <string name="fonts_unreadable">Couldn’t read the font</string>
+    <string name="fonts_some_unreadable">Files that could not be read: %1$d</string>
+
+    <string name="fonts_import_title">Import font</string>
+    <string name="fonts_family_header">Family name</string>
+    <string name="fonts_family">Family</string>
+    <string name="fonts_folder_will_be">Folder /fonts/%1$s will be created</string>
+    <string name="fonts_preview_size">On-screen size: %1$d px</string>
+    <string name="fonts_style_regular">Regular</string>
+    <string name="fonts_style_bold">Bold</string>
+    <string name="fonts_style_italic">Italic</string>
+    <string name="fonts_style_bold_italic">Bold italic</string>
+    <string name="fonts_cpfont_note">Ready-made .cpfont: uploaded as is, no preview.</string>
+    <string name="fonts_duplicate_style">Two files get the same name: choose a different style for one of them.</string>
+    <string name="fonts_upload">Upload to reader</string>
+    <string name="fonts_offline_import">The reader is not connected: the font goes to the send queue.</string>
+    <string name="fonts_sample">Съешь же ещё этих мягких французских булок, да выпей чаю.\nThe quick brown fox jumps over the lazy dog. 0123456789</string>
+</resources>

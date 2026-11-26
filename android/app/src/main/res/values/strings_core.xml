@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Строки ядра и AppModel: ошибки читалки, баннеры синхронизации, заголовки очереди, напоминания. -->
+<resources>
+    <!-- Ошибки обмена с читалкой -->
+    <string name="core_error_invalid_address">Invalid device address</string>
+    <string name="core_error_unreachable">The reader is unreachable. Make sure it\'s on the same Wi‑Fi network and the “Phone link” screen is open.</string>
+    <string name="core_error_timeout">The reader didn\'t respond in time. Try again.</string>
+    <string name="core_error_server">Device error (%1$d): %2$s</string>
+    <string name="core_error_already_exists">“%1$s” already exists on the reader</string>
+    <string name="core_error_decoding">Couldn\'t parse the device response: %1$s</string>
+    <string name="core_error_not_supported">The reader firmware doesn\'t support this feature</string>
+    <string name="core_error_pairing_required">The reader needs pairing: enter the PIN from its screen.</string>
+    <string name="core_error_bad_pin">Wrong PIN</string>
+    <string name="core_error_bad_pin_left">Wrong PIN. Tries left: %1$d</string>
+    <string name="core_error_pin_expired">The PIN is no longer valid. Request a new one.</string>
+    <string name="core_error_no_active_pin">The reader isn’t showing a PIN now. Request a new one.</string>
+    <string name="core_error_rate_limited">Too many attempts. You can request a new PIN in %1$d s.</string>
+    <string name="core_error_gallery_denied">No access to the gallery. Allow storage access in Settings.</string>
+    <string name="core_error_image_decode">Couldn\'t read the picture “%1$s”</string>
+
+    <!-- Ошибки Bluetooth (BleError) -->
+    <string name="core_ble_no_token">First connect the reader over Wi‑Fi and enter the PIN</string>
+    <string name="core_ble_timeout">The reader stopped answering over Bluetooth</string>
+    <string name="core_ble_disconnected">The Bluetooth connection was lost</string>
+    <string name="core_ble_busy">The reader is still answering the previous command</string>
+    <string name="core_ble_pairing_rejected">The reader rejected the pairing key. Connect over Wi‑Fi and pair it again.</string>
+    <string name="core_ble_gatt">Bluetooth error (ATT %1$d)</string>
+
+    <!-- Подключение и сопряжение -->
+    <string name="core_clock_warning">Could not set the reader’s clock — new sessions may stay undated.</string>
+    <string name="core_paired">Reader paired</string>
+    <string name="core_reader_forgotten">Reader forgotten. To change its data again, connect and enter a PIN.</string>
+    <string name="core_connection_lost">Lost connection to the reader</string>
+
+    <!-- Синхронизация -->
+    <string name="core_step_device">Device</string>
+    <string name="core_step_status">Status</string>
+    <string name="core_step_sessions">Sessions</string>
+    <string name="core_step_stats">Statistics</string>
+    <string name="core_step_books">Books</string>
+    <string name="core_step_shelves">Shelves</string>
+    <string name="core_step_highlights">Highlights</string>
+    <string name="core_step_vocab">Vocabulary</string>
+    <string name="core_step_screenshots">Screenshots</string>
+    <string name="core_step_sleep">Sleep screens</string>
+    <string name="core_sync_queue_error">Queue: %1$s</string>
+    <string name="core_sync_queue_rejected">Queue: %1$d rejected</string>
+    <string name="core_synced">Synced</string>
+    <string name="core_synced_sent">Synced · sent from the queue: %1$d</string>
+    <string name="core_synced_with_errors">Synced with errors: %1$d</string>
+
+    <!-- Очередь отправки -->
+    <string name="core_saved_in_queue">Saved in the send queue — it goes to the reader when connected.</string>
+    <string name="core_sending">Sending: %1$s</string>
+    <string name="core_books_sent">Books sent: %1$d</string>
+    <string name="core_changes_sent">Changes sent: %1$d</string>
+    <string name="core_already_on_reader">Already on the reader: %1$d</string>
+    <string name="core_rejected_item">The reader rejected “%1$s”: %2$s</string>
+    <string name="core_rest_waits">The rest waits in the queue: %1$s</string>
+    <string name="core_connect_to_send">Connect the reader to send the queue.</string>
+    <string name="core_item_needs_newer_app">This change was made by a newer FolioLink. Update the app to send it, or delete it from the queue.</string>
+    <string name="core_item_for_other_reader">This change was made for another reader. It goes out when that reader connects — or delete it from the queue.</string>
+    <string name="core_outbox_file_unreadable">The queued file can’t be read</string>
+    <string name="core_settings_partially">The reader applied %1$d of %2$d changes</string>
+    <string name="core_needs_newer_app">Requires a newer FolioLink</string>
+
+    <!-- Заголовки элементов очереди -->
+    <string name="core_title_status">Status: %1$s</string>
+    <string name="core_title_to_shelf">Add to shelf “%1$s”</string>
+    <string name="core_title_from_shelf">Remove from shelf “%1$s”</string>
+    <string name="core_title_new_shelf">New shelf “%1$s”</string>
+    <string name="core_title_rename_shelf">Rename shelf to “%1$s”</string>
+    <string name="core_title_delete_shelf">Delete shelf “%1$s”</string>
+    <string name="core_title_goal">Goal: %1$d min a day</string>
+    <string name="core_title_note">Note on highlight</string>
+    <string name="core_title_delete_highlight">Delete highlight</string>
+    <string name="core_title_delete_word">Delete word “%1$s”</string>
+    <string name="core_title_delete_file">Delete “%1$s”</string>
+    <string name="core_title_sleep_image">Sleep screen %1$s</string>
+    <string name="core_title_sleep_mode">Sleep screen: %1$s</string>
+    <string name="core_title_sleep_random">Show random sleep images</string>
+    <string name="core_title_sleep_show">Show sleep image “%1$s”</string>
+    <string name="core_title_font">Font %1$s</string>
+    <string name="core_title_delete_font">Delete font “%1$s”</string>
+    <string name="core_title_profile">Profile “%1$s”</string>
+
+    <!-- Статусы книг -->
+    <string name="core_status_want">Want to read</string>
+    <string name="core_status_reading">Reading</string>
+    <string name="core_status_done">Finished</string>
+    <string name="core_status_dropped">Dropped</string>
+    <string name="core_status_none">no status</string>
+
+    <!-- Файлы, заставки, шрифты -->
+    <string name="core_book_uploaded">Book uploaded: %1$s</string>
+    <string name="core_sleep_uploaded">Sleep image uploaded: %1$s</string>
+    <string name="core_sleep_mode_changed">Sleep screen changed</string>
+    <string name="core_sleep_random">Random</string>
+    <string name="core_sleep_chosen">Sleep image: %1$s</string>
+    <string name="core_sleep_update_firmware">Update the firmware to Folio 1.0 to choose the sleep image</string>
+    <string name="core_font_uploaded">Font uploaded: %1$s</string>
+    <string name="core_font_deleted">Font deleted: %1$s</string>
+    <string name="core_sleep_mode_0">Dark</string>
+    <string name="core_sleep_mode_1">Light</string>
+    <string name="core_sleep_mode_2">Custom</string>
+    <string name="core_sleep_mode_3">Cover</string>
+    <string name="core_sleep_mode_4">Cover + Custom</string>
+    <string name="core_sleep_mode_5">None</string>
+    <string name="core_sleep_mode_6">Quick resume</string>
+    <string name="core_sleep_mode_7">Transparent</string>
+    <string name="core_sleep_mode_8">Dashboard</string>
+    <string name="core_sleep_mode_9">Quote</string>
+    <string name="core_sleep_mode_10">Rotate</string>
+
+    <!-- Скриншоты в галерею -->
+    <string name="core_saved_to_gallery">Saved to the gallery (Pictures/FolioLink): %1$d</string>
+    <string name="core_autosave_denied">Screenshots not saved: no access to the gallery. Auto-save is off — allow access in Android Settings and turn it on again.</string>
+    <string name="core_autosave_partial">Screenshots saved: %1$d, the rest were not</string>
+    <string name="core_autosave_failed">Screenshots were not saved to the gallery</string>
+    <string name="core_autosave_done">New screenshots in the gallery: %1$d</string>
+
+    <!-- Профили настроек -->
+    <string name="core_profile_default_name">Profile %1$d</string>
+    <string name="core_profile_saved">Profile “%1$s” saved: %2$d settings</string>
+    <string name="core_profile_same">Profile “%1$s” already matches the reader’s settings</string>
+    <string name="core_profile_skipped">Skipped settings this reader doesn’t have: %1$d</string>
+    <string name="core_profile_applied">Profile “%1$s” applied: %2$d changed</string>
+
+    <!-- Прошивка -->
+    <string name="core_firmware_rejected">Rejected: %1$s</string>
+    <string name="core_firmware_confirm">Confirm the installation on the reader’s screen. Reconnect after it restarts.</string>
+    <string name="core_firmware_accepted">Accepted. The reader will restart with the new firmware.</string>
+    <string name="core_firmware_sig_missing">The reader found no signature file next to the image. Installation cancelled.</string>
+    <string name="core_firmware_sig_rejected">The reader rejected the firmware signature (%1$s). Installation cancelled.</string>
+
+    <!-- Напоминание -->
+    <string name="core_reminder_channel">Reading reminder</string>
+    <string name="core_reminder_title">Time to read</string>
+    <string name="core_reminder_left">%1$d min left to your daily goal.</string>
+    <string name="core_reminder_goal">Today\'s goal is %1$d min. Keep your streak going!</string>
+
+    <string name="core_title_dictionary_mode">Dictionary: %1$s</string>
+    <string name="core_dictionary_mode_changed">Dictionary on the reader: %1$s</string>
+    <string name="core_title_delete_dictionary">Delete dictionary “%1$s”</string>
+    <string name="core_dictionary_deleted">Dictionary deleted: %1$s</string>
+    <string name="core_title_dictionary_file">Dictionary %1$s: %2$s</string>
+    <string name="core_dictionary_installed">Dictionary installed: %1$s</string>
+    <!-- Аудит 2026-11-10 -->
+    <string name="core_error_too_large">The file or response is too large (over %1$d MB)</string>
+    <string name="core_book_renamed">“%1$s” — a different file with this name is already on the reader; saved as “%2$s”</string>
+    <string name="core_pairing_save_failed">The reader is paired, but the phone couldn’t store the key. Changes will need the PIN again next time.</string>
+    <string name="core_profile_save_failed">Couldn’t save the profile on the phone</string>
+    <string name="core_profiles_unreadable">The saved profiles file couldn’t be read; it was kept aside and not overwritten</string>
+    <string name="core_ble_server_proof_failed">The Bluetooth device couldn’t prove it is your reader. Data was not applied.</string>
+    <string name="core_ble_server_proof_missing">The reader no longer proves its identity over Bluetooth. Data was not applied.</string>
+    <string name="core_ble_wrong_reader">A different reader answered over Bluetooth. Data was not applied.</string>
+    <string name="core_loading">Loading saved data…</string>
+    <string name="core_reader_unidentified">The reader reports neither a serial number nor a device ID, so the phone won’t send it the pairing key. Files and settings work; for changes that need pairing, update the reader’s firmware.</string>
+</resources>

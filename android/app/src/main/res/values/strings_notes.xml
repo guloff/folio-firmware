@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notes_title">Notes</string>
+    <string name="notes_tab_highlights">Highlights</string>
+    <string name="notes_tab_vocab">Vocabulary</string>
+    <string name="notes_search_highlights">Search highlights</string>
+    <string name="notes_search_words">Search words</string>
+    <string name="notes_nothing_found">Nothing found</string>
+
+    <!-- Цитаты -->
+    <string name="notes_no_highlights">No highlights yet</string>
+    <string name="notes_no_highlights_message">On the reader: reading menu → “Highlight”. Highlights appear here after syncing.</string>
+    <string name="notes_export">Export</string>
+    <string name="notes_export_markdown">Export to Markdown</string>
+    <string name="notes_export_csv">CSV for Readwise</string>
+    <string name="notes_send_readwise">Send to Readwise…</string>
+    <string name="notes_export_book">Export book “%1$s”</string>
+    <string name="notes_export_chooser">Export highlights</string>
+    <string name="notes_share_chooser">Share highlight</string>
+    <string name="notes_note">Note</string>
+    <string name="notes_note_hint">Your thought…</string>
+    <string name="notes_edit_note">Edit note</string>
+    <string name="notes_cant_modify">This highlight was saved by older firmware and can’t be changed from the phone.</string>
+    <string name="notes_delete_highlight">Delete highlight from the reader</string>
+    <string name="notes_delete_highlight_confirm">Delete the highlight from the reader?</string>
+    <string name="notes_delete_highlight_message">The highlight and its note will be permanently deleted from the reader.</string>
+
+    <!-- Словарь -->
+    <string name="notes_vocab_empty">Vocabulary is empty</string>
+    <string name="notes_vocab_empty_message">Words you look up in the reader’s dictionary appear here.</string>
+    <string name="notes_flashcards">Flashcards</string>
+    <string name="notes_due">Due for review: %1$d</string>
+    <string name="notes_all_caught_up">All caught up for today</string>
+    <string name="notes_word_count">×%1$d</string>
+    <plurals name="notes_next_review">
+        <item quantity="one">in %d day</item>
+        <item quantity="other">in %d days</item>
+    </plurals>
+    <string name="notes_delete_word">Delete word</string>
+    <string name="notes_delete_word_confirm">Delete “%1$s” from the reader’s vocabulary?</string>
+
+    <!-- Карточки -->
+    <string name="notes_card_progress">Card %1$d of %2$d</string>
+    <string name="notes_card_hint">Recall the meaning and context, then tap the card</string>
+    <string name="notes_show_answer">Show answer</string>
+    <string name="notes_lookup">Look up in dictionary</string>
+    <string name="notes_define_query">define %1$s</string>
+    <string name="notes_grade_again">Again</string>
+    <string name="notes_grade_hard">Hard</string>
+    <string name="notes_grade_good">Good</string>
+    <string name="notes_grade_easy">Easy</string>
+    <string name="notes_review_done">Done! Words reviewed: %1$d</string>
+
+    <!-- Readwise -->
+    <string name="notes_readwise_title">Readwise</string>
+    <string name="notes_readwise_token_section">Token</string>
+    <string name="notes_readwise_token_label">Readwise access token</string>
+    <string name="notes_readwise_show_token">Show token</string>
+    <string name="notes_readwise_hide_token">Hide token</string>
+    <string name="notes_readwise_check">Check token</string>
+    <string name="notes_readwise_valid">Token is valid</string>
+    <string name="notes_readwise_invalid">Token rejected</string>
+    <string name="notes_readwise_forget">Forget token</string>
+    <string name="notes_readwise_token_footer">The token is stored encrypted on this phone and is sent only to readwise.io.</string>
+    <string name="notes_readwise_get_token">Get a token at readwise.io</string>
+    <string name="notes_readwise_send_section">Send</string>
+    <string name="notes_readwise_send">Send highlights: %1$d</string>
+    <string name="notes_readwise_progress">%1$d of %2$d</string>
+    <string name="notes_readwise_sent">Sent to Readwise: %1$d</string>
+    <string name="notes_readwise_footer">Book, author, note, position and date of each highlight. Readwise skips highlights it already has, so sending again is safe.</string>
+    <string name="notes_readwise_error_token">Readwise rejected the token. Copy it again from readwise.io/access_token.</string>
+    <string name="notes_readwise_error_rate">Readwise asks to wait %1$d s and try again.</string>
+    <string name="notes_readwise_error_rate_plain">Readwise asks to wait and try again.</string>
+    <string name="notes_readwise_error_server">Readwise error %1$d: %2$s</string>
+    <string name="notes_readwise_error_network">Couldn’t reach readwise.io. Check the internet connection.</string>
+</resources>

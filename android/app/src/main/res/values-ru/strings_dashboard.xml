@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Существительные без числа (число рядом крупным шрифтом): ImpliedQuantity здесь намеренно. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="dashboard_welcome_title">Добро пожаловать в FolioLink</string>
+    <string name="dashboard_welcome_text">Статистика чтения, полки, выделения, заставки и шрифты для вашей читалки с прошивкой Folio.</string>
+    <string name="dashboard_welcome_step1">На читалке откройте Меню → «Связь с телефоном»</string>
+    <string name="dashboard_welcome_step2">Телефон и читалка — в одной Wi‑Fi сети</string>
+    <string name="dashboard_welcome_step3">Нажмите «Подключить читалку»</string>
+    <string name="dashboard_connect_reader">Подключить читалку</string>
+    <string name="dashboard_try_demo">Попробовать без читалки</string>
+
+    <string name="dashboard_reader">Читалка</string>
+    <string name="dashboard_firmware">Прошивка %1$s</string>
+    <string name="dashboard_status_connected">Подключено · %1$s</string>
+    <string name="dashboard_status_demo">Демо-режим · виртуальная читалка</string>
+    <string name="dashboard_status_connecting">Подключение…</string>
+    <string name="dashboard_status_failed">Нет связи</string>
+    <string name="dashboard_status_not_connected">Не подключено</string>
+    <string name="dashboard_status_offline">Офлайн</string>
+    <string name="dashboard_battery_a11y">Батарея %1$d%%</string>
+    <string name="dashboard_sd_free">Свободно %1$s из %2$s</string>
+    <string name="dashboard_synced_at">Синхронизация: %1$s</string>
+    <string name="dashboard_not_synced">Ещё не синхронизировано</string>
+    <string name="dashboard_refresh">Обновить</string>
+    <string name="dashboard_syncing">Синхронизация…</string>
+
+    <string name="dashboard_today">Сегодня</string>
+    <string name="dashboard_today_a11y">Сегодня: %1$d из %2$d мин</string>
+    <string name="dashboard_of_goal">из %1$d мин</string>
+    <plurals name="dashboard_streak_label" tools:ignore="ImpliedQuantity">
+        <item quantity="one">день подряд</item>
+        <item quantity="few">дня подряд</item>
+        <item quantity="many">дней подряд</item>
+        <item quantity="other">дня подряд</item>
+    </plurals>
+    <string name="dashboard_best_streak">рекорд серии</string>
+    <string name="dashboard_goal_met">Цель выполнена</string>
+    <string name="dashboard_minutes_left">Осталось %1$d мин</string>
+
+    <string name="dashboard_outbox">Очередь отправки</string>
+    <string name="dashboard_open_outbox">открыть очередь отправки</string>
+    <string name="dashboard_outbox_failed">Читалка отклонила</string>
+    <string name="dashboard_outbox_more">И ещё %1$d</string>
+    <string name="dashboard_outbox_sending">Изменения отправляются на читалку по порядку.</string>
+    <string name="dashboard_outbox_waiting">Всё уйдёт на читалку при следующем подключении.</string>
+
+    <string name="dashboard_currently_reading">Сейчас читаю</string>
+    <string name="dashboard_currently_reading_empty">Здесь появятся книги, которые вы читаете на читалке.</string>
+    <string name="dashboard_open_library">открыть библиотеку</string>
+</resources>

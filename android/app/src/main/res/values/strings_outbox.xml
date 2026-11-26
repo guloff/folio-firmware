@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="outbox_title">Send queue</string>
+    <string name="outbox_send_now">Send now</string>
+    <string name="outbox_send_item">Send now</string>
+    <string name="outbox_retry">Retry</string>
+    <string name="outbox_remove">Remove from queue</string>
+    <string name="outbox_empty_title">Queue is empty</string>
+    <string name="outbox_empty_message">Changes made while the reader is offline land here: statuses, shelves, notes, deletions, sleep screens, fonts, settings and books from “Share → FolioLink”.</string>
+    <plurals name="outbox_waiting">
+        <item quantity="one">%d change waiting to be sent</item>
+        <item quantity="other">%d changes waiting to be sent</item>
+    </plurals>
+    <string name="outbox_footer_connected">Changes go to the reader in order. Ones the reader rejects stay here with the error until you retry or delete them.</string>
+    <string name="outbox_footer_offline">The reader is not connected. Everything is sent in order on the next connection.</string>
+    <string name="outbox_needs_newer_app">Requires a newer FolioLink — this change can only be deleted</string>
+    <string name="outbox_other_reader">For another reader — goes out when that one connects</string>
+    <string name="outbox_delete_title">Remove “%1$s” from the queue?</string>
+    <string name="outbox_delete_message">The change will not be sent to the reader. The app’s data refreshes on the next sync.</string>
+    <plurals name="outbox_unreadable">
+        <item quantity="one">%d change couldn’t be read</item>
+        <item quantity="other">%d changes couldn’t be read</item>
+    </plurals>
+    <string name="outbox_unreadable_footer">The damaged queue file is kept on the phone and was not overwritten. Books found in its folders were restored above.</string>
+    <string name="outbox_unreadable_discard">Discard the damaged copy</string>
+</resources>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Настройки читалки -->
+    <string name="settings_device_title">Настройки читалки</string>
+    <string name="settings_saved">Настройки сохранены</string>
+    <string name="settings_offline_note">Читалка не подключена: показаны сохранённые настройки. Изменения встанут в очередь отправки.</string>
+    <string name="settings_other">Прочее</string>
+    <string name="settings_save_changes">Сохранить изменения?</string>
+    <string name="settings_discard">Не сохранять</string>
+    <string name="settings_decrease">Уменьшить: %1$s</string>
+    <string name="settings_increase">Увеличить: %1$s</string>
+    <string name="settings_show_value">Показать значение</string>
+    <string name="settings_hide_value">Скрыть значение</string>
+
+    <!-- Профили настроек -->
+    <string name="settings_profiles">Профили</string>
+    <string name="settings_profiles_title">Профили настроек</string>
+    <string name="settings_apply_profile">Применить профиль</string>
+    <string name="settings_save_as_profile">Сохранить как профиль…</string>
+    <string name="settings_manage_profiles">Профили…</string>
+    <string name="settings_new_profile">Новый профиль</string>
+    <string name="settings_rename_profile">Переименовать профиль</string>
+    <string name="settings_profile_name">Название</string>
+    <string name="settings_profile_hint">В профиль попадут шрифт, интервалы, поля, обновление экрана и другие переключатели — без имени устройства и паролей.</string>
+    <string name="settings_no_profiles">Профилей пока нет</string>
+    <string name="settings_no_profiles_message">Настройте читалку под себя и сохраните набор как профиль — например, «День» и «Ночь». Потом его можно применить одним нажатием.</string>
+    <string name="settings_apply">Применить</string>
+    <string name="settings_rename">Переименовать</string>
+    <string name="settings_profile_count">Настроек в профиле: %1$d</string>
+    <string name="settings_profile_matches">совпадает с читалкой</string>
+    <string name="settings_profile_will_change">изменит: %1$d</string>
+    <string name="settings_profile_missing">нет на этой читалке: %1$d</string>
+
+    <!-- Приложение -->
+    <string name="settings_app_title">Приложение</string>
+    <string name="settings_reading_header">Чтение</string>
+    <string name="settings_goal">Цель в день</string>
+    <string name="settings_goal_less">Уменьшить цель</string>
+    <string name="settings_goal_more">Увеличить цель</string>
+    <string name="settings_goal_footer">Цель синхронизируется с читалкой и видна на её главном экране.</string>
+    <string name="settings_reminder">Напоминание почитать</string>
+    <string name="settings_reminder_time">Время</string>
+    <string name="settings_reminder_footer">Если дневная цель уже выполнена (по данным последней синхронизации), напоминание сегодня не придёт.</string>
+    <string name="settings_notifications_denied">Уведомления для FolioLink выключены, напоминание не появится. Разрешите их в настройках приложения.</string>
+    <string name="settings_open_app_settings">Открыть настройки приложения</string>
+    <string name="settings_sleep_header">Заставки</string>
+    <string name="settings_dither_default">Дизеринг по умолчанию</string>
+    <string name="settings_dither_floyd">Флойд — Стейнберг</string>
+    <string name="settings_dither_atkinson">Аткинсон</string>
+    <string name="settings_dither_bayer">Байер 8×8</string>
+    <string name="settings_dither_none">Без дизеринга</string>
+    <string name="settings_screenshots_header">Скриншоты</string>
+    <string name="settings_autosave">Сохранять новые скриншоты в галерею</string>
+    <string name="settings_screenshots_footer">После синхронизации новые скриншоты с читалки сохраняются в «Изображения/FolioLink». Уже сделанные скриншоты сохраняет кнопка «Сохранить все».</string>
+    <string name="settings_outbox">Очередь отправки</string>
+    <string name="settings_outbox_empty">пусто</string>
+    <string name="settings_repo_header">Источник обновлений (для разработчиков)</string>
+    <string name="settings_repo_label">Репозиторий GitHub</string>
+    <string name="settings_repo_footer">Пусто — официальные релизы Folio.</string>
+    <string name="settings_data_header">Данные</string>
+    <string name="settings_data_sessions">Сессий в кэше</string>
+    <string name="settings_data_highlights">Выделений</string>
+    <string name="settings_data_words">Слов</string>
+    <string name="settings_about_header">О приложении</string>
+    <string name="settings_version">Версия</string>
+    <string name="settings_about_footer">FolioLink — компаньон для читалки Xteink X4 с прошивкой Folio.</string>
+    <string name="settings_link_site">Сайт FolioLink</string>
+    <string name="settings_link_support">Поддержка</string>
+    <string name="settings_link_privacy">Политика конфиденциальности</string>
+    <string name="settings_url_site">https://rustamguloff.com/ru/page/projects/foliolink</string>
+    <string name="settings_url_support">https://rustamguloff.com/ru/page/projects/foliolink/support</string>
+    <string name="settings_url_privacy">https://rustamguloff.com/ru/page/projects/foliolink/privacy-policy</string>
+    <string name="settings_dict_catalog_header">Каталог словарей (отладка)</string>
+    <string name="settings_dict_catalog_label">URL manifest.json</string>
+    <string name="settings_dict_catalog_footer">Только в отладочной сборке. Пусто — официальный каталог. Из эмулятора сервер на этом компьютере — http://10.0.2.2:&lt;порт&gt;/manifest.json.</string>
+</resources>

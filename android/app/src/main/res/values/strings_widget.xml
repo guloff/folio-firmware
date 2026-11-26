@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_name">Reading goal</string>
+    <string name="widget_medium_name">Reading</string>
+    <string name="widget_description">Streak, today\'s minutes and the current book.</string>
+
+    <string name="widget_days_short">days</string>
+    <string name="widget_of_goal">of %1$d</string>
+    <string name="widget_min_today">min today</string>
+    <string name="widget_goal_met">Goal met</string>
+    <string name="widget_currently_reading">Currently reading</string>
+    <string name="widget_no_book">No active book</string>
+    <string name="widget_minutes_of_goal">%1$d/%2$d min</string>
+    <string name="widget_small_a11y">Streak %1$d days. Today %2$d of %3$d min</string>
+    <string name="widget_medium_a11y">Currently reading: %1$s. Streak %2$d days. Today %3$d of %4$d min</string>
+</resources>

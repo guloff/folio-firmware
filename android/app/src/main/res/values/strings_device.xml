@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Окно подключения -->
+    <string name="device_connect_title">Connect to Folio</string>
+    <string name="device_found_header">Discovered devices</string>
+    <string name="device_found_footer">1. On the reader: Menu → “Phone sync”.\n2. Phone and reader on the same Wi‑Fi network.\n3. The reader appears in the list above.</string>
+    <string name="device_found_need_access">Allow access to devices on your local network to search for the reader.</string>
+    <string name="device_searching">Searching for readers…</string>
+    <string name="device_nothing_found">Nothing found</string>
+    <string name="device_search_again">Search again</string>
+    <string name="device_manual_header">Manual</string>
+    <string name="device_manual_hint">IP address, folio.local or host:port</string>
+    <string name="device_manual_footer">The IP address is shown on the reader’s “Phone sync” screen (for example, 192.168.1.42). You can also enter folio.local.</string>
+    <string name="device_manual_footer_debug">Emulator: the mock on the Mac is 10.0.2.2:8080.</string>
+    <string name="device_connect_button">Connect</string>
+    <string name="device_demo_button">Try without a reader</string>
+    <string name="device_demo_footer">Demo mode: a virtual reader with sample books, stats and highlights. Changes are not kept. To leave it, connect your own reader.</string>
+    <string name="device_last_device">Last device</string>
+    <string name="device_disconnect">Disconnect</string>
+    <string name="device_lan_header">Local network</string>
+    <string name="device_lan_explain">FolioLink talks to the reader over your Wi‑Fi network. To find and connect to it, allow access to devices on the local network. The app only connects to your reader.</string>
+    <string name="device_lan_allow">Allow access</string>
+    <string name="device_lan_denied">Access to the local network is denied. Turn on “Nearby devices on local network” for FolioLink in the app settings. Demo mode works without it.</string>
+    <string name="device_open_app_settings">Open app settings</string>
+
+    <!-- Сопряжение -->
+    <string name="device_pair_title">Pair with reader</string>
+    <string name="device_pair_later">Later</string>
+    <string name="device_pin_header">PIN from the reader’s screen</string>
+    <string name="device_pin_valid_for">PIN valid for another %1$d s</string>
+    <string name="device_pin_expired_request">PIN expired — request a new one</string>
+    <string name="device_pin_requesting">Requesting a PIN…</string>
+    <string name="device_pin_checking">Checking…</string>
+    <string name="device_pin_shown">The reader shows a PIN</string>
+    <string name="device_pin_explain">Enter the 6 digits shown on the reader. This is how the reader recognizes your phone: without pairing the app can only read data, not change it.</string>
+    <string name="device_pin_new">Show a new PIN</string>
+    <string name="device_pin_new_in">New PIN in %1$d s</string>
+    <string name="device_pin_footer">A PIN lives 2 minutes. After 5 wrong tries a new one is needed.</string>
+
+    <!-- Экран «Устройство» -->
+    <string name="device_title">Device</string>
+    <string name="device_pairing_header">Pairing</string>
+    <string name="device_pairing_footer">The reader accepts changes (statuses, shelves, files, settings) only from paired phones. Pairing can be fully reset in the reader’s menu.</string>
+    <string name="device_paired">Paired with this phone</string>
+    <string name="device_unpaired">Not paired: the reader won’t accept changes</string>
+    <string name="device_pair_button">Pair (enter PIN)</string>
+    <string name="device_pairing_not_required">This firmware doesn’t require pairing</string>
+    <string name="device_forget">Forget reader</string>
+    <string name="device_forget_title">Forget the reader?</string>
+    <string name="device_forget_message">The phone deletes the pairing key and the reader’s address. Cached stats stay. To change data again, connect and enter a PIN.</string>
+    <string name="device_forget_confirm">Forget</string>
+    <string name="device_outbox">Send queue</string>
+    <string name="device_connection_header">Connection</string>
+    <string name="device_state">Status</string>
+    <string name="device_not_connected">Not connected</string>
+    <string name="device_address">Address</string>
+    <string name="device_change_device">Change device</string>
+    <string name="device_send_time">Send time to reader</string>
+    <string name="device_time_set">Clock set</string>
+    <string name="device_reader_header">Reader</string>
+    <string name="device_model">Model</string>
+    <string name="device_firmware">Firmware</string>
+    <string name="device_api">API</string>
+    <string name="device_battery">Battery</string>
+    <string name="device_battery_value">%1$d%%</string>
+    <string name="device_battery_charging">%1$d%% · charging</string>
+    <string name="device_sd">SD card</string>
+    <string name="device_sd_value">%1$s free of %2$s</string>
+    <string name="device_clock">Clock</string>
+    <string name="device_clock_not_set">not set</string>
+    <string name="device_clock_no_rtc">no RTC</string>
+    <string name="device_network_header">Network</string>
+    <string name="device_mode">Mode</string>
+    <string name="device_signal">Signal</string>
+    <string name="device_signal_value">%1$d dBm</string>
+    <string name="device_free_heap">Free memory (developers)</string>
+    <string name="device_uptime">Running since restart</string>
+    <string name="device_serial">Serial number</string>
+
+    <!-- Bluetooth -->
+    <string name="device_ble_header">Bluetooth</string>
+    <string name="device_ble_toggle">Bluetooth sync</string>
+    <string name="device_ble_footer">No Wi‑Fi needed: stats, sessions, highlights, vocabulary and the book list arrive by themselves whenever the reader wakes up. Files and screenshots still need Wi‑Fi. On the reader turn on “Bluetooth sync” (Settings → System): it takes effect after the reader restarts. The reader must already be paired with this phone over Wi‑Fi.</string>
+    <string name="device_ble_status_off">Off</string>
+    <string name="device_ble_status_unsupported">Bluetooth LE is not supported</string>
+    <string name="device_ble_status_unauthorized">No Bluetooth access</string>
+    <string name="device_ble_status_powered_off">Bluetooth is off</string>
+    <string name="device_ble_status_searching">Looking for the reader…</string>
+    <string name="device_ble_status_connecting">Connecting…</string>
+    <string name="device_ble_status_syncing">Syncing…</string>
+    <string name="device_ble_status_connected">Connected</string>
+    <string name="device_ble_step">Step</string>
+    <string name="device_ble_step_hello">Greeting</string>
+    <string name="device_ble_step_auth">Pairing check</string>
+    <string name="device_ble_step_info">Reader info</string>
+    <string name="device_ble_step_time">Clock</string>
+    <string name="device_ble_step_stats">Statistics</string>
+    <string name="device_ble_step_sessions">Reading sessions</string>
+    <string name="device_ble_step_highlights">Highlights</string>
+    <string name="device_ble_step_vocab">Vocabulary</string>
+    <string name="device_ble_step_books">Books</string>
+    <string name="device_ble_step_screenshots">Screenshots</string>
+    <string name="device_ble_reader">Reader</string>
+    <string name="device_ble_needs_pairing">First connect the reader over Wi‑Fi and enter the PIN</string>
+    <string name="device_ble_grant">Allow Bluetooth access</string>
+    <string name="device_ble_sync_now">Sync now</string>
+    <string name="device_ble_find_other">Look for another reader</string>
+    <string name="device_ble_last_sync">Last sync</string>
+    <string name="device_ble_never">not yet</string>
+</resources>

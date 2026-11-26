@@ -3,7 +3,9 @@ name: Build x4pro
 on:
   push:
     branches: [main]
+    paths-ignore: ['android/**']
   pull_request:
+    paths-ignore: ['android/**']
   workflow_dispatch:
 
 permissions:

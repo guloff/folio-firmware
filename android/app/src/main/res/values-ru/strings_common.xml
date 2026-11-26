@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_duration_m">%1$d мин</string>
+    <string name="common_duration_h">%1$d ч</string>
+    <string name="common_duration_hm">%1$d ч %2$d мин</string>
+    <string name="common_not_started">Не начата</string>
+    <string name="common_cancel">Отмена</string>
+    <string name="common_done">Готово</string>
+    <string name="common_save">Сохранить</string>
+    <string name="common_delete">Удалить</string>
+    <string name="common_close">Закрыть</string>
+    <string name="common_ok">ОК</string>
+    <string name="common_share">Поделиться</string>
+    <string name="common_back">Назад</string>
+    <string name="common_more_options">Ещё действия</string>
+    <string name="common_connect">Подключить</string>
+    <string name="common_sync">Синхронизировать</string>
+
+    <string name="status_want">Хочу прочитать</string>
+    <string name="status_want_short">Хочу</string>
+    <string name="status_reading">Читаю</string>
+    <string name="status_done">Прочитано</string>
+    <string name="status_dropped">Брошено</string>
+
+    <plurals name="plural_book">
+        <item quantity="one">%d книга</item>
+        <item quantity="few">%d книги</item>
+        <item quantity="many">%d книг</item>
+        <item quantity="other">%d книги</item>
+    </plurals>
+    <plurals name="plural_page">
+        <item quantity="one">%d страница</item>
+        <item quantity="few">%d страницы</item>
+        <item quantity="many">%d страниц</item>
+        <item quantity="other">%d страницы</item>
+    </plurals>
+    <plurals name="plural_session">
+        <item quantity="one">%d сессия</item>
+        <item quantity="few">%d сессии</item>
+        <item quantity="many">%d сессий</item>
+        <item quantity="other">%d сессии</item>
+    </plurals>
+    <plurals name="plural_minute">
+        <item quantity="one">%d минута</item>
+        <item quantity="few">%d минуты</item>
+        <item quantity="many">%d минут</item>
+        <item quantity="other">%d минуты</item>
+    </plurals>
+</resources>

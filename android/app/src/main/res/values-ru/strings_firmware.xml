@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="firmware_title">Прошивка</string>
+    <string name="firmware_current_header">Текущая версия</string>
+    <string name="firmware_version">Прошивка</string>
+    <string name="firmware_board">Плата</string>
+    <string name="firmware_image_header">Образ прошивки</string>
+    <string name="firmware_image_footer">FolioLink устанавливает только прошивку, подписанную ключом Folio: рядом с образом нужен файл подписи .bin.sig.</string>
+    <string name="firmware_download_latest">Скачать последнюю версию Folio</string>
+    <string name="firmware_choose_files">Выбрать файлы .bin и .bin.sig</string>
+    <string name="firmware_release">Версия %1$s: %2$s</string>
+    <string name="firmware_in_image">В образе</string>
+    <string name="firmware_sig_ok">Подпись Folio проверена</string>
+    <string name="firmware_install">Загрузить и установить</string>
+    <string name="firmware_install_footer">Прошивка загрузится на читалку, та проверит её и попросит подтвердить установку на своём экране. Во время установки не выключайте читалку.</string>
+    <string name="firmware_looking">Поиск релиза…</string>
+    <string name="firmware_downloading">Скачивание %1$s…</string>
+    <string name="firmware_downloading_sig">Скачивание подписи…</string>
+    <string name="firmware_uploading">Загрузка на читалку…</string>
+    <string name="firmware_unreadable">Не удалось прочитать: %1$s</string>
+    <string name="firmware_confirm_title">Установить прошивку %1$s?</string>
+    <string name="firmware_confirm_current">Текущая версия: %1$s. Установку нужно будет подтвердить на читалке; она займёт 1–2 минуты.</string>
+    <string name="firmware_confirm_new">Новая: %1$s %2$s.</string>
+    <string name="firmware_confirm_battery">Заряд %1$d%%. Подключите зарядку перед обновлением.</string>
+    <string name="firmware_send">Отправить на читалку</string>
+
+    <string name="firmware_sig_missing">Нет файла подписи (.bin.sig). Неподписанную прошивку FolioLink не устанавливает.</string>
+    <string name="firmware_sig_malformed">Файл подписи повреждён: %1$d байт вместо 64.</string>
+    <string name="firmware_sig_invalid">Подпись не совпадает: образ изменён или подписан чужим ключом. Установка отменена.</string>
+    <string name="firmware_err_bad_repo">Неверный репозиторий: нужен формат owner/repo</string>
+    <string name="firmware_err_no_asset">В последнем релизе нет прошивки для этой читалки</string>
+    <string name="firmware_err_ambiguous">В релизе несколько подходящих файлов — выберите файл вручную</string>
+    <string name="firmware_err_http">Сервер обновлений ответил ошибкой %1$d</string>
+    <string name="firmware_err_not_firmware">Скачанный файл не похож на прошивку</string>
+    <string name="firmware_err_no_signature">В релизе нет файла подписи (.bin.sig) — такую прошивку FolioLink не устанавливает</string>
+    <string name="firmware_err_network">Нет связи с GitHub. Проверьте интернет и попробуйте ещё раз.</string>
+    <string name="firmware_risk_title">Всё равно установить?</string>
+    <string name="firmware_risk_older">Образ (%1$s) старее прошивки читалки (%2$s). При откате пропадут функции и исправления.</string>
+    <string name="firmware_risk_same">Образ (%1$s) той же версии, что и прошивка читалки.</string>
+    <string name="firmware_risk_board">Образ собран для «%1$s», а читалка — «%2$s». Прошивка для другой платы может не запуститься.</string>
+    <string name="firmware_risk_unknown">В образе не указана версия; сравнить с прошивкой читалки (%1$s) нельзя.</string>
+    <string name="firmware_install_anyway">Всё равно установить</string>
+</resources>

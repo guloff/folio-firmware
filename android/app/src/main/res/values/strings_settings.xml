@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Настройки читалки -->
+    <string name="settings_device_title">Reader settings</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="settings_offline_note">The reader is not connected: showing saved settings. Changes go to the send queue.</string>
+    <string name="settings_other">Other</string>
+    <string name="settings_save_changes">Save changes?</string>
+    <string name="settings_discard">Don’t save</string>
+    <string name="settings_decrease">Decrease %1$s</string>
+    <string name="settings_increase">Increase %1$s</string>
+    <string name="settings_show_value">Show value</string>
+    <string name="settings_hide_value">Hide value</string>
+
+    <!-- Профили настроек -->
+    <string name="settings_profiles">Profiles</string>
+    <string name="settings_profiles_title">Settings profiles</string>
+    <string name="settings_apply_profile">Apply profile</string>
+    <string name="settings_save_as_profile">Save as profile…</string>
+    <string name="settings_manage_profiles">Profiles…</string>
+    <string name="settings_new_profile">New profile</string>
+    <string name="settings_rename_profile">Rename profile</string>
+    <string name="settings_profile_name">Name</string>
+    <string name="settings_profile_hint">The profile keeps the font, spacing, margins, screen refresh and other switches — not the device name or passwords.</string>
+    <string name="settings_no_profiles">No profiles yet</string>
+    <string name="settings_no_profiles_message">Set up the reader the way you like and save it as a profile — say, “Day” and “Night”. Then apply it with one tap.</string>
+    <string name="settings_apply">Apply</string>
+    <string name="settings_rename">Rename</string>
+    <string name="settings_profile_count">Settings in profile: %1$d</string>
+    <string name="settings_profile_matches">matches the reader</string>
+    <string name="settings_profile_will_change">will change: %1$d</string>
+    <string name="settings_profile_missing">not on this reader: %1$d</string>
+
+    <!-- Приложение -->
+    <string name="settings_app_title">App</string>
+    <string name="settings_reading_header">Reading</string>
+    <string name="settings_goal">Daily goal</string>
+    <string name="settings_goal_less">Lower the goal</string>
+    <string name="settings_goal_more">Raise the goal</string>
+    <string name="settings_goal_footer">The goal syncs with the reader and shows on its home screen.</string>
+    <string name="settings_reminder">Reading reminder</string>
+    <string name="settings_reminder_time">Time</string>
+    <string name="settings_reminder_footer">If today’s goal is already met (as of the last sync), there will be no reminder today.</string>
+    <string name="settings_notifications_denied">Notifications are off for FolioLink, so the reminder can’t be shown. Allow them in the app settings.</string>
+    <string name="settings_open_app_settings">Open app settings</string>
+    <string name="settings_sleep_header">Sleep screens</string>
+    <string name="settings_dither_default">Default dithering</string>
+    <string name="settings_dither_floyd">Floyd–Steinberg</string>
+    <string name="settings_dither_atkinson">Atkinson</string>
+    <string name="settings_dither_bayer">Bayer 8×8</string>
+    <string name="settings_dither_none">No dithering</string>
+    <string name="settings_screenshots_header">Screenshots</string>
+    <string name="settings_autosave">Save new screenshots to the gallery</string>
+    <string name="settings_screenshots_footer">After each sync, new screenshots from the reader are saved to Pictures/FolioLink. Existing screenshots are saved with “Save all”.</string>
+    <string name="settings_outbox">Send queue</string>
+    <string name="settings_outbox_empty">empty</string>
+    <string name="settings_repo_header">Update source (developers)</string>
+    <string name="settings_repo_label">GitHub repository</string>
+    <string name="settings_repo_footer">Empty — official Folio releases.</string>
+    <string name="settings_data_header">Data</string>
+    <string name="settings_data_sessions">Cached sessions</string>
+    <string name="settings_data_highlights">Highlights</string>
+    <string name="settings_data_words">Words</string>
+    <string name="settings_about_header">About</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_about_footer">FolioLink is the companion app for the Xteink X4 reader running Folio firmware.</string>
+    <string name="settings_link_site">FolioLink website</string>
+    <string name="settings_link_support">Support</string>
+    <string name="settings_link_privacy">Privacy policy</string>
+    <string name="settings_url_site">https://rustamguloff.com/en/page/projects/foliolink</string>
+    <string name="settings_url_support">https://rustamguloff.com/en/page/projects/foliolink/support</string>
+    <string name="settings_url_privacy">https://rustamguloff.com/en/page/projects/foliolink/privacy-policy</string>
+    <string name="settings_dict_catalog_header">Dictionary catalog (debug)</string>
+    <string name="settings_dict_catalog_label">manifest.json URL</string>
+    <string name="settings_dict_catalog_footer">Debug builds only. Empty — the official catalog. From the emulator a server on this computer is http://10.0.2.2:&lt;port&gt;/manifest.json.</string>
+</resources>

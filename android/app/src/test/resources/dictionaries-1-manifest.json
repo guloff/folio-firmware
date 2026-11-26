@@ -1,0 +1,263 @@
+{
+  "version": 1,
+  "dictionaries": [
+    {
+      "id": "en-ru-wiktionary",
+      "title": {
+        "en": "English → Russian (Wiktionary)",
+        "ru": "Английский → русский (Викисловарь)"
+      },
+      "from": "en",
+      "to": "ru",
+      "headwords": 56453,
+      "license": "CC BY-SA 4.0",
+      "attribution": "Contains data from English Wiktionary (https://en.wiktionary.org/) and Russian Wiktionary (https://ru.wiktionary.org/) by Wiktionary contributors, licensed CC BY-SA 4.0. Extracted with Wiktextract by Tatu Ylonen (kaikki.org: https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl.gz, https://kaikki.org/dictionary/Russian/kaikki.org-dictionary-Russian.jsonl.gz, https://kaikki.org/dictionary/downloads/ru/ru-extract.jsonl.gz). Adapted (filtered, reformatted, truncated) into StarDict by the Folio project; the result is licensed CC BY-SA 4.0.",
+      "source": "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl.gz",
+      "files": [
+        {
+          "name": "en-ru-wiktionary.ifo",
+          "size": 841,
+          "sha256": "d833910255053b4fc627773884cff43d76f805afdfc7951200f853ca3325b106"
+        },
+        {
+          "name": "en-ru-wiktionary.idx",
+          "size": 986063,
+          "sha256": "7b8e1b22aa3b2f874d1a71f16dab6b045c1bcca4719a4a3440f97e5bbf625009"
+        },
+        {
+          "name": "en-ru-wiktionary.dict.dz",
+          "size": 2125565,
+          "sha256": "226ff1e7e3fac219a7a57a92c6b6fa6c8963842c4d6514f4f9fddab8a9a52ee2"
+        },
+        {
+          "name": "en-ru-wiktionary.syn",
+          "size": 1084051,
+          "sha256": "fff59831e359a05610a8dea32e39b42c08a49477083cd6f517a1ecd7d19e2fa0"
+        }
+      ],
+      "inputs": [
+        {
+          "url": "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl.gz",
+          "sha256": "cabb3a13b7179d5f8c5909e06b1dcd2e2ae6465d05f35de56509a5b4e2bf0a49"
+        },
+        {
+          "url": "https://kaikki.org/dictionary/Russian/kaikki.org-dictionary-Russian.jsonl.gz",
+          "sha256": "9dc6b247752a59b1be12e891656504d80be3045c4218fd28ec16154246aec251"
+        },
+        {
+          "url": "https://kaikki.org/dictionary/downloads/ru/ru-extract.jsonl.gz",
+          "sha256": "613d46349636406fb1e341d20d9fde5c65644a09e6db377a4d32c188966d8caf"
+        }
+      ]
+    },
+    {
+      "id": "ru-en-wiktionary",
+      "title": {
+        "en": "Russian → English (Wiktionary)",
+        "ru": "Русский → английский (Викисловарь)"
+      },
+      "from": "ru",
+      "to": "en",
+      "headwords": 70406,
+      "license": "CC BY-SA 4.0",
+      "attribution": "Contains data from English Wiktionary (https://en.wiktionary.org/) by Wiktionary contributors, licensed CC BY-SA 4.0. Extracted with Wiktextract by Tatu Ylonen (kaikki.org: https://kaikki.org/dictionary/Russian/kaikki.org-dictionary-Russian.jsonl.gz). Adapted (filtered, reformatted, truncated) into StarDict by the Folio project; the result is licensed CC BY-SA 4.0.",
+      "source": "https://kaikki.org/dictionary/Russian/kaikki.org-dictionary-Russian.jsonl.gz",
+      "files": [
+        {
+          "name": "ru-en-wiktionary.ifo",
+          "size": 649,
+          "sha256": "c96b448a0c43930e478a552d0df744d69236a62e5125e1d751a502b7b3070d7a"
+        },
+        {
+          "name": "ru-en-wiktionary.idx",
+          "size": 1881436,
+          "sha256": "37fca2207011b4ad4a5151402af345734443760ac2a9b7b648a238503a6d35f6"
+        },
+        {
+          "name": "ru-en-wiktionary.dict.dz",
+          "size": 2625161,
+          "sha256": "21c41547464663d7b2c223c5fae3abe7e5c581b5841123c88aeab37eb1a7e459"
+        },
+        {
+          "name": "ru-en-wiktionary.syn",
+          "size": 8081017,
+          "sha256": "d9ffbc361afbd983a4dd32a3260dd871e78e75763ca8d026beb1ff6bdc6ffbf4"
+        }
+      ],
+      "inputs": [
+        {
+          "url": "https://kaikki.org/dictionary/Russian/kaikki.org-dictionary-Russian.jsonl.gz",
+          "sha256": "9dc6b247752a59b1be12e891656504d80be3045c4218fd28ec16154246aec251"
+        }
+      ]
+    },
+    {
+      "id": "en-en-wiktionary",
+      "title": {
+        "en": "English explanatory (Wiktionary)",
+        "ru": "Толковый английский (Викисловарь)"
+      },
+      "from": "en",
+      "to": "en",
+      "headwords": 658306,
+      "license": "CC BY-SA 4.0",
+      "attribution": "Contains data from English Wiktionary (https://en.wiktionary.org/) by Wiktionary contributors, licensed CC BY-SA 4.0. Extracted with Wiktextract by Tatu Ylonen (kaikki.org: https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl.gz). Adapted (filtered, reformatted, truncated) into StarDict by the Folio project; the result is licensed CC BY-SA 4.0.",
+      "source": "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl.gz",
+      "files": [
+        {
+          "name": "en-en-wiktionary.ifo",
+          "size": 643,
+          "sha256": "683b325a26d940ddb88a88a348e1a5219268086037408944651eac64bf262ce2"
+        },
+        {
+          "name": "en-en-wiktionary.idx",
+          "size": 12281797,
+          "sha256": "5dbb12050bf8cdcf3c6c76cd776dfb2ffc301a4949a477764431ceb8b357cd0f"
+        },
+        {
+          "name": "en-en-wiktionary.dict.dz",
+          "size": 28478969,
+          "sha256": "2b5389b7147a360554d62285f97c9c0e894d2cf87d7621ab8d7bce94a29dbdc4"
+        },
+        {
+          "name": "en-en-wiktionary.syn",
+          "size": 6042444,
+          "sha256": "1dd8fee9424a5f8a8abd631c26e7061515f89ccef035da18e33a22e7804435c7"
+        }
+      ],
+      "inputs": [
+        {
+          "url": "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl.gz",
+          "sha256": "cabb3a13b7179d5f8c5909e06b1dcd2e2ae6465d05f35de56509a5b4e2bf0a49"
+        }
+      ]
+    },
+    {
+      "id": "ru-ru-wiktionary",
+      "title": {
+        "en": "Russian explanatory (Wiktionary)",
+        "ru": "Толковый русский (Викисловарь)"
+      },
+      "from": "ru",
+      "to": "ru",
+      "headwords": 429738,
+      "license": "CC BY-SA 4.0",
+      "attribution": "Contains data from English Wiktionary (https://en.wiktionary.org/) and Russian Wiktionary (https://ru.wiktionary.org/) by Wiktionary contributors, licensed CC BY-SA 4.0. Extracted with Wiktextract by Tatu Ylonen (kaikki.org: https://kaikki.org/dictionary/downloads/ru/ru-extract.jsonl.gz, https://kaikki.org/dictionary/Russian/kaikki.org-dictionary-Russian.jsonl.gz). Adapted (filtered, reformatted, truncated) into StarDict by the Folio project; the result is licensed CC BY-SA 4.0.",
+      "source": "https://kaikki.org/dictionary/downloads/ru/ru-extract.jsonl.gz",
+      "files": [
+        {
+          "name": "ru-ru-wiktionary.ifo",
+          "size": 759,
+          "sha256": "5f9659d22337e0ee4b0155dfa363f5409bf490f29c3ade966a2c2b792edb8ff9"
+        },
+        {
+          "name": "ru-ru-wiktionary.idx",
+          "size": 12688230,
+          "sha256": "9e394f58f194447733f1bf93bb46e30117201aa99923961ef5bbe0d256a50783"
+        },
+        {
+          "name": "ru-ru-wiktionary.dict.dz",
+          "size": 11410350,
+          "sha256": "802fc15d28d4a15c83988a015483c908cdd5548727903b8f51be3d14870acbc9"
+        },
+        {
+          "name": "ru-ru-wiktionary.syn",
+          "size": 8658455,
+          "sha256": "aee74c88f0c89f629a7245b5b74fe827e8ce8d7fd0336db29f95460c1d65d275"
+        }
+      ],
+      "inputs": [
+        {
+          "url": "https://kaikki.org/dictionary/downloads/ru/ru-extract.jsonl.gz",
+          "sha256": "613d46349636406fb1e341d20d9fde5c65644a09e6db377a4d32c188966d8caf"
+        },
+        {
+          "url": "https://kaikki.org/dictionary/Russian/kaikki.org-dictionary-Russian.jsonl.gz",
+          "sha256": "9dc6b247752a59b1be12e891656504d80be3045c4218fd28ec16154246aec251"
+        }
+      ]
+    },
+    {
+      "id": "tg-en-wiktionary",
+      "title": {
+        "en": "Tajik → English (Wiktionary)",
+        "ru": "Таджикский → английский (Викисловарь)"
+      },
+      "from": "tg",
+      "to": "en",
+      "headwords": 3453,
+      "license": "CC BY-SA 4.0",
+      "attribution": "Contains data from English Wiktionary (https://en.wiktionary.org/) by Wiktionary contributors, licensed CC BY-SA 4.0. Extracted with Wiktextract by Tatu Ylonen (kaikki.org: https://kaikki.org/dictionary/Tajik/kaikki.org-dictionary-Tajik.jsonl). Adapted (filtered, reformatted, truncated) into StarDict by the Folio project; the result is licensed CC BY-SA 4.0.",
+      "source": "https://kaikki.org/dictionary/Tajik/kaikki.org-dictionary-Tajik.jsonl",
+      "files": [
+        {
+          "name": "tg-en-wiktionary.ifo",
+          "size": 635,
+          "sha256": "73368c36d2bc6cf0a2b29cb71e150745322bf338391133e429485a31da006aeb"
+        },
+        {
+          "name": "tg-en-wiktionary.idx",
+          "size": 74198,
+          "sha256": "643a0e13f7e94e4744f82056ec4cd4c1e2140929000f1218f5c4a40a0d7a016d"
+        },
+        {
+          "name": "tg-en-wiktionary.dict.dz",
+          "size": 92825,
+          "sha256": "cf1da4d351273c4b11537976cefb8a6f5d0cc45e81c9e126d0b23d44f9eacb56"
+        },
+        {
+          "name": "tg-en-wiktionary.syn",
+          "size": 27085,
+          "sha256": "83a508be4d6c8e454e6042ae4c0670f7b87d73420348832287135326ad2d5350"
+        }
+      ],
+      "inputs": [
+        {
+          "url": "https://kaikki.org/dictionary/Tajik/kaikki.org-dictionary-Tajik.jsonl",
+          "sha256": "b7f85b03312461f70d92246d00d71b3c8895e930ae461b7c08ad6a85a994dd93"
+        }
+      ]
+    },
+    {
+      "id": "tg-ru-wiktionary",
+      "title": {
+        "en": "Tajik → Russian (Wiktionary)",
+        "ru": "Таджикский → русский (Викисловарь)"
+      },
+      "from": "tg",
+      "to": "ru",
+      "headwords": 11539,
+      "license": "CC BY-SA 4.0",
+      "attribution": "Contains data from Russian Wiktionary (https://ru.wiktionary.org/) by Wiktionary contributors, licensed CC BY-SA 4.0. Extracted with Wiktextract by Tatu Ylonen (kaikki.org: https://kaikki.org/dictionary/downloads/ru/ru-extract.jsonl.gz). Adapted (filtered, reformatted, truncated) into StarDict by the Folio project; the result is licensed CC BY-SA 4.0.",
+      "source": "https://kaikki.org/dictionary/downloads/ru/ru-extract.jsonl.gz",
+      "files": [
+        {
+          "name": "tg-ru-wiktionary.ifo",
+          "size": 629,
+          "sha256": "9153cc7fef142c701d14abfe6562e8f096df5554cdcf5789d591895c356052da"
+        },
+        {
+          "name": "tg-ru-wiktionary.idx",
+          "size": 261046,
+          "sha256": "5d9ec25a2bf0c64d8f49f0a7d92de6d53de5842c2bc101f91a5d108afbc48549"
+        },
+        {
+          "name": "tg-ru-wiktionary.dict.dz",
+          "size": 121783,
+          "sha256": "390cef898cc204b489dc9f35c52decb773860f81098eea5bb47ef25aa58fe29d"
+        },
+        {
+          "name": "tg-ru-wiktionary.syn",
+          "size": 18251,
+          "sha256": "c6d2e94608d3c605ae98c05008aad0c11c60f889d8d069467edf08fc631b54a8"
+        }
+      ],
+      "inputs": [
+        {
+          "url": "https://kaikki.org/dictionary/downloads/ru/ru-extract.jsonl.gz",
+          "sha256": "613d46349636406fb1e341d20d9fde5c65644a09e6db377a4d32c188966d8caf"
+        }
+      ]
+    }
+  ]
+}

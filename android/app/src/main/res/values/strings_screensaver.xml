@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Студия заставок -->
+    <string name="screensaver_title">Sleep screen studio</string>
+    <string name="screensaver_preview">Sleep image preview</string>
+    <string name="screensaver_preview_zoom">Enlarge</string>
+    <string name="screensaver_show_original">Show without dithering</string>
+    <string name="screensaver_section_template">Template</string>
+    <string name="screensaver_template_photo">Photo</string>
+    <string name="screensaver_template_card">ID card</string>
+    <string name="screensaver_template_quote">Quote</string>
+    <string name="screensaver_template_poster">Text</string>
+    <string name="screensaver_template_calendar">Calendar</string>
+    <string name="screensaver_choose_photo">Choose photo</string>
+    <string name="screensaver_another_photo">Another photo</string>
+    <string name="screensaver_photo_unreadable">Couldn’t read the photo</string>
+    <string name="screensaver_scale">Scale</string>
+    <string name="screensaver_fill">Fill</string>
+    <string name="screensaver_fit">Fit</string>
+    <string name="screensaver_zoom">Zoom</string>
+    <string name="screensaver_offset_x">Offset X</string>
+    <string name="screensaver_offset_y">Offset Y</string>
+    <string name="screensaver_caption">Caption (optional)</string>
+    <string name="screensaver_field_title">Title</string>
+    <string name="screensaver_card_name">Name</string>
+    <string name="screensaver_card_phone">Phone</string>
+    <string name="screensaver_card_email">Email</string>
+    <string name="screensaver_card_note">Footer text</string>
+    <string name="screensaver_card_add_photo">Add photo</string>
+    <string name="screensaver_card_replace_photo">Replace photo</string>
+    <string name="screensaver_card_remove_photo">Remove photo</string>
+    <string name="screensaver_quote_author">Author / book</string>
+    <string name="screensaver_quote_pick">Pick from highlights</string>
+    <string name="screensaver_quote_random">Random highlight</string>
+    <string name="screensaver_quote_author_format">%1$s, “%2$s”</string>
+    <string name="screensaver_poster_text">Text</string>
+    <string name="screensaver_poster_subtitle">Subtitle</string>
+    <string name="screensaver_font">Font</string>
+    <string name="screensaver_font_serif">Serif</string>
+    <string name="screensaver_font_sans">Sans serif</string>
+    <string name="screensaver_font_mono">Monospaced</string>
+    <string name="screensaver_font_rounded">Rounded</string>
+    <string name="screensaver_size">Size</string>
+    <string name="screensaver_centered">Centered</string>
+    <string name="screensaver_inverted">White on black</string>
+    <string name="screensaver_calendar_hint">The last 26 weeks of reading, your streak and totals.</string>
+    <string name="screensaver_section_screen">Reader screen</string>
+    <string name="screensaver_dither">Dithering</string>
+    <string name="screensaver_dither_floyd">Floyd–Steinberg</string>
+    <string name="screensaver_dither_atkinson">Atkinson</string>
+    <string name="screensaver_dither_bayer">Bayer 8×8</string>
+    <string name="screensaver_dither_none">No dithering</string>
+    <string name="screensaver_brightness">Brightness</string>
+    <string name="screensaver_contrast">Contrast</string>
+    <string name="screensaver_gamma">Gamma</string>
+    <string name="screensaver_invert">Invert</string>
+    <string name="screensaver_reset_tone">Reset tone</string>
+    <string name="screensaver_screen_footer">The preview shows exactly 4 gray levels, like the X4 screen (480×800).</string>
+    <string name="screensaver_file_name">File name</string>
+    <string name="screensaver_upload">Upload to reader</string>
+    <string name="screensaver_enqueue">Add to the send queue</string>
+    <string name="screensaver_offline_hint">The reader is not connected: the sleep screen is queued and uploads when connected.</string>
+    <string name="screensaver_save_bmp">Save BMP…</string>
+    <string name="screensaver_open_sleep">Sleep screen on the reader</string>
+    <string name="screensaver_upload_footer_select">The uploaded image becomes the sleep screen: the reader switches to “Custom” and shows it until you choose another one.</string>
+    <string name="screensaver_upload_footer_custom">The picture shows on the sleep screen when “Custom” mode is selected.</string>
+
+    <!-- Значения по умолчанию и надписи на самой картинке -->
+    <string name="screensaver_default_card_headline">If found, please return</string>
+    <string name="screensaver_default_card_note">Reward guaranteed</string>
+    <string name="screensaver_default_quote">Manuscripts don’t burn.</string>
+    <string name="screensaver_default_quote_author">M. Bulgakov, “The Master and Margarita”</string>
+    <string name="screensaver_default_poster">To read\nis to live\ntwice</string>
+    <string name="screensaver_default_calendar_title">My reading year</string>
+    <string name="screensaver_canvas_choose_photo">Choose a photo</string>
+    <string name="screensaver_canvas_name">First Last</string>
+    <string name="screensaver_canvas_phone">+1 555 010 0000</string>
+    <string name="screensaver_canvas_min_per_day">min/day</string>
+    <string name="screensaver_canvas_streak">day streak</string>
+    <string name="screensaver_canvas_record">record</string>
+    <string name="screensaver_canvas_hours">hours</string>
+    <string name="screensaver_canvas_books">books</string>
+    <string name="screensaver_canvas_today">Today: %1$d / %2$d min</string>
+
+    <!-- Экран сна на читалке -->
+    <string name="screensaver_sleep_title">Sleep screen</string>
+    <string name="screensaver_modes_footer">“Custom” shows uploaded pictures, “Dashboard” shows the cover, progress and streak, “Quote” shows a random highlight.</string>
+    <string name="screensaver_choice">Sleep image</string>
+    <string name="screensaver_choice_hint">Choose the sleep image from the pictures on the reader</string>
+    <string name="screensaver_choice_random_subtitle">A different picture each time</string>
+    <string name="screensaver_choice_mode_warning">The “%1$s” mode doesn’t show pictures</string>
+    <string name="screensaver_pictures_on_reader">Pictures on the reader</string>
+    <string name="screensaver_no_pictures">No images yet</string>
+    <string name="screensaver_picker_empty">There are no pictures on the reader yet. Add them on the “Sleep screen” page.</string>
+    <string name="screensaver_pictures_footer_select">“Custom” shows the chosen picture, or a random one when none is chosen. Tap a picture to view it; touch and hold for more.</string>
+    <string name="screensaver_pictures_footer_random">“Custom” shows a random picture. Tap a picture to view it; touch and hold for more.</string>
+    <string name="screensaver_show_this">Show this image</string>
+    <string name="screensaver_show_random">Show random images</string>
+    <string name="screensaver_currently_chosen">Currently chosen</string>
+    <string name="screensaver_shown_on_sleep">Shown on the sleep screen</string>
+    <string name="screensaver_open_picture">Open the picture</string>
+    <string name="screensaver_delete_from_reader">Delete from reader</string>
+    <string name="screensaver_delete_confirm">Delete the picture “%1$s” from the reader?</string>
+
+    <!-- Пакетная загрузка и набор Folio -->
+    <string name="screensaver_add_pictures">Add pictures</string>
+    <string name="screensaver_from_photos">From gallery</string>
+    <string name="screensaver_from_files">From files</string>
+    <string name="screensaver_pack_button">Folio sleep screens (%1$d)</string>
+    <string name="screensaver_show_these">Show these pictures on the sleep screen</string>
+    <plurals name="screensaver_batch_footer">
+        <item quantity="one">Up to %d picture at a time. 480×800 BMPs are sent as they are; others are fitted to the reader’s screen in 4 shades of gray.</item>
+        <item quantity="other">Up to %d pictures at a time. 480×800 BMPs are sent as they are; others are fitted to the reader’s screen in 4 shades of gray.</item>
+    </plurals>
+    <string name="screensaver_batch_preparing">Preparing %1$d of %2$d…</string>
+    <string name="screensaver_batch_sending">Sending %1$d of %2$d…</string>
+    <string name="screensaver_batch_cancelled">Adding pictures cancelled</string>
+    <plurals name="screensaver_batch_sent">
+        <item quantity="one">Sent %d picture</item>
+        <item quantity="other">Sent %d pictures</item>
+    </plurals>
+    <plurals name="screensaver_batch_queued">
+        <item quantity="one">%d picture queued</item>
+        <item quantity="other">%d pictures queued</item>
+    </plurals>
+    <string name="screensaver_batch_failed">Not sent: %1$d</string>
+    <string name="screensaver_batch_skipped">Couldn’t read: %1$d</string>
+    <string name="screensaver_pack_title">Folio sleep screens</string>
+    <string name="screensaver_pack_footer">The pictures are already prepared for the reader’s screen. Sending them again replaces them instead of making copies.</string>
+    <string name="screensaver_pack_send">Send to reader (%1$d)</string>
+    <string name="screensaver_pack_enqueue">Add to queue (%1$d)</string>
+    <string name="screensaver_select_all">Select all</string>
+    <string name="screensaver_deselect_all">Deselect all</string>
+</resources>

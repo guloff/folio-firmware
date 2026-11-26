@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notes_title">Заметки</string>
+    <string name="notes_tab_highlights">Цитаты</string>
+    <string name="notes_tab_vocab">Словарь</string>
+    <string name="notes_search_highlights">Поиск по цитатам</string>
+    <string name="notes_search_words">Поиск слова</string>
+    <string name="notes_nothing_found">Ничего не найдено</string>
+
+    <!-- Цитаты -->
+    <string name="notes_no_highlights">Цитат пока нет</string>
+    <string name="notes_no_highlights_message">На читалке: меню чтения → «Выделить». Цитаты появятся здесь после синхронизации.</string>
+    <string name="notes_export">Экспорт</string>
+    <string name="notes_export_markdown">Экспорт в Markdown</string>
+    <string name="notes_export_csv">CSV для Readwise</string>
+    <string name="notes_send_readwise">Отправить в Readwise…</string>
+    <string name="notes_export_book">Экспорт книги «%1$s»</string>
+    <string name="notes_export_chooser">Экспорт цитат</string>
+    <string name="notes_share_chooser">Поделиться цитатой</string>
+    <string name="notes_note">Заметка</string>
+    <string name="notes_note_hint">Ваша мысль…</string>
+    <string name="notes_edit_note">Изменить заметку</string>
+    <string name="notes_cant_modify">Эту цитату сохранила старая прошивка — с телефона её не изменить.</string>
+    <string name="notes_delete_highlight">Удалить цитату с читалки</string>
+    <string name="notes_delete_highlight_confirm">Удалить цитату с читалки?</string>
+    <string name="notes_delete_highlight_message">Цитата и заметка к ней будут удалены с читалки навсегда.</string>
+
+    <!-- Словарь -->
+    <string name="notes_vocab_empty">Словарь пуст</string>
+    <string name="notes_vocab_empty_message">Слова, которые вы ищете в словаре на читалке, появятся здесь.</string>
+    <string name="notes_flashcards">Карточки</string>
+    <string name="notes_due">К повторению: %1$d</string>
+    <string name="notes_all_caught_up">На сегодня всё повторено</string>
+    <string name="notes_word_count">×%1$d</string>
+    <plurals name="notes_next_review">
+        <item quantity="one">через %d день</item>
+        <item quantity="few">через %d дня</item>
+        <item quantity="many">через %d дней</item>
+        <item quantity="other">через %d дня</item>
+    </plurals>
+    <string name="notes_delete_word">Удалить слово</string>
+    <string name="notes_delete_word_confirm">Удалить слово «%1$s» из словаря на читалке?</string>
+
+    <!-- Карточки -->
+    <string name="notes_card_progress">Карточка %1$d из %2$d</string>
+    <string name="notes_card_hint">Вспомните значение и контекст, затем нажмите на карточку</string>
+    <string name="notes_show_answer">Показать ответ</string>
+    <string name="notes_lookup">Посмотреть в словаре</string>
+    <string name="notes_define_query">значение слова %1$s</string>
+    <string name="notes_grade_again">Снова</string>
+    <string name="notes_grade_hard">Трудно</string>
+    <string name="notes_grade_good">Хорошо</string>
+    <string name="notes_grade_easy">Легко</string>
+    <string name="notes_review_done">Готово! Повторено слов: %1$d</string>
+
+    <!-- Readwise -->
+    <string name="notes_readwise_title">Readwise</string>
+    <string name="notes_readwise_token_section">Токен</string>
+    <string name="notes_readwise_token_label">Токен доступа Readwise</string>
+    <string name="notes_readwise_show_token">Показать токен</string>
+    <string name="notes_readwise_hide_token">Скрыть токен</string>
+    <string name="notes_readwise_check">Проверить токен</string>
+    <string name="notes_readwise_valid">Токен верный</string>
+    <string name="notes_readwise_invalid">Токен не подходит</string>
+    <string name="notes_readwise_forget">Забыть токен</string>
+    <string name="notes_readwise_token_footer">Токен хранится зашифрованным на этом телефоне и уходит только на readwise.io.</string>
+    <string name="notes_readwise_get_token">Получить токен на readwise.io</string>
+    <string name="notes_readwise_send_section">Отправка</string>
+    <string name="notes_readwise_send">Отправить цитаты: %1$d</string>
+    <string name="notes_readwise_progress">%1$d из %2$d</string>
+    <string name="notes_readwise_sent">Отправлено в Readwise: %1$d</string>
+    <string name="notes_readwise_footer">Книга, автор, заметка, позиция и дата каждой цитаты. Readwise сам пропускает цитаты, которые у него уже есть, поэтому отправлять повторно можно.</string>
+    <string name="notes_readwise_error_token">Readwise не принял токен. Скопируйте его заново на readwise.io/access_token.</string>
+    <string name="notes_readwise_error_rate">Readwise просит подождать %1$d с и повторить.</string>
+    <string name="notes_readwise_error_rate_plain">Readwise просит подождать и повторить.</string>
+    <string name="notes_readwise_error_server">Ошибка Readwise %1$d: %2$s</string>
+    <string name="notes_readwise_error_network">Нет связи с readwise.io. Проверьте подключение к интернету.</string>
+</resources>

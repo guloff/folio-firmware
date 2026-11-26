@@ -1,0 +1,18 @@
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# подпись релиза — наружу не отдавать
+keystore.properties
+*.jks
+*.keystore
+
+# собранные пакеты — не исходники
+dist/
+.kotlin/

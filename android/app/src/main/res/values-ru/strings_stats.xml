@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Существительные без числа (число рядом крупным шрифтом): ImpliedQuantity здесь намеренно. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="stats_title">Статистика</string>
+    <string name="stats_wrapped">Итоги года</string>
+    <string name="stats_no_data">Пока нет данных</string>
+
+    <!-- Плитки -->
+    <string name="stats_hours_total">часов всего</string>
+    <string name="stats_hours">часов</string>
+    <plurals name="stats_hours_full">
+        <item quantity="one">%d час</item>
+        <item quantity="few">%d часа</item>
+        <item quantity="many">%d часов</item>
+        <item quantity="other">%d часа</item>
+    </plurals>
+    <plurals name="stats_noun_page" tools:ignore="ImpliedQuantity">
+        <item quantity="one">страница</item>
+        <item quantity="few">страницы</item>
+        <item quantity="many">страниц</item>
+        <item quantity="other">страницы</item>
+    </plurals>
+    <plurals name="stats_noun_session" tools:ignore="ImpliedQuantity">
+        <item quantity="one">сессия</item>
+        <item quantity="few">сессии</item>
+        <item quantity="many">сессий</item>
+        <item quantity="other">сессии</item>
+    </plurals>
+    <plurals name="stats_noun_minute" tools:ignore="ImpliedQuantity">
+        <item quantity="one">минута</item>
+        <item quantity="few">минуты</item>
+        <item quantity="many">минут</item>
+        <item quantity="other">минуты</item>
+    </plurals>
+    <plurals name="stats_noun_day" tools:ignore="ImpliedQuantity">
+        <item quantity="one">день</item>
+        <item quantity="few">дня</item>
+        <item quantity="many">дней</item>
+        <item quantity="other">дня</item>
+    </plurals>
+    <plurals name="stats_noun_streak_day" tools:ignore="ImpliedQuantity">
+        <item quantity="one">день подряд</item>
+        <item quantity="few">дня подряд</item>
+        <item quantity="many">дней подряд</item>
+        <item quantity="other">дня подряд</item>
+    </plurals>
+    <plurals name="stats_noun_highlight" tools:ignore="ImpliedQuantity">
+        <item quantity="one">выделение</item>
+        <item quantity="few">выделения</item>
+        <item quantity="many">выделений</item>
+        <item quantity="other">выделения</item>
+    </plurals>
+    <plurals name="stats_tile_books" tools:ignore="ImpliedQuantity">
+        <item quantity="one">книга прочитана</item>
+        <item quantity="few">книги прочитаны</item>
+        <item quantity="many">книг прочитано</item>
+        <item quantity="other">книги прочитано</item>
+    </plurals>
+
+    <!-- Календарь чтения -->
+    <string name="stats_calendar">Календарь чтения</string>
+    <string name="stats_heatmap_less">Меньше</string>
+    <string name="stats_heatmap_more">Больше</string>
+    <string name="stats_heatmap_scale">0 · 1–14 · 15–29 · 30–59 · 60+ мин в день</string>
+    <string name="stats_heatmap_scale_a11y">Цвет клетки: нет чтения, до 15 минут, до 30, до часа, больше часа</string>
+    <string name="stats_heatmap_a11y_summary">Календарь чтения за %1$d нед.: дней с чтением %2$d, всего %3$s</string>
+    <string name="stats_heatmap_a11y_week_empty">Неделя %1$s: без чтения</string>
+    <string name="stats_heatmap_a11y_week">Неделя %1$s: дней с чтением %2$d, %3$s</string>
+    <string name="stats_heatmap_a11y_most">Больше всего — %1$s: %2$s</string>
+    <string name="stats_heatmap_prev_week">Предыдущая неделя</string>
+    <string name="stats_heatmap_next_week">Следующая неделя</string>
+    <string name="stats_heatmap_open_day">открыть лучший день недели</string>
+
+    <!-- День -->
+    <string name="stats_day_time">Время чтения</string>
+    <string name="stats_day_pages">Страниц</string>
+    <string name="stats_day_goal">Цель</string>
+    <string name="stats_day_goal_met">выполнена</string>
+    <string name="stats_day_goal_not_met">не выполнена</string>
+    <string name="stats_day_sessions">Сессии</string>
+    <string name="stats_day_no_sessions">Нет подробностей о сессиях за этот день</string>
+
+    <!-- Графики -->
+    <string name="stats_by_week">По неделям</string>
+    <string name="stats_weekly_goal">цель в неделю</string>
+    <string name="stats_weekly_average">В среднем %1$d мин в неделю</string>
+    <string name="stats_weekly_bar_a11y">неделя с %1$s: %2$d мин</string>
+    <string name="stats_weekly_goal_a11y">Цель в неделю %1$d мин</string>
+    <string name="stats_time_of_day">Время суток</string>
+    <string name="stats_hour_bar_a11y">%1$d:00 — %2$d мин</string>
+    <string name="stats_peak_hour">Чаще всего вы читаете около %1$d:00</string>
+    <string name="stats_by_book">По книгам</string>
+
+    <!-- Итоги -->
+    <string name="stats_review">Итоги</string>
+    <string name="stats_period_day">День</string>
+    <string name="stats_period_week">Неделя</string>
+    <string name="stats_period_month">Месяц</string>
+    <string name="stats_period_year">Год</string>
+    <string name="stats_period_custom">Период</string>
+    <string name="stats_review_day">Итоги дня</string>
+    <string name="stats_review_week">Итоги недели</string>
+    <string name="stats_review_month">Итоги месяца</string>
+    <string name="stats_review_year">Итоги года</string>
+    <string name="stats_review_custom">Итоги за период</string>
+    <string name="stats_custom_period">Свой период</string>
+    <string name="stats_books_finished">книг прочитано</string>
+    <string name="stats_days_with_book">дней с книгой</string>
+    <string name="stats_days_best_streak">дней — лучшая серия</string>
+    <string name="stats_top_book">Главная книга: %1$s — %2$s</string>
+    <string name="stats_best_day">Самый читающий день: %1$s (%2$s)</string>
+    <string name="stats_share_image">Поделиться картинкой</string>
+    <string name="stats_wrapped_cards">Итоги года — по карточкам</string>
+
+    <!-- Итоги года -->
+    <string name="stats_wrapped_year_title">Итоги %1$s</string>
+    <string name="stats_wrapped_choose_year">Год</string>
+    <string name="stats_wrapped_page_a11y">Карточка %1$d из %2$d</string>
+    <string name="stats_wrapped_intro_title">Ваш год с книгой</string>
+    <string name="stats_wrapped_intro_hint">Листайте, чтобы увидеть итоги</string>
+    <string name="stats_wrapped_time_caption">Вы читали</string>
+    <string name="stats_wrapped_avg_per_day">В среднем %1$s в день чтения</string>
+    <string name="stats_wrapped_days_caption">Дни с книгой</string>
+    <string name="stats_wrapped_days_share">из %1$d — это %2$d%%</string>
+    <string name="stats_wrapped_streak_caption">Самая длинная серия</string>
+    <string name="stats_wrapped_streak_text">Столько дней подряд вы не расставались с книгой.</string>
+    <string name="stats_wrapped_books_caption">Главные книги года</string>
+    <string name="stats_wrapped_finished">Прочитано: %1$s</string>
+    <string name="stats_wrapped_hour_caption">Любимое время</string>
+    <string name="stats_wrapped_fav_hour">любимый час для чтения</string>
+    <string name="stats_wrapped_best_month">Самый читающий месяц — %1$s</string>
+    <string name="stats_wrapped_highlights_caption">Выделения</string>
+    <string name="stats_wrapped_with_notes">С заметками: %1$d</string>
+    <string name="stats_wrapped_quote">«%1$s»</string>
+    <string name="stats_wrapped_words_caption">Словарь</string>
+    <string name="stats_wrapped_words_label">слов посмотрели в словаре</string>
+    <string name="stats_wrapped_words_text">Каждое — шаг к языку, на котором написана книга.</string>
+    <string name="stats_wrapped_share_hint">Поделитесь итогами — кнопка вверху справа.</string>
+    <string name="stats_wrapped_empty_title">За %1$s пока нет чтения</string>
+    <string name="stats_wrapped_empty_text">Синхронизируйте читалку — итоги соберутся из её статистики.</string>
+</resources>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dashboard_title" translatable="false">FolioLink</string>
+
+    <string name="dashboard_welcome_title">Welcome to FolioLink</string>
+    <string name="dashboard_welcome_text">Reading stats, shelves, highlights, sleep screens and fonts for your reader running Folio.</string>
+    <string name="dashboard_welcome_step1">On the reader open Menu → “Phone sync”</string>
+    <string name="dashboard_welcome_step2">Phone and reader on the same Wi‑Fi network</string>
+    <string name="dashboard_welcome_step3">Tap “Connect reader”</string>
+    <string name="dashboard_connect_reader">Connect reader</string>
+    <string name="dashboard_try_demo">Try without a reader</string>
+
+    <string name="dashboard_reader">Reader</string>
+    <string name="dashboard_firmware">Firmware %1$s</string>
+    <string name="dashboard_status_connected">Connected · %1$s</string>
+    <string name="dashboard_status_demo">Demo mode · virtual reader</string>
+    <string name="dashboard_status_connecting">Connecting…</string>
+    <string name="dashboard_status_failed">No connection</string>
+    <string name="dashboard_status_not_connected">Not connected</string>
+    <string name="dashboard_status_offline">Offline</string>
+    <string name="dashboard_battery_a11y">Battery %1$d%%</string>
+    <string name="dashboard_sd_free">%1$s free of %2$s</string>
+    <string name="dashboard_synced_at">Synced %1$s</string>
+    <string name="dashboard_not_synced">Not synced yet</string>
+    <string name="dashboard_refresh">Refresh</string>
+    <string name="dashboard_syncing">Syncing…</string>
+
+    <string name="dashboard_today">Today</string>
+    <string name="dashboard_today_a11y">Today: %1$d of %2$d min</string>
+    <string name="dashboard_of_goal">of %1$d min</string>
+    <plurals name="dashboard_streak_label">
+        <item quantity="one">day streak</item>
+        <item quantity="other">day streak</item>
+    </plurals>
+    <string name="dashboard_best_streak">best streak</string>
+    <string name="dashboard_goal_met">Goal met</string>
+    <string name="dashboard_minutes_left">%1$d min to go</string>
+
+    <string name="dashboard_outbox">Send queue</string>
+    <string name="dashboard_open_outbox">open the send queue</string>
+    <string name="dashboard_outbox_failed">Rejected by the reader</string>
+    <string name="dashboard_outbox_more">And %1$d more</string>
+    <string name="dashboard_outbox_sending">Changes are sent to the reader in order.</string>
+    <string name="dashboard_outbox_waiting">Everything goes to the reader on the next connection.</string>
+
+    <string name="dashboard_currently_reading">Currently reading</string>
+    <string name="dashboard_currently_reading_empty">Books you are reading on the device will appear here.</string>
+    <string name="dashboard_open_library">open the library</string>
+</resources>

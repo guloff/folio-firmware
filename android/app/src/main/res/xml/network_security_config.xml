@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SEC-036. Читалка Folio отвечает только по открытому HTTP на IP-адресе локальной сети
+  (192.168.x.x, 10.x.x.x, точка доступа 192.168.4.1; эмулятор — 10.0.2.2). Адреса заранее
+  неизвестны, а network-security-config не умеет задавать диапазоны IP, поэтому открытый HTTP
+  по умолчанию разрешён. Токен читалке уходит только после сверки серийника (SEC-033).
+  Ссылки на статьи http:// («Поделиться» и «Статья по ссылке») тоже работают через это разрешение.
+
+  Для известных интернет-хостов открытый HTTP запрещён: GitHub (релизы прошивки и каталог
+  словарей, включая CDN ассетов) и Readwise ходят только по HTTPS.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">github.com</domain>
+        <domain includeSubdomains="true">githubusercontent.com</domain>
+        <domain includeSubdomains="true">readwise.io</domain>
+    </domain-config>
+</network-security-config>

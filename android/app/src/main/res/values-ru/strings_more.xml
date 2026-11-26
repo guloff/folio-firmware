@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="more_title">Ещё</string>
+    <string name="more_screen_header">Экран</string>
+    <string name="more_screensaver">Студия заставок</string>
+    <string name="more_sleep_images">Заставки на читалке</string>
+    <string name="more_screenshots">Скриншоты</string>
+    <string name="more_fonts">Шрифты</string>
+    <string name="more_reader_header">Читалка</string>
+    <string name="more_device">Устройство</string>
+    <string name="more_device_settings">Настройки читалки</string>
+    <string name="more_firmware">Прошивка</string>
+    <string name="more_outbox">Очередь отправки</string>
+    <string name="more_outbox_empty">пусто</string>
+    <plurals name="more_outbox_changes">
+        <item quantity="one">%d изменение</item>
+        <item quantity="few">%d изменения</item>
+        <item quantity="many">%d изменений</item>
+        <item quantity="other">%d изменения</item>
+    </plurals>
+    <string name="more_app">Приложение</string>
+    <string name="more_connected_to">Подключено · %1$s</string>
+    <string name="more_demo">Демо-режим · виртуальная читалка</string>
+    <string name="more_connecting">Подключение…</string>
+    <string name="more_not_connected">Читалка не подключена</string>
+    <string name="more_connect_hint">На читалке откройте Меню → «Связь с телефоном»</string>
+    <string name="more_firmware_version">Прошивка %1$s</string>
+    <string name="more_dictionaries">Словари</string>
+    <string name="more_dictionaries_update">Нужна Folio 1.1 или новее</string>
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screenshots_title">Скриншоты</string>
+    <string name="screenshots_empty_title">Скриншотов нет</string>
+    <string name="screenshots_empty_message">Сделайте скриншот на читалке — он появится здесь после синхронизации.</string>
+    <string name="screenshots_save_all">Сохранить все в галерею</string>
+    <string name="screenshots_autosave_notice">Новые скриншоты сохраняются в галерею (Pictures/FolioLink)</string>
+    <string name="screenshots_no_book">Другие скриншоты</string>
+    <string name="screenshots_open">Открыть скриншот</string>
+    <string name="screenshots_to_gallery">В галерею</string>
+    <string name="screenshots_detail_info">%1$s · %2$s</string>
+    <string name="screenshots_save_needs_connection">Подключите читалку, чтобы сохранить скриншот в галерею.</string>
+    <string name="screenshots_delete_confirm">Удалить скриншот с читалки?</string>
+</resources>

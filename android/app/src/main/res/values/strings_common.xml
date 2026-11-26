@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_duration_m">%1$d min</string>
+    <string name="common_duration_h">%1$d h</string>
+    <string name="common_duration_hm">%1$d h %2$d min</string>
+    <string name="common_not_started">Not started</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_done">Done</string>
+    <string name="common_save">Save</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_close">Close</string>
+    <string name="common_ok">OK</string>
+    <string name="common_share">Share</string>
+    <string name="common_back">Back</string>
+    <string name="common_more_options">More options</string>
+    <string name="common_connect">Connect</string>
+    <string name="common_sync">Sync</string>
+
+    <string name="status_want">Want to read</string>
+    <string name="status_want_short">Want</string>
+    <string name="status_reading">Reading</string>
+    <string name="status_done">Finished</string>
+    <string name="status_dropped">Dropped</string>
+
+    <plurals name="plural_book">
+        <item quantity="one">%d book</item>
+        <item quantity="other">%d books</item>
+    </plurals>
+    <plurals name="plural_page">
+        <item quantity="one">%d page</item>
+        <item quantity="other">%d pages</item>
+    </plurals>
+    <plurals name="plural_session">
+        <item quantity="one">%d session</item>
+        <item quantity="other">%d sessions</item>
+    </plurals>
+    <plurals name="plural_minute">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+</resources>

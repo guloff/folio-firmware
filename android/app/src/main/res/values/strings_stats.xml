@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="stats_title">Stats</string>
+    <string name="stats_wrapped">Year in review</string>
+    <string name="stats_poster_brand" translatable="false">FolioLink · X4</string>
+    <string name="stats_no_data">No data yet</string>
+
+    <!-- Плитки -->
+    <string name="stats_hours_total">hours total</string>
+    <string name="stats_hours">hours</string>
+    <plurals name="stats_hours_full">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
+    <plurals name="stats_noun_page">
+        <item quantity="one">page</item>
+        <item quantity="other">pages</item>
+    </plurals>
+    <plurals name="stats_noun_session">
+        <item quantity="one">session</item>
+        <item quantity="other">sessions</item>
+    </plurals>
+    <plurals name="stats_noun_minute">
+        <item quantity="one">minute</item>
+        <item quantity="other">minutes</item>
+    </plurals>
+    <plurals name="stats_noun_day">
+        <item quantity="one">day</item>
+        <item quantity="other">days</item>
+    </plurals>
+    <plurals name="stats_noun_streak_day">
+        <item quantity="one">day streak</item>
+        <item quantity="other">day streak</item>
+    </plurals>
+    <plurals name="stats_noun_highlight">
+        <item quantity="one">highlight</item>
+        <item quantity="other">highlights</item>
+    </plurals>
+    <plurals name="stats_tile_books">
+        <item quantity="one">book finished</item>
+        <item quantity="other">books finished</item>
+    </plurals>
+
+    <!-- Календарь чтения -->
+    <string name="stats_calendar">Reading calendar</string>
+    <string name="stats_heatmap_less">Less</string>
+    <string name="stats_heatmap_more">More</string>
+    <string name="stats_heatmap_scale">0 · 1–14 · 15–29 · 30–59 · 60+ min per day</string>
+    <string name="stats_heatmap_scale_a11y">Cell color: no reading, under 15 minutes, under 30, under an hour, over an hour</string>
+    <string name="stats_heatmap_a11y_summary">Reading calendar, %1$d weeks: %2$d reading days, %3$s in total</string>
+    <string name="stats_heatmap_a11y_week_empty">Week %1$s: no reading</string>
+    <string name="stats_heatmap_a11y_week">Week %1$s: %2$d reading days, %3$s</string>
+    <string name="stats_heatmap_a11y_most">Most on %1$s: %2$s</string>
+    <string name="stats_heatmap_prev_week">Previous week</string>
+    <string name="stats_heatmap_next_week">Next week</string>
+    <string name="stats_heatmap_open_day">open the week\'s best day</string>
+
+    <!-- День -->
+    <string name="stats_day_time">Reading time</string>
+    <string name="stats_day_pages">Pages</string>
+    <string name="stats_day_goal">Goal</string>
+    <string name="stats_day_goal_met">met</string>
+    <string name="stats_day_goal_not_met">not met</string>
+    <string name="stats_day_sessions">Sessions</string>
+    <string name="stats_day_no_sessions">No session details for this day</string>
+
+    <!-- Графики -->
+    <string name="stats_by_week">By week</string>
+    <string name="stats_weekly_goal">weekly goal</string>
+    <string name="stats_weekly_average">Average %1$d min per week</string>
+    <string name="stats_weekly_bar_a11y">week of %1$s: %2$d min</string>
+    <string name="stats_weekly_goal_a11y">Weekly goal %1$d min</string>
+    <string name="stats_time_of_day">Time of day</string>
+    <string name="stats_hour_bar_a11y">%1$d:00 — %2$d min</string>
+    <string name="stats_peak_hour">You read most around %1$d:00</string>
+    <string name="stats_by_book">By book</string>
+
+    <!-- Итоги -->
+    <string name="stats_review">Review</string>
+    <string name="stats_period_day">Day</string>
+    <string name="stats_period_week">Week</string>
+    <string name="stats_period_month">Month</string>
+    <string name="stats_period_year">Year</string>
+    <string name="stats_period_custom">Custom</string>
+    <string name="stats_review_day">Day in review</string>
+    <string name="stats_review_week">Week in review</string>
+    <string name="stats_review_month">Month in review</string>
+    <string name="stats_review_year">Year in review</string>
+    <string name="stats_review_custom">Period in review</string>
+    <string name="stats_custom_period">Custom period</string>
+    <string name="stats_books_finished">books finished</string>
+    <string name="stats_days_with_book">reading days</string>
+    <string name="stats_days_best_streak">days — best streak</string>
+    <string name="stats_top_book">Top book: %1$s — %2$s</string>
+    <string name="stats_best_day">Top reading day: %1$s (%2$s)</string>
+    <string name="stats_share_image">Share as image</string>
+    <string name="stats_wrapped_cards">Year in review — card by card</string>
+
+    <!-- Итоги года -->
+    <string name="stats_wrapped_year_title">%1$s in review</string>
+    <string name="stats_wrapped_choose_year">Year</string>
+    <string name="stats_wrapped_page_a11y">Card %1$d of %2$d</string>
+    <string name="stats_wrapped_intro_title">Your year in books</string>
+    <string name="stats_wrapped_intro_hint">Swipe to see your year</string>
+    <string name="stats_wrapped_time_caption">You read for</string>
+    <string name="stats_wrapped_avg_per_day">On average %1$s per reading day</string>
+    <string name="stats_wrapped_days_caption">Reading days</string>
+    <string name="stats_wrapped_days_share">of %1$d — that\'s %2$d%%</string>
+    <string name="stats_wrapped_streak_caption">Longest streak</string>
+    <string name="stats_wrapped_streak_text">That many days in a row you kept reading.</string>
+    <string name="stats_wrapped_books_caption">Top books of the year</string>
+    <string name="stats_wrapped_finished">Finished: %1$s</string>
+    <string name="stats_wrapped_hour_caption">Favourite time</string>
+    <string name="stats_wrapped_fav_hour">favourite hour to read</string>
+    <string name="stats_wrapped_best_month">Top month: %1$s</string>
+    <string name="stats_wrapped_highlights_caption">Highlights</string>
+    <string name="stats_wrapped_with_notes">With notes: %1$d</string>
+    <string name="stats_wrapped_quote">“%1$s”</string>
+    <string name="stats_wrapped_words_caption">Vocabulary</string>
+    <string name="stats_wrapped_words_label">words looked up</string>
+    <string name="stats_wrapped_words_text">Each one a step into the language of the book.</string>
+    <string name="stats_wrapped_share_hint">Share your year with the button at the top right.</string>
+    <string name="stats_wrapped_empty_title">No reading in %1$s yet</string>
+    <string name="stats_wrapped_empty_text">Sync your reader — the review is built from its stats.</string>
+</resources>

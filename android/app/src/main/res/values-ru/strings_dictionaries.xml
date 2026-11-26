@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dictionaries_title">Словари</string>
+    <string name="dictionaries_add">Добавить свой словарь</string>
+    <string name="dictionaries_offline_note">Читалка не подключена: показан список с прошлого подключения. Изменения уйдут через очередь отправки.</string>
+    <string name="dictionaries_connect_note">Подключите читалку, чтобы увидеть её словари.</string>
+    <string name="dictionaries_update_firmware">Словарям нужна Folio 1.1 или новее. Обновите прошивку, чтобы устанавливать и выбирать словари здесь.</string>
+    <string name="dictionaries_open_firmware">Обновить прошивку</string>
+
+    <string name="dictionaries_on_reader">На читалке</string>
+    <string name="dictionaries_on_reader_count">На читалке: %1$d</string>
+    <string name="dictionaries_none">Словарей пока нет. Установите словарь из каталога или добавьте свой.</string>
+    <string name="dictionaries_size_script">%1$s · %2$s</string>
+    <string name="dictionaries_folder">Папка %1$s</string>
+    <string name="dictionaries_in_use">Используется</string>
+    <string name="dictionaries_not_indexed">Индекс построится при первом поиске</string>
+    <string name="dictionaries_script_latin">Латиница</string>
+    <string name="dictionaries_script_cyrillic">Кириллица</string>
+    <string name="dictionaries_script_other">Другая письменность</string>
+    <string name="dictionaries_delete_named">Удалить словарь %1$s</string>
+    <string name="dictionaries_delete_title">Удалить словарь «%1$s» с карты памяти?</string>
+    <string name="dictionaries_delete_text">Папка %1$s удалится вместе с поисковыми индексами. Словарь можно будет установить снова.</string>
+
+    <string name="dictionaries_mode_header">Где искать слова</string>
+    <string name="dictionaries_mode_all">Все словари</string>
+    <string name="dictionaries_mode_all_note">Сначала словари той же письменности, что и слово</string>
+    <string name="dictionaries_mode_only">Только «%1$s»</string>
+    <string name="dictionaries_mode_off">Выкл.</string>
+    <string name="dictionaries_mode_off_note">Нажатие на слово перевод не показывает</string>
+    <string name="dictionaries_mode_footer">Тот же выбор есть на читалке: Настройки → Чтение → Словарь.</string>
+
+    <string name="dictionaries_catalog">Каталог</string>
+    <string name="dictionaries_catalog_footer">Свободные словари, подготовленные для Folio. Каждый файл сверяется с контрольной суммой SHA-256, прежде чем уйти на читалку.</string>
+    <string name="dictionaries_catalog_loading">Загружаем каталог…</string>
+    <string name="dictionaries_catalog_empty">Каталог пуст.</string>
+    <string name="dictionaries_catalog_unavailable">Каталог пока недоступен. Попробуйте позже.</string>
+    <string name="dictionaries_catalog_offline">Нет интернета: каталог не загрузить.</string>
+    <string name="dictionaries_catalog_failed">Не удалось загрузить каталог: %1$s</string>
+    <string name="dictionaries_retry">Повторить</string>
+    <string name="dictionaries_languages">%1$s → %2$s</string>
+    <string name="dictionaries_license">Лицензия: %1$s</string>
+    <string name="dictionaries_attribution_more">Показать атрибуцию целиком</string>
+    <string name="dictionaries_source">Источник: %1$s</string>
+    <string name="dictionaries_install">Установить</string>
+    <string name="dictionaries_install_named">Установить %1$s</string>
+    <string name="dictionaries_installed">Установлен</string>
+    <string name="dictionaries_downloading">Скачиваем %1$d из %2$d…</string>
+    <string name="dictionaries_verifying">Проверяем…</string>
+    <string name="dictionaries_uploading">Отправляем на читалку…</string>
+    <string name="dictionaries_queued">Ждёт в очереди отправки</string>
+    <string name="dictionaries_install_failed">Не установлен: %1$s</string>
+    <string name="dictionaries_install_failed_queue">Не установлен: читалка отклонила файл (см. очередь отправки)</string>
+
+    <string name="dictionaries_own">Свой словарь</string>
+    <string name="dictionaries_own_button">Добавить свой…</string>
+    <string name="dictionaries_own_footer">Выберите файлы StarDict одного словаря: .ifo, .idx или .idx.gz, .dict или .dict.dz и .syn, если он есть. Архивы (.zip, .tar.gz) не поддерживаются — сначала распакуйте их.</string>
+    <string name="dictionaries_import_title">Новый словарь</string>
+    <string name="dictionaries_import_files">Файлы</string>
+    <string name="dictionaries_import_folder_header">Папка на читалке</string>
+    <string name="dictionaries_import_folder">Имя папки</string>
+    <string name="dictionaries_import_folder_will_be">Файлы лягут в /dictionaries/%1$s. Латинские буквы, цифры, «.», «-» и «_», не длиннее 31 символа.</string>
+    <string name="dictionaries_import_folder_taken">Словарь с такой папкой уже есть на читалке — будет использовано другое имя: %1$s</string>
+    <string name="dictionaries_import_gunzip">%1$s будет распакован в .idx</string>
+    <string name="dictionaries_import_upload">Загрузить на читалку</string>
+    <string name="dictionaries_import_offline">Читалка не подключена: файлы подождут в очереди отправки.</string>
+    <string name="dictionaries_unreadable">Не удалось прочитать файлов: %1$d</string>
+
+    <string name="dictionaries_err_no_files">Файлы не выбраны.</string>
+    <string name="dictionaries_err_unsupported">«%1$s» — не файл StarDict. Нужны .ifo, .idx, .idx.gz, .dict, .dict.dz или .syn.</string>
+    <string name="dictionaries_err_mixed">Это файлы разных словарей: %1$s. Выберите файлы одного словаря.</string>
+    <string name="dictionaries_err_duplicate">Выбрано два файла %1$s. Оставьте один.</string>
+    <string name="dictionaries_err_missing_ifo">Нет файла .ifo.</string>
+    <string name="dictionaries_err_missing_idx">Нет индекса (.idx или .idx.gz).</string>
+    <string name="dictionaries_err_missing_dict">Нет файла статей (.dict или .dict.dz).</string>
+    <string name="dictionaries_err_bad_ifo">Файл .ifo — не описание словаря StarDict.</string>
+    <string name="dictionaries_err_bad_archive">«%1$s» не распаковывается.</string>
+    <string name="dictionaries_err_index_size">Индекс не совпадает с .ifo (%1$s байт вместо %2$s): файл повреждён или от другого словаря.</string>
+    <string name="dictionaries_err_empty">«%1$s» пуст.</string>
+    <string name="dictionaries_err_too_large">«%1$s» слишком большой.</string>
+    <string name="dictionaries_err_checksum">«%1$s» повреждён: контрольная сумма не совпала с каталогом.</string>
+    <string name="dictionaries_err_size">«%1$s» скачался не полностью.</string>
+    <string name="dictionaries_err_http">сервер ответил HTTP %1$d</string>
+    <string name="dictionaries_err_bad_manifest">Файл каталога повреждён или нужна более новая версия FolioLink.</string>
+    <string name="dictionaries_err_network">нет интернета</string>
+
+    <string name="dictionaries_hint_header">Как пользоваться</string>
+    <string name="dictionaries_hint">На читалке нажмите на слово в книге — появится перевод. Какие словари использовать, можно выбрать и на читалке: Настройки → Чтение → Словарь.</string>
+
+    <plurals name="dictionaries_words">
+        <item quantity="one">%1$s слово</item>
+        <item quantity="few">%1$s слова</item>
+        <item quantity="many">%1$s слов</item>
+        <item quantity="other">%1$s слова</item>
+    </plurals>
+</resources>

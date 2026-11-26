@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fonts_title">Шрифты</string>
+    <string name="fonts_import">Импорт шрифта</string>
+    <string name="fonts_import_button">Импорт TTF, OTF или .cpfont</string>
+    <string name="fonts_offline_note">Читалка не подключена: список шрифтов появится после подключения. Импортированный шрифт встанет в очередь отправки.</string>
+    <string name="fonts_installed">Установленные</string>
+    <string name="fonts_installed_of">Установлено: %1$d из %2$d</string>
+    <string name="fonts_footer">Загруженный шрифт появится на читалке в «Настройки → Шрифт». TTF/OTF загружаются в /fonts/&lt;Семейство&gt;/&lt;Семейство&gt;-Regular.ttf (а также -Bold, -Italic, -BoldItalic).</string>
+    <string name="fonts_none">Шрифтов на карте нет</string>
+    <string name="fonts_folder">Папка /fonts</string>
+    <string name="fonts_sizes">Размеры: %1$s</string>
+    <string name="fonts_delete_named">Удалить шрифт %1$s</string>
+    <string name="fonts_delete_title">Удалить шрифт «%1$s» с карты памяти?</string>
+    <string name="fonts_unreadable">Не удалось прочитать шрифт</string>
+    <string name="fonts_some_unreadable">Не удалось прочитать файлов: %1$d</string>
+
+    <string name="fonts_import_title">Импорт шрифта</string>
+    <string name="fonts_family_header">Название семейства</string>
+    <string name="fonts_family">Семейство</string>
+    <string name="fonts_folder_will_be">Будет создана папка /fonts/%1$s</string>
+    <string name="fonts_preview_size">Размер на экране: %1$d px</string>
+    <string name="fonts_style_regular">Обычный</string>
+    <string name="fonts_style_bold">Жирный</string>
+    <string name="fonts_style_italic">Курсив</string>
+    <string name="fonts_style_bold_italic">Жирный курсив</string>
+    <string name="fonts_cpfont_note">Готовый шрифт .cpfont: загружается как есть, без предпросмотра.</string>
+    <string name="fonts_duplicate_style">У двух файлов одинаковое имя: выберите для одного из них другое начертание.</string>
+    <string name="fonts_upload">Загрузить на читалку</string>
+    <string name="fonts_offline_import">Читалка не подключена: шрифт встанет в очередь отправки.</string>
+    <string name="fonts_sample">Съешь же ещё этих мягких французских булок, да выпей чаю.\nThe quick brown fox jumps over the lazy dog. 0123456789</string>
+</resources>

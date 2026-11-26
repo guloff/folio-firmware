@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screenshots_title">Screenshots</string>
+    <string name="screenshots_empty_title">No screenshots</string>
+    <string name="screenshots_empty_message">Take a screenshot on the reader — it appears here after syncing.</string>
+    <string name="screenshots_save_all">Save all to gallery</string>
+    <string name="screenshots_autosave_notice">New screenshots are saved to the gallery (Pictures/FolioLink)</string>
+    <string name="screenshots_no_book">Other screenshots</string>
+    <string name="screenshots_open">Open screenshot</string>
+    <string name="screenshots_to_gallery">To gallery</string>
+    <string name="screenshots_detail_info">%1$s · %2$s</string>
+    <string name="screenshots_save_needs_connection">Connect the reader to save the screenshot to the gallery.</string>
+    <string name="screenshots_delete_confirm">Delete screenshot from the reader?</string>
+</resources>

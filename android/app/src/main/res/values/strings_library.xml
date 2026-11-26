@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_title">Library</string>
+    <string name="library_search_hint">Title or author</string>
+    <string name="library_search_clear">Clear search</string>
+    <string name="library_filter_status">Status</string>
+    <string name="library_filter_all">All</string>
+    <string name="library_filter_shelves">Shelves</string>
+    <string name="library_filter_all_shelves">All shelves</string>
+    <string name="library_books_count">Books: %1$d</string>
+    <string name="library_empty_title">No books yet</string>
+    <string name="library_empty_sync">Sync with the reader to see your books.</string>
+    <string name="library_nothing_found">Nothing found</string>
+    <string name="library_add">Add</string>
+    <string name="library_upload_file">Upload file (EPUB, FB2, TXT, MD)</string>
+    <string name="library_add_article">Article from link</string>
+    <string name="library_shelves">Shelves</string>
+    <string name="library_sort">Sort</string>
+    <string name="library_sort_recent">Recently read</string>
+    <string name="library_sort_title">Title</string>
+    <string name="library_sort_author">Author</string>
+    <string name="library_sort_progress">Progress</string>
+    <string name="library_unreadable">Could not read: %1$s</string>
+    <string name="library_unsupported">Not supported: %1$s. EPUB, FB2 (.fb2, .fb2.zip), TXT and MD files can be uploaded.</string>
+    <string name="library_books_sent">Books sent: %1$d</string>
+    <string name="library_books_queued">In the send queue: %1$d</string>
+    <string name="library_mark_done">Mark as finished</string>
+    <string name="library_status_none">No status</string>
+    <string name="library_open_book">Open</string>
+
+    <!-- Карточка книги -->
+    <string name="library_read_pct">%1$d%% read</string>
+    <string name="library_stats">Stats</string>
+    <string name="library_reading_time">Reading time</string>
+    <string name="library_sessions_count">Sessions</string>
+    <string name="library_pages_count">Pages</string>
+    <string name="library_last_read">Last read</string>
+    <string name="library_time_left">Time left (approx.)</string>
+    <string name="library_file">File</string>
+    <string name="library_status_and_shelves">Status and shelves</string>
+    <string name="library_no_shelves_hint">Create shelves to group books.</string>
+    <string name="library_manage_shelves">Manage shelves</string>
+    <string name="library_highlights_count">Highlights (%1$d)</string>
+    <string name="library_sessions">Sessions</string>
+    <string name="library_no_date">no date</string>
+    <string name="library_session_line">%1$s · %2$d pp.</string>
+    <string name="library_delete_file">Delete from the reader</string>
+    <string name="library_delete_file_confirm">Delete “%1$s” from the reader?</string>
+    <string name="library_delete_file_message">The book file will be deleted from the reader. Highlights and reading stats stay in the app.</string>
+    <string name="library_delete_pending">Deletion is waiting in the send queue.</string>
+
+    <!-- Полки -->
+    <string name="library_no_shelves">No shelves yet</string>
+    <string name="library_new_shelf">New shelf</string>
+    <string name="library_shelf_name">Name</string>
+    <string name="library_create">Create</string>
+    <string name="library_rename">Rename</string>
+    <string name="library_rename_shelf">Rename shelf</string>
+    <string name="library_delete_shelf">Delete shelf</string>
+    <string name="library_delete_shelf_confirm">Delete the shelf “%1$s”?</string>
+    <string name="library_delete_shelf_message">The books stay on the reader.</string>
+    <string name="library_shelf_books_hint">Tick the books that belong on this shelf.</string>
+
+    <!-- Статья по ссылке -->
+    <string name="library_article_url_label">Link</string>
+    <string name="library_article_url_hint">https://…</string>
+    <string name="library_article_paste">Paste</string>
+    <string name="library_article_load">Load article</string>
+    <string name="library_article_footer">The page will be converted to EPUB and sent to the reader’s /Books folder.</string>
+    <string name="library_article_preview">Preview</string>
+    <string name="library_article_paragraphs">Paragraphs: %1$d</string>
+    <string name="library_article_send">Send to reader</string>
+    <string name="library_article_queue">Add to queue</string>
+    <string name="library_article_queued">Article queued — it will be sent when connected</string>
+    <string name="library_article_bad_url">Enter a link that starts with http:// or https://</string>
+    <string name="library_article_no_content">Couldn’t find article text on the page</string>
+    <string name="library_article_bad_response">The page didn’t load</string>
+    <string name="library_article_offline">Couldn’t reach the site. Check the internet connection.</string>
+</resources>

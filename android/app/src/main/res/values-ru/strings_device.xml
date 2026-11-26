@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Окно подключения -->
+    <string name="device_connect_title">Подключение к Folio</string>
+    <string name="device_found_header">Найденные устройства</string>
+    <string name="device_found_footer">1. На читалке: Меню → «Связь с телефоном».\n2. Телефон и читалка — в одной Wi‑Fi сети.\n3. Читалка появится в списке выше.</string>
+    <string name="device_found_need_access">Чтобы искать читалку, разрешите доступ к устройствам в локальной сети.</string>
+    <string name="device_searching">Поиск читалок в сети…</string>
+    <string name="device_nothing_found">Ничего не найдено</string>
+    <string name="device_search_again">Искать снова</string>
+    <string name="device_manual_header">Вручную</string>
+    <string name="device_manual_hint">IP-адрес, folio.local или host:port</string>
+    <string name="device_manual_footer">IP-адрес показан на экране «Связь с телефоном» на читалке (например, 192.168.1.42). Можно ввести и имя folio.local.</string>
+    <string name="device_manual_footer_debug">Эмулятор: мок-сервер на Mac — 10.0.2.2:8080.</string>
+    <string name="device_connect_button">Подключиться</string>
+    <string name="device_demo_button">Попробовать без читалки</string>
+    <string name="device_demo_footer">Демо-режим: виртуальная читалка с примерами книг, статистики и выделений. Изменения в нём не сохраняются. Чтобы выйти, подключите свою читалку.</string>
+    <string name="device_last_device">Последнее устройство</string>
+    <string name="device_disconnect">Отключиться</string>
+    <string name="device_lan_header">Локальная сеть</string>
+    <string name="device_lan_explain">FolioLink общается с читалкой через вашу Wi‑Fi сеть. Чтобы найти её и подключиться, разрешите доступ к устройствам в локальной сети. Приложение подключается только к вашей читалке.</string>
+    <string name="device_lan_allow">Разрешить доступ</string>
+    <string name="device_lan_denied">Доступ к локальной сети запрещён. Включите для FolioLink «Устройства поблизости в локальной сети» в настройках приложения. Демо-режим работает и без него.</string>
+    <string name="device_open_app_settings">Открыть настройки приложения</string>
+
+    <!-- Сопряжение -->
+    <string name="device_pair_title">Сопряжение с читалкой</string>
+    <string name="device_pair_later">Позже</string>
+    <string name="device_pin_header">PIN с экрана читалки</string>
+    <string name="device_pin_valid_for">PIN действует ещё %1$d с</string>
+    <string name="device_pin_expired_request">PIN истёк — запросите новый</string>
+    <string name="device_pin_requesting">Запрашиваем PIN…</string>
+    <string name="device_pin_checking">Проверяем…</string>
+    <string name="device_pin_shown">Читалка показывает PIN</string>
+    <string name="device_pin_explain">Введите 6 цифр с экрана читалки. Так читалка узнаёт ваш телефон: без сопряжения приложение может только читать данные, но не менять их.</string>
+    <string name="device_pin_new">Показать новый PIN</string>
+    <string name="device_pin_new_in">Новый PIN через %1$d с</string>
+    <string name="device_pin_footer">PIN живёт 2 минуты. После 5 неверных попыток нужен новый.</string>
+
+    <!-- Экран «Устройство» -->
+    <string name="device_title">Устройство</string>
+    <string name="device_pairing_header">Сопряжение</string>
+    <string name="device_pairing_footer">Изменения (статусы, полки, файлы, настройки) читалка принимает только от сопряжённых телефонов. Полностью сбросить сопряжение можно в меню читалки.</string>
+    <string name="device_paired">Сопряжено с этим телефоном</string>
+    <string name="device_unpaired">Не сопряжено: читалка не примет изменения</string>
+    <string name="device_pair_button">Сопрячь (ввести PIN)</string>
+    <string name="device_pairing_not_required">Прошивка не требует сопряжения</string>
+    <string name="device_forget">Забыть читалку</string>
+    <string name="device_forget_title">Забыть читалку?</string>
+    <string name="device_forget_message">Телефон удалит ключ сопряжения и адрес читалки. Кэш статистики останется. Чтобы снова менять данные, подключитесь и введите PIN.</string>
+    <string name="device_forget_confirm">Забыть</string>
+    <string name="device_outbox">Очередь отправки</string>
+    <string name="device_connection_header">Подключение</string>
+    <string name="device_state">Состояние</string>
+    <string name="device_not_connected">Не подключено</string>
+    <string name="device_address">Адрес</string>
+    <string name="device_change_device">Сменить устройство</string>
+    <string name="device_send_time">Отправить время на читалку</string>
+    <string name="device_time_set">Время установлено</string>
+    <string name="device_reader_header">Читалка</string>
+    <string name="device_model">Модель</string>
+    <string name="device_firmware">Прошивка</string>
+    <string name="device_api">API</string>
+    <string name="device_battery">Батарея</string>
+    <string name="device_battery_value">%1$d%%</string>
+    <string name="device_battery_charging">%1$d%% · заряжается</string>
+    <string name="device_sd">Карта памяти</string>
+    <string name="device_sd_value">%1$s свободно из %2$s</string>
+    <string name="device_clock">Часы</string>
+    <string name="device_clock_not_set">не установлены</string>
+    <string name="device_clock_no_rtc">нет RTC</string>
+    <string name="device_network_header">Сеть</string>
+    <string name="device_mode">Режим</string>
+    <string name="device_signal">Сигнал</string>
+    <string name="device_signal_value">%1$d дБм</string>
+    <string name="device_free_heap">Свободная память (для разработчиков)</string>
+    <string name="device_uptime">Работает без перезагрузки</string>
+    <string name="device_serial">Серийный номер</string>
+
+    <!-- Bluetooth -->
+    <string name="device_ble_header">Bluetooth</string>
+    <string name="device_ble_toggle">Синхронизация по Bluetooth</string>
+    <string name="device_ble_footer">Без Wi‑Fi: статистика, сессии, выделения, словарь и список книг приходят сами, когда читалка просыпается. Файлы и скриншоты — только по Wi‑Fi. На читалке включите «Синхронизация по Bluetooth» (Настройки → Система): настройка начинает работать после перезапуска читалки. Нужна читалка, уже сопряжённая с телефоном по Wi‑Fi.</string>
+    <string name="device_ble_status_off">Выключено</string>
+    <string name="device_ble_status_unsupported">Bluetooth LE не поддерживается</string>
+    <string name="device_ble_status_unauthorized">Нет доступа к Bluetooth</string>
+    <string name="device_ble_status_powered_off">Bluetooth выключен</string>
+    <string name="device_ble_status_searching">Поиск читалки…</string>
+    <string name="device_ble_status_connecting">Подключение…</string>
+    <string name="device_ble_status_syncing">Синхронизация…</string>
+    <string name="device_ble_status_connected">Подключено</string>
+    <string name="device_ble_step">Шаг</string>
+    <string name="device_ble_step_hello">Приветствие</string>
+    <string name="device_ble_step_auth">Проверка сопряжения</string>
+    <string name="device_ble_step_info">Сведения о читалке</string>
+    <string name="device_ble_step_time">Часы</string>
+    <string name="device_ble_step_stats">Статистика</string>
+    <string name="device_ble_step_sessions">Сессии чтения</string>
+    <string name="device_ble_step_highlights">Выделения</string>
+    <string name="device_ble_step_vocab">Словарь</string>
+    <string name="device_ble_step_books">Книги</string>
+    <string name="device_ble_step_screenshots">Скриншоты</string>
+    <string name="device_ble_reader">Читалка</string>
+    <string name="device_ble_needs_pairing">Сначала подключите читалку по Wi‑Fi и введите PIN</string>
+    <string name="device_ble_grant">Разрешить доступ к Bluetooth</string>
+    <string name="device_ble_sync_now">Синхронизировать сейчас</string>
+    <string name="device_ble_find_other">Искать другую читалку</string>
+    <string name="device_ble_last_sync">Последняя синхронизация</string>
+    <string name="device_ble_never">ещё не было</string>
+</resources>

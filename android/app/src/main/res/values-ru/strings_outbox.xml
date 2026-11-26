@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="outbox_title">Очередь отправки</string>
+    <string name="outbox_send_now">Отправить сейчас</string>
+    <string name="outbox_send_item">Отправить сейчас</string>
+    <string name="outbox_retry">Повторить</string>
+    <string name="outbox_remove">Удалить из очереди</string>
+    <string name="outbox_empty_title">Очередь пуста</string>
+    <string name="outbox_empty_message">Сюда попадают изменения, сделанные без связи с читалкой: статусы, полки, заметки, удаления, заставки, шрифты, настройки и книги из «Поделиться → FolioLink».</string>
+    <plurals name="outbox_waiting">
+        <item quantity="one">Ожидает отправки: %d изменение</item>
+        <item quantity="few">Ожидают отправки: %d изменения</item>
+        <item quantity="many">Ожидают отправки: %d изменений</item>
+        <item quantity="other">Ожидают отправки: %d изменения</item>
+    </plurals>
+    <string name="outbox_footer_connected">Изменения уходят на читалку по порядку. Отклонённые читалкой остаются здесь с ошибкой, пока вы их не повторите или не удалите.</string>
+    <string name="outbox_footer_offline">Читалка не подключена. Всё отправится по порядку при следующем подключении.</string>
+    <string name="outbox_needs_newer_app">Нужна более новая версия FolioLink — это изменение можно только удалить</string>
+    <string name="outbox_other_reader">Для другой читалки — уйдёт, когда подключится она</string>
+    <string name="outbox_delete_title">Удалить из очереди «%1$s»?</string>
+    <string name="outbox_delete_message">Изменение не будет отправлено на читалку. Данные в приложении обновятся при следующей синхронизации.</string>
+    <plurals name="outbox_unreadable">
+        <item quantity="one">%d изменение не прочитано</item>
+        <item quantity="few">%d изменения не прочитано</item>
+        <item quantity="many">%d изменений не прочитано</item>
+        <item quantity="other">%d изменения не прочитано</item>
+    </plurals>
+    <string name="outbox_unreadable_footer">Повреждённый файл очереди сохранён на телефоне и не перезаписан. Книги, найденные в его папках, восстановлены выше.</string>
+    <string name="outbox_unreadable_discard">Удалить повреждённую копию</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SEC-036, Android 6–11 (fullBackupContent). В резервную копию не попадают очередь отправки
+  (книги и правки для конкретной читалки, могут быть большими) и кэши. Токены сопряжения лежат
+  в noBackupFilesDir и в копию не попадают никогда; их ключ Keystore на другом устройстве всё равно
+  недоступен.
+-->
+<full-backup-content>
+    <exclude domain="file" path="Outbox/" />
+    <exclude domain="file" path="Store/snapshot.json" />
+    <exclude domain="file" path="Store/widget.json" />
+    <exclude domain="sharedpref" path="ble_sync.xml" />
+</full-backup-content>
